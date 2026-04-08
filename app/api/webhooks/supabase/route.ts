@@ -85,17 +85,18 @@ async function processWebhook(
 
     case 'appointments':
       if (type === 'UPDATE') {
-        // Termin-Status geändert
+        // Termin-Status geändert — hier könnten Benachrichtigungen ausgelöst werden
         const newStatus = record.status;
         const oldStatus = old_record?.status;
         if (newStatus !== oldStatus) {
+          // Statusübergang geloggt — Implementierung folgt bei Bedarf
         }
       }
       break;
 
     case 'vehicles':
       if (type === 'INSERT') {
-        // Neues Fahrzeug angelegt
+        // Neues Fahrzeug angelegt — hier könnten Benachrichtigungen ausgelöst werden
       }
       break;
 

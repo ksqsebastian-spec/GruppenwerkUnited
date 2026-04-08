@@ -13,11 +13,17 @@ export async function GET(
   const { id } = await params;
   const adminClient = createAdminClient();
 
-  const { data, error } = await adminClient
+  let query = adminClient
     .from("empfehlungen")
     .select("*")
-    .eq("id", id)
-    .single();
+    .eq("id", id);
+
+  // SICHERHEIT: Nicht-Admins dürfen nur eigene Empfehlungen abrufen
+  if (!authResult.isAdmin) {
+    query = query.eq("handwerker_id", authResult.handwerkerId);
+  }
+
+  const { data, error } = await query.single();
 
   if (error || !data) {
     return NextResponse.json(

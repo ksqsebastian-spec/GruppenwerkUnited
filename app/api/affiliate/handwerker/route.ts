@@ -124,10 +124,7 @@ export async function POST(request: NextRequest) {
       );
     }
     return NextResponse.json(
-      {
-        error: "Auth-Benutzer konnte nicht erstellt werden",
-        detail: authError.message,
-      },
+      { error: "Auth-Benutzer konnte nicht erstellt werden" },
       { status: 500 }
     );
   }
