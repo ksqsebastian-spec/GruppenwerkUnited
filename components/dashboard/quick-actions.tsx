@@ -15,31 +15,31 @@ interface QuickAction {
 const quickActions: QuickAction[] = [
   {
     label: 'Neues Fahrzeug',
-    href: '/vehicles/new',
+    href: '/fuhrpark/vehicles/new',
     icon: Car,
     description: 'Fahrzeug zur Flotte hinzufügen',
   },
   {
     label: 'Neuer Fahrer',
-    href: '/drivers/new',
+    href: '/fuhrpark/drivers/new',
     icon: Users,
     description: 'Fahrer registrieren',
   },
   {
     label: 'Neuer Termin',
-    href: '/appointments/new',
+    href: '/fuhrpark/appointments/new',
     icon: Calendar,
     description: 'Wartung oder Prüfung planen',
   },
   {
     label: 'Schaden melden',
-    href: '/damages/new',
+    href: '/fuhrpark/damages/new',
     icon: AlertTriangle,
     description: 'Schaden dokumentieren',
   },
   {
     label: 'Kosten erfassen',
-    href: '/costs/new',
+    href: '/fuhrpark/costs/new',
     icon: Receipt,
     description: 'Ausgabe eintragen',
   },

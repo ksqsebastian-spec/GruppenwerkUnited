@@ -13,47 +13,221 @@ import {
   Settings,
   Contact,
   Shield,
+  ChevronLeft,
+  FileSearch,
+  TrendingUp,
+  Share2,
+  Star,
+  Wrench,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLicenseWarningCount } from '@/hooks/use-license-control';
 import { useUvvWarningCount } from '@/hooks/use-uvv-control';
+import { MODULES, getModuleByRoute, type ModuleConfig } from '@/lib/modules';
 
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Fahrzeuge', href: '/vehicles', icon: Car },
-  { name: 'Fahrer', href: '/drivers', icon: Users },
-  { name: 'Termine', href: '/appointments', icon: Calendar },
-  { name: 'Schäden', href: '/damages', icon: AlertTriangle },
-  { name: 'Kosten', href: '/costs', icon: Euro },
-  { name: 'Datenablage', href: '/documents', icon: FolderOpen },
+// Fuhrpark Modul-spezifische Navigation
+const fuhrparkNavigation = [
+  { name: 'Dashboard', href: '/fuhrpark', icon: LayoutDashboard },
+  { name: 'Fahrzeuge', href: '/fuhrpark/vehicles', icon: Car },
+  { name: 'Fahrer', href: '/fuhrpark/drivers', icon: Users },
+  { name: 'Termine', href: '/fuhrpark/appointments', icon: Calendar },
+  { name: 'Schäden', href: '/fuhrpark/damages', icon: AlertTriangle },
+  { name: 'Kosten', href: '/fuhrpark/costs', icon: Euro },
+  { name: 'Datenablage', href: '/fuhrpark/documents', icon: FolderOpen },
 ];
 
 type BadgeType = 'uvv' | 'license' | null;
 
-interface SecondaryNavItem {
+interface FuhrparkSecondaryNavItem {
   name: string;
   href: string;
   icon: typeof Shield;
   badgeType: BadgeType;
 }
 
-const secondaryNavigation: SecondaryNavItem[] = [
-  { name: 'UVV-Kontrolle', href: '/uvv', icon: Shield, badgeType: 'uvv' },
-  { name: 'Führerscheinkontrolle', href: '/license-control', icon: Contact, badgeType: 'license' },
-  { name: 'Einstellungen', href: '/settings', icon: Settings, badgeType: null },
+const fuhrparkSecondaryNavigation: FuhrparkSecondaryNavItem[] = [
+  { name: 'UVV-Kontrolle', href: '/fuhrpark/uvv', icon: Shield, badgeType: 'uvv' },
+  { name: 'Führerscheinkontrolle', href: '/fuhrpark/license-control', icon: Contact, badgeType: 'license' },
+  { name: 'Einstellungen', href: '/fuhrpark/settings', icon: Settings, badgeType: null },
 ];
 
-export function Sidebar(): JSX.Element {
-  const pathname = usePathname();
+// Modul-Icon-Zuordnung
+const MODULE_ICONS: Record<string, React.ElementType> = {
+  FileSearch,
+  TrendingUp,
+  Car,
+  Users,
+  Share2,
+  Star,
+  Wrench,
+  LayoutDashboard,
+};
+
+interface SidebarNavItemProps {
+  href: string;
+  name: string;
+  icon: React.ElementType;
+  isActive: boolean;
+  badge?: number;
+  comingSoon?: boolean;
+}
+
+function SidebarNavItem({
+  href,
+  name,
+  icon: Icon,
+  isActive,
+  badge,
+  comingSoon,
+}: SidebarNavItemProps): JSX.Element {
+  return (
+    <li>
+      <Link
+        href={comingSoon ? '#' : href}
+        className={cn(
+          'group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-colors',
+          isActive
+            ? 'bg-primary/10 text-primary'
+            : comingSoon
+              ? 'cursor-not-allowed text-gray-400'
+              : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+        )}
+        aria-disabled={comingSoon}
+      >
+        <Icon
+          className={cn(
+            'h-5 w-5 shrink-0',
+            isActive ? 'text-primary' : 'text-gray-400 group-hover:text-gray-600'
+          )}
+        />
+        <span className="flex-1">{name}</span>
+        {badge !== undefined && badge > 0 && (
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-medium text-white">
+            {badge > 99 ? '99+' : badge}
+          </span>
+        )}
+        {comingSoon && (
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+            Bald
+          </span>
+        )}
+      </Link>
+    </li>
+  );
+}
+
+/** Werkbank-Übersicht: alle Module als Karten */
+function WerkbankModuleNav({ pathname }: { pathname: string }): JSX.Element {
+  // Module nach Kategorie gruppieren
+  const tools = MODULES.filter((m) => m.category === 'tool');
+  const companies = Array.from(new Set(MODULES.filter((m) => m.category === 'company').map((m) => m.company)));
+
+  const renderModuleItem = (mod: ModuleConfig): JSX.Element => {
+    const Icon = MODULE_ICONS[mod.icon] ?? Wrench;
+    const isActive = pathname.startsWith(mod.route);
+    return (
+      <SidebarNavItem
+        key={mod.id}
+        href={mod.route}
+        name={mod.name}
+        icon={Icon}
+        isActive={isActive}
+        comingSoon={mod.status === 'coming_soon'}
+      />
+    );
+  };
+
+  return (
+    <nav className="flex flex-1 flex-col">
+      <ul role="list" className="flex flex-1 flex-col gap-y-7">
+        {/* Allgemeine Tools */}
+        <li>
+          <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            Tools
+          </div>
+          <ul role="list" className="-mx-2 space-y-1">
+            {tools.map(renderModuleItem)}
+          </ul>
+        </li>
+
+        {/* Firmen-Module */}
+        {companies.map((company) => {
+          const companyModules = MODULES.filter((m) => m.company === company);
+          const companyName = companyModules[0]?.companyName ?? company ?? '';
+          return (
+            <li key={company}>
+              <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                {companyName}
+              </div>
+              <ul role="list" className="-mx-2 space-y-1">
+                {companyModules.map(renderModuleItem)}
+              </ul>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
+
+/** Fuhrpark-Modul-Navigation */
+function FuhrparkModuleNav({ pathname }: { pathname: string }): JSX.Element {
   const { data: licenseWarningCount } = useLicenseWarningCount();
   const { data: uvvWarningCount } = useUvvWarningCount();
 
   const isActive = (href: string): boolean => {
-    if (href === '/') {
-      return pathname === '/';
+    if (href === '/fuhrpark') {
+      return pathname === '/fuhrpark';
     }
     return pathname.startsWith(href);
   };
+
+  return (
+    <nav className="flex flex-1 flex-col">
+      <ul role="list" className="flex flex-1 flex-col gap-y-7">
+        <li>
+          <ul role="list" className="-mx-2 space-y-1">
+            {fuhrparkNavigation.map((item) => (
+              <SidebarNavItem
+                key={item.name}
+                href={item.href}
+                name={item.name}
+                icon={item.icon}
+                isActive={isActive(item.href)}
+              />
+            ))}
+          </ul>
+        </li>
+
+        {/* Sekundäre Navigation: UVV, Führerschein & Einstellungen */}
+        <li className="mt-auto">
+          <ul role="list" className="-mx-2 space-y-1">
+            {fuhrparkSecondaryNavigation.map((item) => {
+              let badge: number | undefined;
+              if (item.badgeType === 'uvv') badge = uvvWarningCount;
+              else if (item.badgeType === 'license') badge = licenseWarningCount;
+              return (
+                <SidebarNavItem
+                  key={item.name}
+                  href={item.href}
+                  name={item.name}
+                  icon={item.icon}
+                  isActive={isActive(item.href)}
+                  badge={badge}
+                />
+              );
+            })}
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  );
+}
+
+export function Sidebar(): JSX.Element {
+  const pathname = usePathname();
+  const currentModule = getModuleByRoute(pathname);
+  const isInsideModule = currentModule !== undefined;
 
   return (
     <aside className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
@@ -62,97 +236,34 @@ export function Sidebar(): JSX.Element {
         <div className="flex h-16 shrink-0 items-center">
           <Link href="/" className="flex items-center gap-2">
             <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-              <Car className="h-5 w-5 text-primary-foreground" />
+              <Wrench className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-lg">Fuhrpark</span>
+            <span className="font-semibold text-lg">Werkbank</span>
           </Link>
         </div>
 
-        {/* Haupt-Navigation */}
-        <nav className="flex flex-1 flex-col">
-          <ul role="list" className="flex flex-1 flex-col gap-y-7">
-            <li>
-              <ul role="list" className="-mx-2 space-y-1">
-                {navigation.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(item.href);
+        {/* Zurück zur Übersicht (nur innerhalb eines Moduls) */}
+        {isInsideModule && (
+          <div className="border-b pb-4">
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Zur Übersicht
+            </Link>
+            <p className="mt-2 px-1 text-xs font-semibold uppercase tracking-wider text-gray-400">
+              {currentModule.name}
+            </p>
+          </div>
+        )}
 
-                  return (
-                    <li key={item.name}>
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          'group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-colors',
-                          active
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                        )}
-                      >
-                        <Icon
-                          className={cn(
-                            'h-5 w-5 shrink-0',
-                            active
-                              ? 'text-primary'
-                              : 'text-gray-400 group-hover:text-gray-600'
-                          )}
-                        />
-                        {item.name}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </li>
-
-            {/* Sekundäre Navigation (UVV, Führerscheinkontrolle & Einstellungen) */}
-            <li className="mt-auto">
-              <ul role="list" className="-mx-2 space-y-1">
-                {secondaryNavigation.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(item.href);
-
-                  // Badge-Logik basierend auf Typ
-                  let badgeCount: number | undefined;
-                  if (item.badgeType === 'uvv') {
-                    badgeCount = uvvWarningCount;
-                  } else if (item.badgeType === 'license') {
-                    badgeCount = licenseWarningCount;
-                  }
-                  const showBadge = badgeCount !== undefined && badgeCount > 0;
-
-                  return (
-                    <li key={item.name}>
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          'group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-colors',
-                          active
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                        )}
-                      >
-                        <Icon
-                          className={cn(
-                            'h-5 w-5 shrink-0',
-                            active
-                              ? 'text-primary'
-                              : 'text-gray-400 group-hover:text-gray-600'
-                          )}
-                        />
-                        <span className="flex-1">{item.name}</span>
-                        {showBadge && badgeCount && (
-                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-medium text-white">
-                            {badgeCount > 99 ? '99+' : badgeCount}
-                          </span>
-                        )}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </li>
-          </ul>
-        </nav>
+        {/* Kontextuelle Navigation */}
+        {isInsideModule && currentModule.id === 'fuhrpark' ? (
+          <FuhrparkModuleNav pathname={pathname} />
+        ) : (
+          <WerkbankModuleNav pathname={pathname} />
+        )}
       </div>
     </aside>
   );

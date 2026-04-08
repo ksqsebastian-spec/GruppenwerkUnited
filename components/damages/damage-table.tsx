@@ -117,7 +117,7 @@ export function DamageTable({ damages }: DamageTableProps): JSX.Element {
                 <TableCell>
                   {damage.vehicle ? (
                     <Link
-                      href={`/vehicles/${damage.vehicle.id}`}
+                      href={`/fuhrpark/vehicles/${damage.vehicle.id}`}
                       className="hover:underline flex items-center gap-2"
                     >
                       <Car className="h-4 w-4 text-muted-foreground" />
@@ -129,7 +129,7 @@ export function DamageTable({ damages }: DamageTableProps): JSX.Element {
                 </TableCell>
                 <TableCell className="max-w-[250px]">
                   <Link
-                    href={`/damages/${damage.id}`}
+                    href={`/fuhrpark/damages/${damage.id}`}
                     className="hover:underline flex items-center gap-2"
                   >
                     <AlertTriangle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -161,13 +161,13 @@ export function DamageTable({ damages }: DamageTableProps): JSX.Element {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => router.push(`/damages/${damage.id}`)}
+                        onClick={() => router.push(`/fuhrpark/damages/${damage.id}`)}
                       >
                         <Eye className="mr-2 h-4 w-4" />
                         Anzeigen
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => router.push(`/damages/${damage.id}/edit`)}
+                        onClick={() => router.push(`/fuhrpark/damages/${damage.id}/edit`)}
                       >
                         <Pencil className="mr-2 h-4 w-4" />
                         Bearbeiten

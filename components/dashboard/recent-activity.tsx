@@ -88,7 +88,7 @@ export function RecentActivity({
           Letzte Aktivitäten
         </CardTitle>
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/activity">
+          <Link href="/fuhrpark/activity">
             Alle anzeigen
             <ChevronRight className="ml-1 h-4 w-4" />
           </Link>

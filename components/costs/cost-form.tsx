@@ -152,7 +152,7 @@ export function CostForm(): JSX.Element {
         receipt_path: receiptPath,
       });
 
-      router.push('/costs');
+      router.push('/fuhrpark/costs');
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
     } finally {

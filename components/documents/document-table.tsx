@@ -111,21 +111,21 @@ function getEntityLabel(entityType: DocumentEntityType): string {
 function getEntityUrl(doc: Document): string | null {
   switch (doc.entity_type) {
     case 'vehicle':
-      return doc.vehicle_id ? `/vehicles/${doc.vehicle_id}` : null;
+      return doc.vehicle_id ? `/fuhrpark/vehicles/${doc.vehicle_id}` : null;
     case 'damage':
-      return doc.damage_id ? `/damages/${doc.damage_id}` : null;
+      return doc.damage_id ? `/fuhrpark/damages/${doc.damage_id}` : null;
     case 'appointment':
-      return doc.appointment_id ? `/appointments/${doc.appointment_id}` : null;
+      return doc.appointment_id ? `/fuhrpark/appointments/${doc.appointment_id}` : null;
     case 'driver':
-      return doc.driver_id ? `/drivers/${doc.driver_id}` : null;
+      return doc.driver_id ? `/fuhrpark/drivers/${doc.driver_id}` : null;
     case 'license_check_employee':
-      return doc.license_check_employee_id ? `/license-control/employees/${doc.license_check_employee_id}` : null;
+      return doc.license_check_employee_id ? `/fuhrpark/license-control/employees/${doc.license_check_employee_id}` : null;
     case 'license_check':
       // Kontrolle hat keine eigene Detailseite, Link zum Mitarbeiter
-      return doc.license_check?.employee_id ? `/license-control/employees/${doc.license_check.employee_id}` : null;
+      return doc.license_check?.employee_id ? `/fuhrpark/license-control/employees/${doc.license_check.employee_id}` : null;
     case 'uvv_check':
       // UVV-Kontrolle hat keine eigene Detailseite, Link zum Fahrer
-      return doc.uvv_check?.driver_id ? `/uvv/drivers/${doc.uvv_check.driver_id}` : null;
+      return doc.uvv_check?.driver_id ? `/fuhrpark/uvv/drivers/${doc.uvv_check.driver_id}` : null;
   }
 }
 

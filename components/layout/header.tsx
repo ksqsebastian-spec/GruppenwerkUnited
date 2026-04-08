@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogOut, Menu, Car, User } from 'lucide-react';
+import { LogOut, Menu, Wrench, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -49,9 +49,9 @@ export function Header(): JSX.Element {
         {/* Mobile Logo */}
         <Link href="/" className="flex items-center gap-2 lg:hidden">
           <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-            <Car className="h-5 w-5 text-primary-foreground" />
+            <Wrench className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="font-semibold">Fuhrpark</span>
+          <span className="font-semibold">Werkbank</span>
         </Link>
 
         {/* Spacer */}

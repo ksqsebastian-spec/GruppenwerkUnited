@@ -103,7 +103,7 @@ export function CostTable({ costs }: CostTableProps): JSX.Element {
               <TableRow key={cost.id}>
                 <TableCell>
                   <Link
-                    href={`/costs/${cost.id}`}
+                    href={`/fuhrpark/costs/${cost.id}`}
                     className="hover:underline"
                   >
                     {format(new Date(cost.date), 'dd.MM.yyyy', { locale: de })}
@@ -112,7 +112,7 @@ export function CostTable({ costs }: CostTableProps): JSX.Element {
                 <TableCell>
                   {cost.vehicle ? (
                     <Link
-                      href={`/vehicles/${cost.vehicle.id}`}
+                      href={`/fuhrpark/vehicles/${cost.vehicle.id}`}
                       className="hover:underline flex items-center gap-2"
                     >
                       <Car className="h-4 w-4 text-muted-foreground" />
@@ -147,13 +147,13 @@ export function CostTable({ costs }: CostTableProps): JSX.Element {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => router.push(`/costs/${cost.id}`)}
+                        onClick={() => router.push(`/fuhrpark/costs/${cost.id}`)}
                       >
                         <Eye className="mr-2 h-4 w-4" />
                         Anzeigen
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => router.push(`/costs/${cost.id}/edit`)}
+                        onClick={() => router.push(`/fuhrpark/costs/${cost.id}/edit`)}
                       >
                         <Pencil className="mr-2 h-4 w-4" />
                         Bearbeiten

@@ -179,7 +179,7 @@ export function EmployeeTable({
           }
           action={showFilters ? (
             <Button asChild>
-              <Link href="/license-control/employees/new">Mitarbeiter anlegen</Link>
+              <Link href="/fuhrpark/license-control/employees/new">Mitarbeiter anlegen</Link>
             </Button>
           ) : undefined}
         />
@@ -228,13 +228,13 @@ export function EmployeeTable({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/license-control/employees/${employee.id}`}>
+                          <Link href={`/fuhrpark/license-control/employees/${employee.id}`}>
                             <Eye className="mr-2 h-4 w-4" />
                             Anzeigen
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href={`/license-control/employees/${employee.id}/edit`}>
+                          <Link href={`/fuhrpark/license-control/employees/${employee.id}/edit`}>
                             <Pencil className="mr-2 h-4 w-4" />
                             Bearbeiten
                           </Link>

@@ -134,7 +134,7 @@ export function VehicleTable({ vehicles }: VehicleTableProps): JSX.Element {
                 <TableRow key={vehicle.id}>
                   <TableCell className="font-medium">
                     <Link
-                      href={`/vehicles/${vehicle.id}`}
+                      href={`/fuhrpark/vehicles/${vehicle.id}`}
                       className="hover:underline flex items-center gap-2"
                     >
                       <Car className="h-4 w-4 text-muted-foreground" />
@@ -194,14 +194,14 @@ export function VehicleTable({ vehicles }: VehicleTableProps): JSX.Element {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => router.push(`/vehicles/${vehicle.id}`)}
+                          onClick={() => router.push(`/fuhrpark/vehicles/${vehicle.id}`)}
                         >
                           <Eye className="mr-2 h-4 w-4" />
                           Anzeigen
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() =>
-                            router.push(`/vehicles/${vehicle.id}/edit`)
+                            router.push(`/fuhrpark/vehicles/${vehicle.id}/edit`)
                           }
                         >
                           <Pencil className="mr-2 h-4 w-4" />

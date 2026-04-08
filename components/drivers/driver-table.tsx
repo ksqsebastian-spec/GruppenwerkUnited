@@ -101,7 +101,7 @@ export function DriverTable({ drivers }: DriverTableProps): JSX.Element {
                 <TableRow key={driver.id}>
                   <TableCell className="font-medium">
                     <Link
-                      href={`/drivers/${driver.id}`}
+                      href={`/fuhrpark/drivers/${driver.id}`}
                       className="hover:underline flex items-center gap-2"
                     >
                       <User className="h-4 w-4 text-muted-foreground" />
@@ -173,13 +173,13 @@ export function DriverTable({ drivers }: DriverTableProps): JSX.Element {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => router.push(`/drivers/${driver.id}`)}
+                          onClick={() => router.push(`/fuhrpark/drivers/${driver.id}`)}
                         >
                           <Eye className="mr-2 h-4 w-4" />
                           Anzeigen
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => router.push(`/drivers/${driver.id}/edit`)}
+                          onClick={() => router.push(`/fuhrpark/drivers/${driver.id}/edit`)}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
                           Bearbeiten

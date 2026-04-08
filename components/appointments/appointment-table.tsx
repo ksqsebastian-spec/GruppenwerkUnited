@@ -157,7 +157,7 @@ export function AppointmentTable({ appointments }: AppointmentTableProps): JSX.E
                 <TableRow key={appointment.id}>
                   <TableCell className="font-medium">
                     <Link
-                      href={`/appointments/${appointment.id}`}
+                      href={`/fuhrpark/appointments/${appointment.id}`}
                       className="hover:underline flex items-center gap-2"
                     >
                       <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -167,7 +167,7 @@ export function AppointmentTable({ appointments }: AppointmentTableProps): JSX.E
                   <TableCell>
                     {appointment.vehicle ? (
                       <Link
-                        href={`/vehicles/${appointment.vehicle.id}`}
+                        href={`/fuhrpark/vehicles/${appointment.vehicle.id}`}
                         className="hover:underline flex items-center gap-2"
                       >
                         <Car className="h-4 w-4 text-muted-foreground" />
@@ -209,7 +209,7 @@ export function AppointmentTable({ appointments }: AppointmentTableProps): JSX.E
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           onClick={() =>
-                            router.push(`/appointments/${appointment.id}/edit`)
+                            router.push(`/fuhrpark/appointments/${appointment.id}/edit`)
                           }
                         >
                           <Pencil className="mr-2 h-4 w-4" />

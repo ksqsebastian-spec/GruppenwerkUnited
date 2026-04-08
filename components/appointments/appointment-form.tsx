@@ -86,13 +86,13 @@ export function AppointmentForm({ appointment }: AppointmentFormProps): JSX.Elem
         id: appointment.id,
         data,
       });
-      router.push('/appointments');
+      router.push('/fuhrpark/appointments');
     } else {
       await createMutation.mutateAsync({
         ...data,
         status: 'pending',
       });
-      router.push('/appointments');
+      router.push('/fuhrpark/appointments');
     }
   };
 

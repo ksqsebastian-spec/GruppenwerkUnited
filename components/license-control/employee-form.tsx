@@ -107,7 +107,7 @@ export function EmployeeForm({ employee }: EmployeeFormProps): JSX.Element {
       await createMutation.mutateAsync(insertData);
     }
     clearAutoSave();
-    router.push('/license-control/employees');
+    router.push('/fuhrpark/license-control/employees');
   };
 
   return (
@@ -284,7 +284,7 @@ export function EmployeeForm({ employee }: EmployeeFormProps): JSX.Element {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push('/license-control/employees')}
+            onClick={() => router.push('/fuhrpark/license-control/employees')}
           >
             Abbrechen
           </Button>

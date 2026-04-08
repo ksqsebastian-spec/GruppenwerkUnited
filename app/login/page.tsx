@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Loader2, Car } from 'lucide-react';
+import { Loader2, Wrench } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -23,14 +23,14 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
 
 /**
- * E-Mail für den geteilten Account
- * Konfiguriert über Umgebungsvariable oder Standardwert
+ * E-Mail für den geteilten Werkbank-Account
  */
-const SHARED_ACCOUNT_EMAIL = process.env.NEXT_PUBLIC_SHARED_ACCOUNT_EMAIL ?? 'admin@fuhrpark.local';
+const SHARED_ACCOUNT_EMAIL =
+  process.env.NEXT_PUBLIC_SHARED_ACCOUNT_EMAIL ?? 'admin@werkbank.local';
 
 /**
- * Login-Seite mit nur Passwort-Eingabe
- * Gemäß PRD 4.3: Ein geteilter Account für alle Nutzer
+ * Login-Seite der Werkbank-Plattform
+ * Einmaliges Passwort für alle internen Nutzer (Phase 1)
  */
 export default function LoginPage(): JSX.Element {
   const router = useRouter();
@@ -47,11 +47,10 @@ export default function LoginPage(): JSX.Element {
   const onSubmit = async (data: LoginFormData): Promise<void> => {
     setIsLoading(true);
     try {
-      // Verwendet den geteilten Account mit dem eingegebenen Passwort
       await signIn(SHARED_ACCOUNT_EMAIL, data.password);
       toast.success('Erfolgreich angemeldet');
       router.push('/');
-    } catch (error) {
+    } catch {
       toast.error('Falsches Passwort');
     } finally {
       setIsLoading(false);
@@ -63,11 +62,16 @@ export default function LoginPage(): JSX.Element {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
-            <div className="h-16 w-16 bg-primary rounded-full flex items-center justify-center">
-              <Car className="h-8 w-8 text-primary-foreground" />
+            <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center">
+              <Wrench className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl">Fuhrpark Management</CardTitle>
+          <div>
+            <CardTitle className="text-2xl">Werkbank</CardTitle>
+            <CardDescription className="mt-1">
+              Gruppenwerk Intranet-Plattform
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <Form {...form}>

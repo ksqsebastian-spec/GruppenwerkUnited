@@ -108,10 +108,10 @@ export function DriverForm({ driver }: DriverFormProps): JSX.Element {
         id: driver.id,
         data,
       });
-      router.push(`/drivers/${driver.id}`);
+      router.push(`/fuhrpark/drivers/${driver.id}`);
     } else {
       const newDriver = await createMutation.mutateAsync(data);
-      router.push(`/drivers/${newDriver.id}`);
+      router.push(`/fuhrpark/drivers/${newDriver.id}`);
     }
   };
 
