@@ -2,16 +2,20 @@ import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { User } from "@supabase/supabase-js";
 
+// validateOrigin und getAllowedOrigins kommen aus der gemeinsamen Implementierung.
+// Re-export für Rückwärtskompatibilität bestehender API-Route-Imports.
+export { validateOrigin, getAllowedOrigins } from "@/lib/api-guards";
+
 interface AuthResult {
   user: User;
   isAdmin: boolean;
 }
 
-// Verify auth and get user context for API routes
+// Prüft Auth und gibt User-Kontext für API-Routen zurück
 export async function requireAuth(): Promise<AuthResult | NextResponse> {
   const supabase = await createServerSupabaseClient();
 
-  // SECURITY: Use getUser() — validates JWT against Supabase Auth server
+  // SICHERHEIT: getUser() validiert JWT gegen Supabase Auth-Server
   const {
     data: { user },
     error,
@@ -24,13 +28,10 @@ export async function requireAuth(): Promise<AuthResult | NextResponse> {
     );
   }
 
-  // SECURITY: Admin flag from app_metadata (not user_metadata)
+  // SICHERHEIT: Admin-Flag aus app_metadata (nicht user_metadata)
   const isAdmin = user.app_metadata?.is_admin === true;
 
-  return {
-    user,
-    isAdmin,
-  };
+  return { user, isAdmin };
 }
 
 export async function requireAdmin(): Promise<
@@ -47,50 +48,4 @@ export async function requireAdmin(): Promise<
   }
 
   return { user: result.user, isAdmin: true };
-}
-
-// Collect all allowed origins for CSRF validation
-function getAllowedOrigins(): string[] {
-  const origins: string[] = [];
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (appUrl) {
-    origins.push(new URL(appUrl).origin);
-  }
-
-  // Vercel sets VERCEL_URL automatically for every deployment (including previews)
-  const vercelUrl = process.env.VERCEL_URL;
-  if (vercelUrl) {
-    origins.push(new URL(`https://${vercelUrl}`).origin);
-  }
-
-  if (origins.length === 0) {
-    origins.push("http://localhost:3000");
-  }
-
-  return origins;
-}
-
-// Validate request origin to protect against CSRF
-export function validateOrigin(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  const referer = request.headers.get("referer");
-  const allowed = getAllowedOrigins();
-
-  // For same-origin requests with no origin header (e.g., same-page navigation)
-  if (!origin && !referer) return true;
-
-  if (origin) {
-    return allowed.includes(origin);
-  }
-
-  if (referer) {
-    try {
-      return allowed.includes(new URL(referer).origin);
-    } catch {
-      return false;
-    }
-  }
-
-  return false;
 }
