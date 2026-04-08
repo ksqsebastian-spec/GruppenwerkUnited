@@ -1,30 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  FileSearch,
-  TrendingUp,
-  Car,
-  Users,
-  Share2,
-  Star,
-  Wrench,
-  ArrowRight,
-  Clock,
-} from 'lucide-react';
+import { Wrench, ArrowRight, Clock } from 'lucide-react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { MODULES, type ModuleConfig } from '@/lib/modules';
-
-// Icon-Zuordnung für Module
-const MODULE_ICONS: Record<string, React.ElementType> = {
-  FileSearch,
-  TrendingUp,
-  Car,
-  Users,
-  Share2,
-  Star,
-  Wrench,
-};
+import { MODULES, MODULE_ICONS, type ModuleConfig } from '@/lib/modules';
 
 interface ModuleCardProps {
   module: ModuleConfig;

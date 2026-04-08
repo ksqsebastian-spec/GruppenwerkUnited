@@ -1,3 +1,4 @@
+import { requireAuth } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCompleteSchema } from "@/lib/modules/affiliate/validators";
 import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
@@ -9,6 +10,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authResult = await requireAuth();
+  if (authResult instanceof NextResponse) return authResult;
+
   const { id } = await params;
 
   let body: unknown;

@@ -1,14 +1,41 @@
 import { createBrowserClient } from '@supabase/ssr';
 
 /**
+ * Prüft ob Supabase korrekt konfiguriert ist.
+ * Gibt false zurück beim Build-Prozess (SSR Prerender) wenn env-Variablen fehlen.
+ */
+export const isSupabaseConfigured =
+  typeof process.env.NEXT_PUBLIC_SUPABASE_URL === 'string' &&
+  process.env.NEXT_PUBLIC_SUPABASE_URL.length > 0 &&
+  typeof process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === 'string' &&
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.length > 0;
+
+/**
  * Erstellt einen Supabase-Client für Browser-Komponenten.
- * Verwendet Platzhalter-Werte wenn Umgebungsvariablen nicht konfiguriert sind (z.B. beim Build).
+ *
+ * Beim Build (Prerender) fehlen die Umgebungsvariablen – der Client wird dann
+ * mit Dummy-Werten erstellt und ist nicht funktionsfähig. Zur Laufzeit in der
+ * deployen App MÜSSEN die Variablen gesetzt sein.
  */
 export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    if (typeof window !== 'undefined') {
+      // Zur Laufzeit im Browser: Fehler, damit es nicht still fehlschlägt
+      console.error(
+        'NEXT_PUBLIC_SUPABASE_URL und NEXT_PUBLIC_SUPABASE_ANON_KEY müssen als Umgebungsvariablen gesetzt sein.'
+      );
+    }
+    // Build-/Prerender-Zeit: Dummy-Client der nicht funktioniert, aber nicht crasht
+    return createBrowserClient(
+      'https://placeholder.supabase.co',
+      'placeholder-key'
+    );
+  }
+
+  return createBrowserClient(url, key);
 }
 
 // Singleton für Client-Komponenten

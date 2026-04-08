@@ -2,7 +2,6 @@
 
 import { Suspense } from 'react';
 import { useParams } from 'next/navigation';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ErrorState } from '@/components/shared/error-state';
@@ -20,25 +19,25 @@ export default function EditDamagePage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <AppLayout>
+      <>
         <LoadingSpinner text="Schaden wird geladen..." />
-      </AppLayout>
+      </>
     );
   }
 
   if (error || !damage) {
     return (
-      <AppLayout>
+      <>
         <ErrorState
           message="Schaden konnte nicht geladen werden"
           onRetry={refetch}
         />
-      </AppLayout>
+      </>
     );
   }
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Schaden bearbeiten"
@@ -50,6 +49,6 @@ export default function EditDamagePage(): React.JSX.Element {
           <DamageForm damage={damage} />
         </Suspense>
       </div>
-    </AppLayout>
+    </>
   );
 }

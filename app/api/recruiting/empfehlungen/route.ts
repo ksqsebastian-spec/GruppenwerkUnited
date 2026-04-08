@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCreateSchema } from "@/lib/modules/recruiting/validators";
 import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
@@ -5,8 +6,10 @@ import { logAudit } from "@/lib/modules/recruiting/audit";
 
 const VALID_STATUSES = ["offen", "eingestellt", "probezeit_bestanden", "ausgezahlt"] as const;
 
-// POST /api/admin/empfehlungen — create new empfehlung (admin)
+// POST /api/recruiting/empfehlungen — create new empfehlung (admin)
 export async function POST(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   let body: unknown;
   try {
     body = await request.json();
@@ -74,8 +77,10 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(data, { status: 201 });
 }
 
-// PATCH /api/admin/empfehlungen — update empfehlung fields
+// PATCH /api/recruiting/empfehlungen — update empfehlung fields
 export async function PATCH(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   let body: unknown;
   try {
     body = await request.json();
@@ -191,8 +196,10 @@ export async function PATCH(request: NextRequest) {
   return NextResponse.json({ success: true });
 }
 
-// DELETE /api/admin/empfehlungen — delete empfehlung
+// DELETE /api/recruiting/empfehlungen — delete empfehlung
 export async function DELETE(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
   const id = searchParams.get("id");
 

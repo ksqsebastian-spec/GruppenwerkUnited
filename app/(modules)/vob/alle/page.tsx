@@ -1,6 +1,5 @@
 import { getAllTenders, getCompanies } from '@/lib/modules/vob/queries';
 import { AllTendersClient } from './AllTendersClient';
-import { AppLayout } from '@/components/layout/app-layout';
 
 export const revalidate = 300;
 
@@ -20,13 +19,13 @@ export default async function AlleTendersPage({ searchParams }: PageProps): Prom
   ]);
 
   return (
-    <AppLayout>
+    <>
       <div className="max-w-[1200px]">
         <h1 className="text-[18px] font-semibold text-neutral-900 mb-6">
           Alle Ausschreibungen
         </h1>
         <AllTendersClient tenders={tenders} total={total} page={page} companies={companies} />
       </div>
-    </AppLayout>
+    </>
   );
 }

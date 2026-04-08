@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { stelleCreateSchema, stelleUpdateSchema, paginationSchema } from "@/lib/modules/recruiting/validators";
 import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
@@ -5,8 +6,10 @@ import { logAudit } from "@/lib/modules/recruiting/audit";
 
 const VALID_STATUSES = ["offen", "eingestellt", "probezeit_bestanden", "ausgezahlt"] as const;
 
-// GET /api/admin/stellen — list stellen or empfehlungen (admin)
+// GET /api/recruiting/stellen — list stellen or empfehlungen (admin)
 export async function GET(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
   const view = searchParams.get("view");
   const adminClient = createAdminClient();
@@ -74,8 +77,10 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ data: data || [] });
 }
 
-// POST /api/admin/stellen — create new stelle
+// POST /api/recruiting/stellen — create new stelle
 export async function POST(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   let body: unknown;
   try {
     body = await request.json();
@@ -130,8 +135,10 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(data, { status: 201 });
 }
 
-// PATCH /api/admin/stellen — update stelle
+// PATCH /api/recruiting/stellen — update stelle
 export async function PATCH(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   let body: unknown;
   try {
     body = await request.json();
@@ -192,8 +199,10 @@ export async function PATCH(request: NextRequest) {
   return NextResponse.json(data);
 }
 
-// DELETE /api/admin/stellen — delete stelle
+// DELETE /api/recruiting/stellen — delete stelle
 export async function DELETE(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
   const id = searchParams.get("id");
 

@@ -1,10 +1,13 @@
+import { requireAdmin } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { handwerkerCreateSchema, handwerkerUpdateSchema, paginationSchema } from "@/lib/modules/affiliate/validators";
 import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
 import { logAudit } from "@/lib/modules/affiliate/audit";
 
-// GET /api/admin/handwerker — list handwerker or empfehlungen (admin)
+// GET /api/affiliate/handwerker — list handwerker or empfehlungen (admin)
 export async function GET(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
   const view = searchParams.get("view");
   const adminClient = createAdminClient();
@@ -72,8 +75,10 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ data: data || [] });
 }
 
-// POST /api/admin/handwerker — create new handwerker
+// POST /api/affiliate/handwerker — create new handwerker
 export async function POST(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   let body: unknown;
   try {
     body = await request.json();
@@ -158,8 +163,10 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(data, { status: 201 });
 }
 
-// PATCH /api/admin/handwerker — update handwerker
+// PATCH /api/affiliate/handwerker — update handwerker
 export async function PATCH(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   let body: unknown;
   try {
     body = await request.json();
@@ -221,8 +228,10 @@ export async function PATCH(request: NextRequest) {
   return NextResponse.json(data);
 }
 
-// DELETE /api/admin/handwerker — delete handwerker
+// DELETE /api/affiliate/handwerker — delete handwerker
 export async function DELETE(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
   const id = searchParams.get("id");
 

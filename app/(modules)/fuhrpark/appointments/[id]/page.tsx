@@ -16,7 +16,6 @@ import {
   FileText,
   Plus,
 } from 'lucide-react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ErrorState } from '@/components/shared/error-state';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
@@ -110,20 +109,20 @@ export default function AppointmentDetailPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <AppLayout>
+      <>
         <LoadingSpinner text="Termin wird geladen..." />
-      </AppLayout>
+      </>
     );
   }
 
   if (error || !appointment) {
     return (
-      <AppLayout>
+      <>
         <ErrorState
           message="Termin konnte nicht geladen werden"
           onRetry={refetch}
         />
-      </AppLayout>
+      </>
     );
   }
 
@@ -133,7 +132,7 @@ export default function AppointmentDetailPage(): React.JSX.Element {
   const isCompleted = displayStatus === 'completed';
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -383,7 +382,7 @@ export default function AppointmentDetailPage(): React.JSX.Element {
           isLoading={deleteMutation.isPending}
         />
       </div>
-    </AppLayout>
+    </>
   );
 }
 

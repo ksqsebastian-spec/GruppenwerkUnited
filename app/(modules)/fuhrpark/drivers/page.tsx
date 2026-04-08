@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Plus, Users } from 'lucide-react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -21,7 +20,7 @@ export default function DriversPage(): React.JSX.Element {
   const { data: drivers, isLoading, error, refetch } = useDrivers({ status });
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Fahrer"
@@ -61,6 +60,6 @@ export default function DriversPage(): React.JSX.Element {
           <DriverTable drivers={drivers} />
         )}
       </div>
-    </AppLayout>
+    </>
   );
 }

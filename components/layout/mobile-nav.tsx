@@ -16,28 +16,13 @@ import {
   Shield,
   ChevronLeft,
   Wrench,
-  FileSearch,
-  TrendingUp,
-  Share2,
-  Star,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useLicenseWarningCount } from '@/hooks/use-license-control';
 import { useUvvWarningCount } from '@/hooks/use-uvv-control';
-import { MODULES, getModuleByRoute } from '@/lib/modules';
-
-const MODULE_ICONS: Record<string, React.ElementType> = {
-  FileSearch,
-  TrendingUp,
-  Car,
-  Users,
-  Share2,
-  Star,
-  Wrench,
-  LayoutDashboard,
-};
+import { MODULES, MODULE_ICONS, getModuleByRoute } from '@/lib/modules';
 
 const fuhrparkNavigation = [
   { name: 'Dashboard', href: '/fuhrpark', icon: LayoutDashboard, badgeType: null as 'uvv' | 'license' | null },

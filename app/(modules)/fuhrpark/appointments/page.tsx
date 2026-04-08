@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Plus, Calendar } from 'lucide-react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -31,7 +30,7 @@ export default function AppointmentsPage(): React.JSX.Element {
   );
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Termine"
@@ -99,6 +98,6 @@ export default function AppointmentsPage(): React.JSX.Element {
           <AppointmentTable appointments={appointments} />
         )}
       </div>
-    </AppLayout>
+    </>
   );
 }

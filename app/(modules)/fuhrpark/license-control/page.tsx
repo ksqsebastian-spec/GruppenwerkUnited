@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { Plus, Settings, Users, Contact } from 'lucide-react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +16,7 @@ export default function LicenseControlPage(): React.JSX.Element {
   const { data: employees } = useLicenseEmployees({ status: 'active' });
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Führerscheinkontrolle"
@@ -104,6 +103,6 @@ export default function LicenseControlPage(): React.JSX.Element {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
+    </>
   );
 }

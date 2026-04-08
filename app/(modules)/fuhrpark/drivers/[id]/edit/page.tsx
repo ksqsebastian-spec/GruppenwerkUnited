@@ -1,7 +1,6 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ErrorState } from '@/components/shared/error-state';
@@ -19,25 +18,25 @@ export default function EditDriverPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <AppLayout>
+      <>
         <LoadingSpinner text="Fahrer wird geladen..." />
-      </AppLayout>
+      </>
     );
   }
 
   if (error || !driver) {
     return (
-      <AppLayout>
+      <>
         <ErrorState
           message="Fahrer konnte nicht geladen werden"
           onRetry={refetch}
         />
-      </AppLayout>
+      </>
     );
   }
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Fahrer bearbeiten"
@@ -47,6 +46,6 @@ export default function EditDriverPage(): React.JSX.Element {
 
         <DriverForm driver={driver} />
       </div>
-    </AppLayout>
+    </>
   );
 }

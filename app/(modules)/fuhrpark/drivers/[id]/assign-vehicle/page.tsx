@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ErrorState } from '@/components/shared/error-state';
@@ -21,27 +20,27 @@ export default function AssignVehiclePage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <AppLayout>
+      <>
         <LoadingSpinner text="Fahrer wird geladen..." />
-      </AppLayout>
+      </>
     );
   }
 
   if (error || !driver) {
     return (
-      <AppLayout>
+      <>
         <ErrorState
           message="Fahrer konnte nicht geladen werden"
           onRetry={refetch}
         />
-      </AppLayout>
+      </>
     );
   }
 
   const driverName = `${driver.first_name} ${driver.last_name}`;
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         {/* Zurück-Link */}
         <Button variant="ghost" asChild className="-ml-4">
@@ -65,6 +64,6 @@ export default function AssignVehiclePage(): React.JSX.Element {
           />
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 }

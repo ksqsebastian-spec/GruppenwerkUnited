@@ -1,3 +1,4 @@
+import { requireAuth } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCreateSchema, paginationSchema } from "@/lib/modules/recruiting/validators";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/modules/recruiting/rate-limit";
@@ -7,6 +8,8 @@ const VALID_STATUSES = ["offen", "eingestellt", "probezeit_bestanden", "ausgezah
 
 // GET /api/referrals — list empfehlungen
 export async function GET(request: NextRequest) {
+  const authResult = await requireAuth();
+  if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
   const stelleId = searchParams.get("stelle_id");
 

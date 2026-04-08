@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Upload, X, FileText } from 'lucide-react';
 import { toast } from 'sonner';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ErrorState } from '@/components/shared/error-state';
@@ -172,25 +171,25 @@ export default function EditCostPage(): React.JSX.Element {
 
   if (costLoading) {
     return (
-      <AppLayout>
+      <>
         <LoadingSpinner text="Kosteneintrag wird geladen..." />
-      </AppLayout>
+      </>
     );
   }
 
   if (costError || !cost) {
     return (
-      <AppLayout>
+      <>
         <ErrorState
           message="Kosteneintrag konnte nicht geladen werden"
           onRetry={refetch}
         />
-      </AppLayout>
+      </>
     );
   }
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Kosteneintrag bearbeiten"
@@ -432,6 +431,6 @@ export default function EditCostPage(): React.JSX.Element {
           </form>
         </Form>
       </div>
-    </AppLayout>
+    </>
   );
 }

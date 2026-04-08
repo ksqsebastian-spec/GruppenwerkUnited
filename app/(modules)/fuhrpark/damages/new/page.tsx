@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { DamageForm } from '@/components/damages';
@@ -11,7 +10,7 @@ import { DamageForm } from '@/components/damages';
  */
 export default function NewDamagePage(): React.JSX.Element {
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Schaden melden"
@@ -23,6 +22,6 @@ export default function NewDamagePage(): React.JSX.Element {
           <DamageForm />
         </Suspense>
       </div>
-    </AppLayout>
+    </>
   );
 }

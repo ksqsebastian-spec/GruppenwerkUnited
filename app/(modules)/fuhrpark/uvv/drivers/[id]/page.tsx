@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { ClipboardCheck, FileText, Building2, Mail, Phone } from 'lucide-react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { Button } from '@/components/ui/button';
@@ -31,27 +30,27 @@ export default function UvvDriverDetailPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <AppLayout>
+      <>
         <LoadingSpinner text="Fahrer wird geladen..." />
-      </AppLayout>
+      </>
     );
   }
 
   if (error || !driver) {
     return (
-      <AppLayout>
+      <>
         <div className="text-center py-12">
           <h2 className="text-lg font-semibold">Fahrer nicht gefunden</h2>
           <p className="text-muted-foreground">
             Der angeforderte Fahrer existiert nicht oder wurde gelöscht.
           </p>
         </div>
-      </AppLayout>
+      </>
     );
   }
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title={`${driver.first_name} ${driver.last_name}`}
@@ -195,6 +194,6 @@ export default function UvvDriverDetailPage(): React.JSX.Element {
           onOpenChange={setCheckDialogOpen}
         />
       )}
-    </AppLayout>
+    </>
   );
 }

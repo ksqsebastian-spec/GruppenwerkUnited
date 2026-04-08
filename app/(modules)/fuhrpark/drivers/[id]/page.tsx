@@ -18,7 +18,6 @@ import {
   FileText,
   Plus,
 } from 'lucide-react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ErrorState } from '@/components/shared/error-state';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
@@ -53,20 +52,20 @@ export default function DriverDetailPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <AppLayout>
+      <>
         <LoadingSpinner text="Fahrer wird geladen..." />
-      </AppLayout>
+      </>
     );
   }
 
   if (error || !driver) {
     return (
-      <AppLayout>
+      <>
         <ErrorState
           message="Fahrer konnte nicht geladen werden"
           onRetry={refetch}
         />
-      </AppLayout>
+      </>
     );
   }
 
@@ -88,7 +87,7 @@ export default function DriverDetailPage(): React.JSX.Element {
   const licenseStatus = getLicenseStatus();
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -323,7 +322,7 @@ export default function DriverDetailPage(): React.JSX.Element {
           isLoading={archiveMutation.isPending}
         />
       </div>
-    </AppLayout>
+    </>
   );
 }
 

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Plus, Car } from 'lucide-react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -24,7 +23,7 @@ export default function VehiclesPage(): React.JSX.Element {
   const { data: vehicles, isLoading, error, refetch } = useVehicles(filters);
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Fahrzeuge"
@@ -77,6 +76,6 @@ export default function VehiclesPage(): React.JSX.Element {
           <VehicleTable vehicles={vehicles} />
         )}
       </div>
-    </AppLayout>
+    </>
   );
 }

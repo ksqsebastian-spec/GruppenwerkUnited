@@ -1,6 +1,5 @@
 'use client';
 
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { DriverForm } from '@/components/drivers';
 
@@ -9,7 +8,7 @@ import { DriverForm } from '@/components/drivers';
  */
 export default function NewDriverPage(): React.JSX.Element {
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Neuer Fahrer"
@@ -19,6 +18,6 @@ export default function NewDriverPage(): React.JSX.Element {
 
         <DriverForm />
       </div>
-    </AppLayout>
+    </>
   );
 }

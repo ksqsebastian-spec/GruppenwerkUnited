@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCreateSchema } from "@/lib/modules/affiliate/validators";
 import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
@@ -6,8 +7,10 @@ import { berechneProvision } from "@/lib/modules/affiliate/utils";
 
 const VALID_STATUSES = ["offen", "erledigt", "ausgezahlt"] as const;
 
-// POST /api/admin/empfehlungen — create new empfehlung (admin)
+// POST /api/affiliate/empfehlungen — create new empfehlung (admin)
 export async function POST(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   let body: unknown;
   try {
     body = await request.json();
@@ -66,8 +69,10 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(data, { status: 201 });
 }
 
-// PATCH /api/admin/empfehlungen — update empfehlung fields
+// PATCH /api/affiliate/empfehlungen — update empfehlung fields
 export async function PATCH(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   let body: unknown;
   try {
     body = await request.json();
@@ -198,8 +203,10 @@ export async function PATCH(request: NextRequest) {
   return NextResponse.json({ success: true });
 }
 
-// DELETE /api/admin/empfehlungen — delete empfehlung
+// DELETE /api/affiliate/empfehlungen — delete empfehlung
 export async function DELETE(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
   const id = searchParams.get("id");
 

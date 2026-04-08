@@ -391,7 +391,7 @@ export function AllTendersClient({ tenders, total, page, companies }: AllTenders
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-6">
           {page > 1 && (
-            <Link href={`/alle?page=${page - 1}`}>
+            <Link href={`/vob/alle?page=${page - 1}`}>
               <Button variant="outline" size="sm" className="text-[11px] text-neutral-500 border-neutral-200">Zurück</Button>
             </Link>
           )}
@@ -399,7 +399,7 @@ export function AllTendersClient({ tenders, total, page, companies }: AllTenders
             {page} / {totalPages}
           </span>
           {page < totalPages && (
-            <Link href={`/alle?page=${page + 1}`}>
+            <Link href={`/vob/alle?page=${page + 1}`}>
               <Button variant="outline" size="sm" className="text-[11px] text-neutral-500 border-neutral-200">Weiter</Button>
             </Link>
           )}
