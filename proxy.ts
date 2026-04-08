@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
 /**
- * Werkbank Middleware
+ * Werkbank Proxy (ehemals Middleware)
  *
  * Phase 1: Supabase-Session-basierter Schutz (geteilter Account).
  * Phase 2 (geplant): Cookie-Gate mit APP_PASSWORD env-Variable,
@@ -10,7 +10,7 @@ import { updateSession } from '@/lib/supabase/middleware';
  *
  * Nicht geschützte Pfade: /login, /api/*, statische Assets
  */
-export async function middleware(request: NextRequest): Promise<NextResponse> {
+export async function proxy(request: NextRequest): Promise<NextResponse> {
   return updateSession(request);
 }
 

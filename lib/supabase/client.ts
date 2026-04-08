@@ -22,8 +22,8 @@ export function createClient() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    if (typeof window !== 'undefined') {
-      // Zur Laufzeit im Browser: Fehler, damit es nicht still fehlschlägt
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+      // Nur in Production loggen — in Entwicklung/Test sind Dummy-Werte akzeptabel
       console.error(
         'NEXT_PUBLIC_SUPABASE_URL und NEXT_PUBLIC_SUPABASE_ANON_KEY müssen als Umgebungsvariablen gesetzt sein.'
       );
