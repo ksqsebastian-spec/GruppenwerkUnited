@@ -70,7 +70,7 @@ function formatCurrency(amount: number | null | undefined): string {
 /**
  * Detailansicht für ein Fahrzeug
  */
-export function VehicleDetail({ vehicle }: VehicleDetailProps): JSX.Element {
+export function VehicleDetail({ vehicle }: VehicleDetailProps): React.JSX.Element {
   const router = useRouter();
   const archiveMutation = useArchiveVehicle();
   const deleteMutation = useDeleteVehicle();
@@ -476,7 +476,7 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): JSX.Element {
 /**
  * Hilfskomponente für Detail-Zeilen
  */
-function DetailRow({ label, value }: { label: string; value: string }): JSX.Element {
+function DetailRow({ label, value }: { label: string; value: string }): React.JSX.Element {
   return (
     <div className="flex justify-between border-b pb-2 last:border-0">
       <span className="text-sm text-muted-foreground">{label}</span>

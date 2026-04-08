@@ -60,7 +60,7 @@ export function CheckDialog({
   open,
   onOpenChange,
   employee,
-}: CheckDialogProps): JSX.Element {
+}: CheckDialogProps): React.JSX.Element {
   const { data: inspectors = [] } = useLicenseInspectors('active');
   const { data: settings } = useLicenseSettings();
   const { data: documentTypes = [] } = useDocumentTypes();

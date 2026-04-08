@@ -14,7 +14,7 @@ import { useLicenseEmployees } from '@/hooks/use-license-control';
 /**
  * Führerscheinkontrolle - Mitarbeiterliste
  */
-export default function LicenseEmployeesPage(): JSX.Element {
+export default function LicenseEmployeesPage(): React.JSX.Element {
   const { data: employees, isLoading, error, refetch } = useLicenseEmployees();
 
   return (

@@ -73,7 +73,7 @@ function formatCurrency(amount: number | null | undefined): string {
 /**
  * Tabelle zur Anzeige von Schäden
  */
-export function DamageTable({ damages }: DamageTableProps): JSX.Element {
+export function DamageTable({ damages }: DamageTableProps): React.JSX.Element {
   const router = useRouter();
   const deleteMutation = useDeleteDamage();
 

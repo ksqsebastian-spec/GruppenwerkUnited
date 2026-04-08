@@ -51,7 +51,7 @@ function InstructorForm({
 }: {
   instructor?: UvvInstructor;
   onSuccess: () => void;
-}): JSX.Element {
+}): React.JSX.Element {
   const createInstructor = useCreateUvvInstructor();
   const updateInstructor = useUpdateUvvInstructor();
 
@@ -125,7 +125,7 @@ function InstructorForm({
 /**
  * Verwaltung der Unterweisenden
  */
-export function InstructorManagement(): JSX.Element {
+export function InstructorManagement(): React.JSX.Element {
   const { data: instructors, isLoading } = useUvvInstructors();
   const archiveInstructor = useArchiveUvvInstructor();
   const [isCreateOpen, setIsCreateOpen] = useState(false);

@@ -7,7 +7,7 @@ import { EmployeeForm } from '@/components/license-control';
 /**
  * Seite zum Anlegen eines neuen Mitarbeiters für Führerscheinkontrolle
  */
-export default function NewLicenseEmployeePage(): JSX.Element {
+export default function NewLicenseEmployeePage(): React.JSX.Element {
   return (
     <AppLayout>
       <div className="space-y-6">

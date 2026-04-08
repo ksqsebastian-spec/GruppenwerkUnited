@@ -15,7 +15,7 @@ import crypto from 'crypto';
 export async function POST(request: Request): Promise<NextResponse> {
   try {
     // Webhook-Secret prüfen
-    const headersList = headers();
+    const headersList = await headers();
     const signature = headersList.get('x-supabase-signature');
     const webhookSecret = process.env.SUPABASE_WEBHOOK_SECRET;
 

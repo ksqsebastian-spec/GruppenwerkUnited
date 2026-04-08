@@ -61,7 +61,7 @@ export function UvvCheckDialog({
   driver,
   open,
   onOpenChange,
-}: UvvCheckDialogProps): JSX.Element {
+}: UvvCheckDialogProps): React.JSX.Element {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 

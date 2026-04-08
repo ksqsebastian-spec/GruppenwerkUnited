@@ -10,7 +10,7 @@ import { DriverUvvTable, BatchCheckDialog } from '@/components/uvv-control';
 /**
  * UVV-Fahrerliste Seite
  */
-export default function UvvDriversPage(): JSX.Element {
+export default function UvvDriversPage(): React.JSX.Element {
   const [batchDialogOpen, setBatchDialogOpen] = useState(false);
 
   return (

@@ -54,7 +54,7 @@ const fuelTypes = [
 /**
  * Formular zum Erstellen und Bearbeiten von Fahrzeugen
  */
-export function VehicleForm({ vehicle }: VehicleFormProps): JSX.Element {
+export function VehicleForm({ vehicle }: VehicleFormProps): React.JSX.Element {
   const router = useRouter();
   const isEditing = !!vehicle;
 

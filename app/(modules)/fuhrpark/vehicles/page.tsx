@@ -16,7 +16,7 @@ import type { VehicleFilters as VehicleFiltersType } from '@/types';
 /**
  * Fahrzeugübersicht - Liste aller Fahrzeuge im Fuhrpark
  */
-export default function VehiclesPage(): JSX.Element {
+export default function VehiclesPage(): React.JSX.Element {
   const [filters, setFilters] = useState<VehicleFiltersType>({
     status: 'active',
   });

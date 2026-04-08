@@ -34,7 +34,7 @@ export function StatCard({
   isLoading = false,
   className,
   variant = 'default',
-}: StatCardProps): JSX.Element {
+}: StatCardProps): React.JSX.Element {
   const variantStyles = {
     default: 'text-muted-foreground',
     warning: 'text-yellow-600',

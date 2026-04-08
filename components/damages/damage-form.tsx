@@ -52,7 +52,7 @@ const statusOptions: { value: DamageStatus; label: string }[] = [
 /**
  * Formular zum Erstellen und Bearbeiten von Schäden
  */
-export function DamageForm({ damage }: DamageFormProps): JSX.Element {
+export function DamageForm({ damage }: DamageFormProps): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isEditing = !!damage;

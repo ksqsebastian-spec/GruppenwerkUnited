@@ -21,7 +21,7 @@ interface DashboardLayoutProps {
  * ROI-Modul Layout – enthält die modulinterne Navigation (Tabs)
  * Wird von der Werkbank AppLayout umschlossen
  */
-export default function RoiDashboardLayout({ children }: DashboardLayoutProps): JSX.Element {
+export default function RoiDashboardLayout({ children }: DashboardLayoutProps): React.JSX.Element {
   const pathname = usePathname();
 
   return (

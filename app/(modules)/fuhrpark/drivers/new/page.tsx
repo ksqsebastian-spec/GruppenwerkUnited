@@ -7,7 +7,7 @@ import { DriverForm } from '@/components/drivers';
 /**
  * Seite zum Anlegen eines neuen Fahrers
  */
-export default function NewDriverPage(): JSX.Element {
+export default function NewDriverPage(): React.JSX.Element {
   return (
     <AppLayout>
       <div className="space-y-6">

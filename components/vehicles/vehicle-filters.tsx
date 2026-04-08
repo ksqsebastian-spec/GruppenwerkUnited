@@ -46,7 +46,7 @@ const statusOptions: { value: VehicleStatus; label: string }[] = [
 export function VehicleFilters({
   filters,
   onFiltersChange,
-}: VehicleFiltersProps): JSX.Element {
+}: VehicleFiltersProps): React.JSX.Element {
   const { data: companies } = useCompanies();
 
   const handleSearchChange = (value: string): void => {

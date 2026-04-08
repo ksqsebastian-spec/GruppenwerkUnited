@@ -9,7 +9,7 @@ import { SettingsForm, InstructorManagement } from '@/components/uvv-control';
 /**
  * UVV-Einstellungen Seite
  */
-export default function UvvSettingsPage(): JSX.Element {
+export default function UvvSettingsPage(): React.JSX.Element {
   return (
     <AppLayout>
       <div className="space-y-6">

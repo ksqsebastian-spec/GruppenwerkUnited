@@ -62,7 +62,7 @@ const licenseClasses = [
 /**
  * Formular zum Erstellen und Bearbeiten von Fahrern
  */
-export function DriverForm({ driver }: DriverFormProps): JSX.Element {
+export function DriverForm({ driver }: DriverFormProps): React.JSX.Element {
   const router = useRouter();
   const isEditing = !!driver;
 

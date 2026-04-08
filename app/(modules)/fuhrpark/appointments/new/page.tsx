@@ -9,7 +9,7 @@ import { AppointmentForm } from '@/components/appointments';
 /**
  * Seite zum Anlegen eines neuen Termins
  */
-export default function NewAppointmentPage(): JSX.Element {
+export default function NewAppointmentPage(): React.JSX.Element {
   return (
     <AppLayout>
       <div className="space-y-6">

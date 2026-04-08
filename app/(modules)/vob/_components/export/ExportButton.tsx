@@ -17,7 +17,7 @@ export function ExportButton({ slug, label = 'PDF' }: ExportButtonProps) {
     try {
       const res = await fetch(`/api/export/${slug}`)
       const { company, tenders } = await res.json()
-      const { generateCompanyPdf } = await import('@/lib/pdf-generator')
+      const { generateCompanyPdf } = await import('@/lib/modules/vob/pdf-generator')
       const doc = await generateCompanyPdf(company.name, tenders)
       const today = new Date().toISOString().slice(0, 10)
       doc.save(`VOB_${slug}_${today}.pdf`)

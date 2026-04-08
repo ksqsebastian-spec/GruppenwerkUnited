@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 /**
  * Statistik-Karten für das UVV-Dashboard
  */
-export function UvvStats(): JSX.Element {
+export function UvvStats(): React.JSX.Element {
   const { data: stats, isLoading } = useUvvControlStats();
 
   if (isLoading) {

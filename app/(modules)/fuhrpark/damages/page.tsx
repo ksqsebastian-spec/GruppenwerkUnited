@@ -23,7 +23,7 @@ import type { DamageStatus } from '@/types';
 /**
  * Schadensübersicht - Liste aller Schäden
  */
-export default function DamagesPage(): JSX.Element {
+export default function DamagesPage(): React.JSX.Element {
   const [status, setStatus] = useState<DamageStatus | 'all'>('all');
 
   const { data: damages, isLoading, error, refetch } = useDamages(

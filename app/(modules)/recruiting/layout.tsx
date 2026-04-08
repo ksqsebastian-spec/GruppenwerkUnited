@@ -30,7 +30,7 @@ interface RecruitingLayoutProps {
 /**
  * Recruiting-Modul Layout – Sub-Navigation als Tab-Leiste
  */
-export default function RecruitingLayout({ children }: RecruitingLayoutProps): JSX.Element {
+export default function RecruitingLayout({ children }: RecruitingLayoutProps): React.JSX.Element {
   const pathname = usePathname();
 
   return (

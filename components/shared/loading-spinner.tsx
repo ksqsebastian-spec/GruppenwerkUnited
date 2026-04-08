@@ -20,7 +20,7 @@ export function LoadingSpinner({
   text,
   size = 'md',
   className,
-}: LoadingSpinnerProps): JSX.Element {
+}: LoadingSpinnerProps): React.JSX.Element {
   return (
     <div className={cn('flex flex-col items-center gap-2', className)}>
       <Loader2 className={cn('animate-spin text-primary', sizeClasses[size])} />

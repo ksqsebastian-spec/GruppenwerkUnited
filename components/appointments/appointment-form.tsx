@@ -39,7 +39,7 @@ interface AppointmentFormProps {
 /**
  * Formular zum Erstellen und Bearbeiten von Terminen
  */
-export function AppointmentForm({ appointment }: AppointmentFormProps): JSX.Element {
+export function AppointmentForm({ appointment }: AppointmentFormProps): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isEditing = !!appointment;

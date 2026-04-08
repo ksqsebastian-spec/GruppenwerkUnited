@@ -160,7 +160,7 @@ export function AllTendersClient({ tenders, total, page, companies }: AllTenders
     setExporting(true)
     try {
       const selectedTenders = tenders.filter(t => selected.has(t.tender_id))
-      const { generateCompanyPdf } = await import('@/lib/pdf-generator')
+      const { generateCompanyPdf } = await import('@/lib/modules/vob/pdf-generator')
       const doc = await generateCompanyPdf('Ausgewählte Ausschreibungen', selectedTenders)
       const today = new Date().toISOString().slice(0, 10)
       doc.save(`VOB_Auswahl_${today}.pdf`)

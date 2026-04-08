@@ -1,11 +1,30 @@
-import { createClient } from '@supabase/supabase-js'
-
-// Direkter Supabase-Client für Server-seitige VOB-Abfragen (kein Auth-Session-Bedarf)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
-)
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Company, VobScan, DashboardRow, CompanyTrend, CompanyWeeklyStat } from './types'
+
+// Null-Client der leere Ergebnisse zurückgibt, wenn Supabase nicht konfiguriert ist (z.B. beim Build)
+function createNullClient(): SupabaseClient {
+  const nullResult = { data: null, error: null, count: 0 }
+  const createChain = (): ReturnType<typeof createClient> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const chain: any = new Proxy(() => createChain(), {
+      get(_, prop) {
+        if (prop === 'then') return (resolve: (v: unknown) => unknown) => resolve(nullResult)
+        return () => createChain()
+      },
+    })
+    return chain
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return new Proxy({} as any, { get: () => () => createChain() }) as SupabaseClient
+}
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+// Direkter Supabase-Client für Server-seitige VOB-Abfragen
+const supabase: SupabaseClient = supabaseUrl && supabaseKey
+  ? createClient(supabaseUrl, supabaseKey)
+  : createNullClient()
 
 export async function getDashboardData() {
   const [

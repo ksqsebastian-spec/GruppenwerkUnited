@@ -60,7 +60,7 @@ function formatMileage(mileage: number | null | undefined): string {
 /**
  * Tabelle zur Anzeige von Kosten
  */
-export function CostTable({ costs }: CostTableProps): JSX.Element {
+export function CostTable({ costs }: CostTableProps): React.JSX.Element {
   const router = useRouter();
   const deleteMutation = useDeleteCost();
 

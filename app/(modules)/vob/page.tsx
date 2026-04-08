@@ -12,7 +12,7 @@ export const revalidate = 300;
  * VOB Monitor – Hauptseite
  * Zeigt die Übersicht aller überwachten Unternehmen und aktuellen Ausschreibungen.
  */
-export default async function VobDashboardPage(): Promise<JSX.Element> {
+export default async function VobDashboardPage(): Promise<React.JSX.Element> {
   const [{ companies, latestScan, recentTenders, trends }, totalTenders] = await Promise.all([
     getDashboardData(),
     getTotalTenderCount(),

@@ -14,7 +14,7 @@ interface PageProps {
 /**
  * VOB Monitor – Unternehmensdetailseite
  */
-export default async function CompanyPage({ params }: PageProps): Promise<JSX.Element> {
+export default async function CompanyPage({ params }: PageProps): Promise<React.JSX.Element> {
   const { slug } = await params;
   const [company, tenders] = await Promise.all([
     getCompany(slug),

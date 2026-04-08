@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "../_components/ui/Button";
+import { Button } from "../ui/Button";
 
 interface CompleteFormProps {
   empfehlungId: string;

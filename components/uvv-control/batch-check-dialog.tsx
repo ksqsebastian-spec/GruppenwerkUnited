@@ -64,7 +64,7 @@ export function BatchCheckDialog({
   open,
   onOpenChange,
   preselectedDriverIds = [],
-}: BatchCheckDialogProps): JSX.Element {
+}: BatchCheckDialogProps): React.JSX.Element {
   const [selectedDriverIds, setSelectedDriverIds] = useState<string[]>(preselectedDriverIds);
 
   const { data: settings } = useUvvSettings();

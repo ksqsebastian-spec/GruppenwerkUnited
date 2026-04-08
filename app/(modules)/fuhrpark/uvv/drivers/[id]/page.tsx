@@ -22,7 +22,7 @@ import { useDriverWithUvvStatus } from '@/hooks/use-uvv-control';
 /**
  * UVV-Fahrerdetail Seite
  */
-export default function UvvDriverDetailPage(): JSX.Element {
+export default function UvvDriverDetailPage(): React.JSX.Element {
   const params = useParams();
   const driverId = params.id as string;
   const [checkDialogOpen, setCheckDialogOpen] = useState(false);

@@ -59,7 +59,7 @@ function downloadFile(content: string, filename: string): void {
 /**
  * Komponente für den Datenexport
  */
-export function DataExport(): JSX.Element {
+export function DataExport(): React.JSX.Element {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [isExporting, setIsExporting] = useState(false);
 

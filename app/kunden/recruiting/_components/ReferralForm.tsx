@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { validateForm, type ReferralFormData } from "./_lib/types";
-import { generateRefCode } from "./_lib/generateRefCode";
+import { validateForm, type ReferralFormData } from "../_lib/types";
+import { generateRefCode } from "../_lib/generateRefCode";
 import {
   generateMailtoLink,
   generateGmailLink,
-} from "./_lib/generateMailtoLink";
-import { generatePDF } from "./_lib/generatePDF";
-import { getReferralBlockText } from "./_lib/referralBlock";
+} from "../_lib/generateMailtoLink";
+import { generatePDF } from "../_lib/generatePDF";
+import { getReferralBlockText } from "../_lib/referralBlock";
 
 export default function ReferralForm() {
   const [name, setName] = useState("");

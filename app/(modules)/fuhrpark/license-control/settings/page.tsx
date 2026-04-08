@@ -10,7 +10,7 @@ import { SettingsForm, InspectorManagement } from '@/components/license-control'
  * Führerscheinkontrolle - Einstellungsseite
  * SettingsForm und InspectorManagement laden ihre Daten selbst
  */
-export default function LicenseControlSettingsPage(): JSX.Element {
+export default function LicenseControlSettingsPage(): React.JSX.Element {
   return (
     <AppLayout>
       <div className="space-y-6">

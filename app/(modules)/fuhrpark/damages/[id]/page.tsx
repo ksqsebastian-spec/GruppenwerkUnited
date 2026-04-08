@@ -73,7 +73,7 @@ function formatCurrency(amount: number | null | undefined): string {
 /**
  * Schaden-Detailseite
  */
-export default function DamageDetailPage(): JSX.Element {
+export default function DamageDetailPage(): React.JSX.Element {
   const params = useParams();
   const router = useRouter();
   const damageId = params.id as string;
@@ -357,7 +357,7 @@ function DetailRow({
   icon: React.ReactNode;
   label: string;
   value: string;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <div className="flex items-center justify-between border-b pb-2 last:border-0">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">

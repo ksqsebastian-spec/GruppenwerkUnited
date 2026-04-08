@@ -37,7 +37,7 @@ const entityTypeLabels: Record<DocumentEntityType, string> = {
 /**
  * Wrapper-Komponente für Entity-Auswahl
  */
-function DocumentUploadForm(): JSX.Element {
+function DocumentUploadForm(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -185,7 +185,7 @@ function DocumentUploadForm(): JSX.Element {
 /**
  * Seite zum Hochladen eines Dokuments
  */
-export default function UploadDocumentPage(): JSX.Element {
+export default function UploadDocumentPage(): React.JSX.Element {
   return (
     <AppLayout>
       <div className="space-y-6">

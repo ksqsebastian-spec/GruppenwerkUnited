@@ -41,12 +41,13 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   const { data: { user } } = await supabase.auth.getUser();
 
   // Nicht eingeloggte Benutzer zur Login-Seite weiterleiten
-  // Ausnahmen: Login-Seite, API-Routes, statische Dateien
+  // Ausnahmen: Login-Seite, API-Routes, Kunden-Seiten (öffentlich), statische Dateien
   const isLoginPage = request.nextUrl.pathname === '/login';
   const isApiRoute = request.nextUrl.pathname.startsWith('/api');
+  const isKundenPage = request.nextUrl.pathname.startsWith('/kunden');
   const isStaticFile = request.nextUrl.pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp)$/);
 
-  if (!user && !isLoginPage && !isApiRoute && !isStaticFile) {
+  if (!user && !isLoginPage && !isApiRoute && !isKundenPage && !isStaticFile) {
     const loginUrl = new URL('/login', request.url);
     return NextResponse.redirect(loginUrl);
   }

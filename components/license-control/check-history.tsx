@@ -36,7 +36,7 @@ interface CheckHistoryProps {
 /**
  * Zeigt die Historie aller Führerscheinkontrollen eines Mitarbeiters
  */
-export function CheckHistory({ employeeId }: CheckHistoryProps): JSX.Element {
+export function CheckHistory({ employeeId }: CheckHistoryProps): React.JSX.Element {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [checkToDelete, setCheckToDelete] = useState<LicenseCheck | null>(null);
 

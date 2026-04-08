@@ -48,7 +48,7 @@ const quickActions: QuickAction[] = [
 /**
  * Schnellaktionen für häufig genutzte Funktionen
  */
-export function QuickActions(): JSX.Element {
+export function QuickActions(): React.JSX.Element {
   return (
     <Card>
       <CardHeader>

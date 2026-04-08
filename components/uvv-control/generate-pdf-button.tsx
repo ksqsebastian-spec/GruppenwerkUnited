@@ -30,7 +30,7 @@ export function GeneratePdfButton({
   variant = 'outline',
   size = 'default',
   className,
-}: GeneratePdfButtonProps): JSX.Element {
+}: GeneratePdfButtonProps): React.JSX.Element {
   const [isGenerating, setIsGenerating] = useState(false);
   const { data: settings } = useUvvSettings();
 

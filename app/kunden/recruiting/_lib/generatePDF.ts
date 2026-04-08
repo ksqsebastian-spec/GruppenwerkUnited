@@ -1,4 +1,4 @@
-import type { ReferralData } from "@/types";
+import type { ReferralData } from "./types";
 
 export async function generatePDF(data: ReferralData): Promise<void> {
   const { jsPDF } = await import("jspdf");

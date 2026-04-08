@@ -51,7 +51,7 @@ import {
  * Dialog für Sammelkontrolle mehrerer Mitarbeiter
  * Enthält eigenen Trigger-Button und lädt Mitarbeiter intern
  */
-export function BatchCheckDialog(): JSX.Element {
+export function BatchCheckDialog(): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 

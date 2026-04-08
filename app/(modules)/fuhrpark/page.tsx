@@ -23,7 +23,7 @@ function formatCurrency(amount: number): string {
 /**
  * Dashboard-Seite - Übersicht über den gesamten Fuhrpark
  */
-export default function DashboardPage(): JSX.Element {
+export default function DashboardPage(): React.JSX.Element {
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: warnings, isLoading: warningsLoading } = useWarningAppointments();
   const { data: activities, isLoading: activitiesLoading } = useRecentActivities();

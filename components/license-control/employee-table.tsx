@@ -63,7 +63,7 @@ interface EmployeeTableProps {
 export function EmployeeTable({
   employees: externalEmployees,
   showFilters = true,
-}: EmployeeTableProps): JSX.Element {
+}: EmployeeTableProps): React.JSX.Element {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<LicenseCheckStatus | 'all'>('all');
   const [companyFilter, setCompanyFilter] = useState<string>('all');

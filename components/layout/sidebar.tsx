@@ -79,7 +79,7 @@ function SidebarNavItem({
   isActive,
   badge,
   comingSoon,
-}: SidebarNavItemProps): JSX.Element {
+}: SidebarNavItemProps): React.JSX.Element {
   return (
     <li>
       <Link
@@ -117,12 +117,12 @@ function SidebarNavItem({
 }
 
 /** Werkbank-Übersicht: alle Module als Karten */
-function WerkbankModuleNav({ pathname }: { pathname: string }): JSX.Element {
+function WerkbankModuleNav({ pathname }: { pathname: string }): React.JSX.Element {
   // Module nach Kategorie gruppieren
   const tools = MODULES.filter((m) => m.category === 'tool');
   const companies = Array.from(new Set(MODULES.filter((m) => m.category === 'company').map((m) => m.company)));
 
-  const renderModuleItem = (mod: ModuleConfig): JSX.Element => {
+  const renderModuleItem = (mod: ModuleConfig): React.JSX.Element => {
     const Icon = MODULE_ICONS[mod.icon] ?? Wrench;
     const isActive = pathname.startsWith(mod.route);
     return (
@@ -171,7 +171,7 @@ function WerkbankModuleNav({ pathname }: { pathname: string }): JSX.Element {
 }
 
 /** Fuhrpark-Modul-Navigation */
-function FuhrparkModuleNav({ pathname }: { pathname: string }): JSX.Element {
+function FuhrparkModuleNav({ pathname }: { pathname: string }): React.JSX.Element {
   const { data: licenseWarningCount } = useLicenseWarningCount();
   const { data: uvvWarningCount } = useUvvWarningCount();
 
@@ -224,7 +224,7 @@ function FuhrparkModuleNav({ pathname }: { pathname: string }): JSX.Element {
   );
 }
 
-export function Sidebar(): JSX.Element {
+export function Sidebar(): React.JSX.Element {
   const pathname = usePathname();
   const currentModule = getModuleByRoute(pathname);
   const isInsideModule = currentModule !== undefined;

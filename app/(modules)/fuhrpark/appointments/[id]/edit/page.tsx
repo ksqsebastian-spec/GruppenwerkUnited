@@ -36,7 +36,7 @@ async function fetchAppointment(id: string): Promise<Appointment> {
 /**
  * Inner component that uses params
  */
-function EditAppointmentContent(): JSX.Element {
+function EditAppointmentContent(): React.JSX.Element {
   const params = useParams();
   const appointmentId = params.id as string;
 
@@ -75,7 +75,7 @@ function EditAppointmentContent(): JSX.Element {
 /**
  * Seite zum Bearbeiten eines Termins
  */
-export default function EditAppointmentPage(): JSX.Element {
+export default function EditAppointmentPage(): React.JSX.Element {
   return (
     <AppLayout>
       <Suspense fallback={<LoadingSpinner text="Termin wird geladen..." />}>

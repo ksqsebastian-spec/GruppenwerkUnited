@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 /**
  * Formular für UVV-Einstellungen
  */
-export function SettingsForm(): JSX.Element {
+export function SettingsForm(): React.JSX.Element {
   const { data: settings, isLoading } = useUvvSettings();
   const updateSettings = useUpdateUvvSettings();
 

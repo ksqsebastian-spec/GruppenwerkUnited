@@ -1,4 +1,4 @@
-import type { ReferralData } from "@/types";
+import type { ReferralData } from "./types";
 import { getReferralBlockText } from "./referralBlock";
 
 function getEmailBody(data: ReferralData): string {

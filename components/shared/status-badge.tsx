@@ -27,7 +27,7 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-export function StatusBadge({ status, className }: StatusBadgeProps): JSX.Element {
+export function StatusBadge({ status, className }: StatusBadgeProps): React.JSX.Element {
   const config = statusConfigs[status];
 
   if (!config) {

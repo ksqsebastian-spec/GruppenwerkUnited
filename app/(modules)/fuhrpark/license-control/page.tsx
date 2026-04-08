@@ -13,7 +13,7 @@ import { useLicenseEmployees } from '@/hooks/use-license-control';
  * Führerscheinkontrolle - Übersichtsseite
  * Zeigt Statistiken und schnellen Zugriff auf alle Funktionen
  */
-export default function LicenseControlPage(): JSX.Element {
+export default function LicenseControlPage(): React.JSX.Element {
   const { data: employees } = useLicenseEmployees({ status: 'active' });
 
   return (

@@ -11,7 +11,7 @@ import { useDriver } from '@/hooks/use-drivers';
 /**
  * Seite zum Bearbeiten eines Fahrers
  */
-export default function EditDriverPage(): JSX.Element {
+export default function EditDriverPage(): React.JSX.Element {
   const params = useParams();
   const driverId = params.id as string;
 

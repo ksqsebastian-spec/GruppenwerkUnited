@@ -14,7 +14,7 @@ import { useVehicle } from '@/hooks/use-vehicles';
 /**
  * Seite zum Zuweisen von Fahrern zu einem Fahrzeug
  */
-export default function AssignDriverPage(): JSX.Element {
+export default function AssignDriverPage(): React.JSX.Element {
   const params = useParams();
   const id = params.id as string;
   const { data: vehicle, isLoading, error, refetch } = useVehicle(id);

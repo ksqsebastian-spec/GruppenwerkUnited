@@ -9,7 +9,7 @@ import { DamageForm } from '@/components/damages';
 /**
  * Seite zum Melden eines neuen Schadens
  */
-export default function NewDamagePage(): JSX.Element {
+export default function NewDamagePage(): React.JSX.Element {
   return (
     <AppLayout>
       <div className="space-y-6">

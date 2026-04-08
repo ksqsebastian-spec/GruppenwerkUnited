@@ -9,7 +9,7 @@ interface AuthGuardProps {
   children: React.ReactNode;
 }
 
-export function AuthGuard({ children }: AuthGuardProps): JSX.Element {
+export function AuthGuard({ children }: AuthGuardProps): React.JSX.Element {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 

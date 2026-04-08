@@ -1,8 +1,8 @@
 "use client";
 
 import type { Empfehlung } from "@/types/recruiting";
-import { Avatar } from "../_components/ui/Avatar";
-import { Badge } from "../_components/ui/Badge";
+import { Avatar } from "../ui/Avatar";
+import { Badge } from "../ui/Badge";
 import { formatRelativeDate } from "@/lib/modules/recruiting/utils";
 import { getStatusColor } from "@/lib/modules/recruiting/utils";
 

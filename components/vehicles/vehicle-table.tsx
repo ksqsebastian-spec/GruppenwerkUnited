@@ -62,7 +62,7 @@ function formatMileage(mileage: number): string {
 /**
  * Tabelle zur Anzeige von Fahrzeugen
  */
-export function VehicleTable({ vehicles }: VehicleTableProps): JSX.Element {
+export function VehicleTable({ vehicles }: VehicleTableProps): React.JSX.Element {
   const router = useRouter();
   const archiveMutation = useArchiveVehicle();
   const deleteMutation = useDeleteVehicle();

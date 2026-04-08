@@ -54,7 +54,7 @@ const statusLabels: Record<AppointmentStatus, string> = {
 /**
  * Status-Icons
  */
-function StatusIcon({ status }: { status: AppointmentStatus }): JSX.Element {
+function StatusIcon({ status }: { status: AppointmentStatus }): React.JSX.Element {
   switch (status) {
     case 'completed':
       return <CheckCircle className="h-5 w-5 text-green-600" />;
@@ -82,7 +82,7 @@ function calculateStatus(appointment: { status: AppointmentStatus; due_date: str
 /**
  * Termin-Detailseite
  */
-export default function AppointmentDetailPage(): JSX.Element {
+export default function AppointmentDetailPage(): React.JSX.Element {
   const params = useParams();
   const router = useRouter();
   const appointmentId = params.id as string;
@@ -390,7 +390,7 @@ export default function AppointmentDetailPage(): JSX.Element {
 /**
  * Hilfskomponente für Detail-Zeilen
  */
-function DetailRow({ label, value }: { label: string; value: string }): JSX.Element {
+function DetailRow({ label, value }: { label: string; value: string }): React.JSX.Element {
   return (
     <div className="flex justify-between border-b pb-2 last:border-0">
       <span className="text-sm text-muted-foreground">{label}</span>

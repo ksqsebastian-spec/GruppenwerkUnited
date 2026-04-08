@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import type { ReferralData } from "./_lib/types";
+import type { ReferralData } from "../_lib/types";
 
 interface TemplateBlockProps {
   data: ReferralData;

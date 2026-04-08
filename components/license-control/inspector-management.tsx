@@ -50,7 +50,7 @@ import type { LicenseCheckInspector } from '@/types';
 /**
  * Verwaltung der Prüfer für Führerscheinkontrollen
  */
-export function InspectorManagement(): JSX.Element {
+export function InspectorManagement(): React.JSX.Element {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingInspector, setEditingInspector] = useState<LicenseCheckInspector | null>(null);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);

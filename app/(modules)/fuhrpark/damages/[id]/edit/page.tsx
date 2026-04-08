@@ -12,7 +12,7 @@ import { useDamage } from '@/hooks/use-damages';
 /**
  * Seite zum Bearbeiten eines Schadens
  */
-export default function EditDamagePage(): JSX.Element {
+export default function EditDamagePage(): React.JSX.Element {
   const params = useParams();
   const damageId = params.id as string;
 

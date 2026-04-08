@@ -16,7 +16,7 @@ import {
 /**
  * UVV-Kontrolle Übersichtsseite
  */
-export default function UvvControlPage(): JSX.Element {
+export default function UvvControlPage(): React.JSX.Element {
   const [batchDialogOpen, setBatchDialogOpen] = useState(false);
 
   return (

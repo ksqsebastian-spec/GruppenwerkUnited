@@ -32,7 +32,7 @@ const SHARED_ACCOUNT_EMAIL =
  * Login-Seite der Werkbank-Plattform
  * Einmaliges Passwort für alle internen Nutzer (Phase 1)
  */
-export default function LoginPage(): JSX.Element {
+export default function LoginPage(): React.JSX.Element {
   const router = useRouter();
   const { signIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);

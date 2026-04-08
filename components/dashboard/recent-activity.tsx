@@ -22,8 +22,8 @@ interface RecentActivityProps {
 export function RecentActivity({
   activities,
   isLoading = false,
-}: RecentActivityProps): JSX.Element {
-  const getActivityIcon = (type: DashboardActivity['type']): JSX.Element => {
+}: RecentActivityProps): React.JSX.Element {
+  const getActivityIcon = (type: DashboardActivity['type']): React.JSX.Element => {
     switch (type) {
       case 'vehicle':
         return <Car className="h-4 w-4 text-blue-600" />;
