@@ -40,7 +40,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 /**
  * Formular zum Erfassen von Kosten
  */
-export function CostForm(): JSX.Element {
+export function CostForm(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);

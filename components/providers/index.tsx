@@ -8,7 +8,7 @@ interface ProvidersProps {
   children: React.ReactNode;
 }
 
-export function Providers({ children }: ProvidersProps): JSX.Element {
+export function Providers({ children }: ProvidersProps): React.JSX.Element {
   return (
     <QueryProvider>
       <AuthProvider>

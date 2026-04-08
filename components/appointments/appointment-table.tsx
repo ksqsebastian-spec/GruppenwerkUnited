@@ -62,7 +62,7 @@ const statusLabels: Record<string, string> = {
 /**
  * Tabelle zur Anzeige von Terminen
  */
-export function AppointmentTable({ appointments }: AppointmentTableProps): JSX.Element {
+export function AppointmentTable({ appointments }: AppointmentTableProps): React.JSX.Element {
   const router = useRouter();
   const completeMutation = useCompleteAppointment();
   const deleteMutation = useDeleteAppointment();

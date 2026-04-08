@@ -11,7 +11,7 @@ interface PageProps {
 /**
  * VOB Monitor – Alle Ausschreibungen
  */
-export default async function AlleTendersPage({ searchParams }: PageProps): Promise<JSX.Element> {
+export default async function AlleTendersPage({ searchParams }: PageProps): Promise<React.JSX.Element> {
   const { page: pageParam } = await searchParams;
   const page = Math.max(1, parseInt(pageParam ?? '1', 10));
   const [{ tenders, total }, companies] = await Promise.all([

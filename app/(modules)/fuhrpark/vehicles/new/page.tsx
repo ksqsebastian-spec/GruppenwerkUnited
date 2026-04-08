@@ -7,7 +7,7 @@ import { VehicleForm } from '@/components/vehicles';
 /**
  * Seite zum Anlegen eines neuen Fahrzeugs
  */
-export default function NewVehiclePage(): JSX.Element {
+export default function NewVehiclePage(): React.JSX.Element {
   return (
     <AppLayout>
       <div className="space-y-6">

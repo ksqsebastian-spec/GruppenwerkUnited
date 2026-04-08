@@ -64,7 +64,7 @@ function formatFileSize(bytes: number): string {
 /**
  * Icon für Entity-Typ
  */
-function getEntityIcon(entityType: DocumentEntityType): JSX.Element {
+function getEntityIcon(entityType: DocumentEntityType): React.JSX.Element {
   switch (entityType) {
     case 'vehicle':
       return <Car className="h-4 w-4" />;
@@ -164,7 +164,7 @@ function getEntityDescription(doc: Document): string {
 /**
  * Datei-Icon basierend auf MIME-Type
  */
-function getFileIcon(mimeType: string): JSX.Element {
+function getFileIcon(mimeType: string): React.JSX.Element {
   if (mimeType.startsWith('image/')) {
     return <ImageIcon className="h-5 w-5 text-blue-500" />;
   }
@@ -179,7 +179,7 @@ export function DocumentTable({
   sortField,
   sortDirection,
   onSortChange,
-}: DocumentTableProps): JSX.Element {
+}: DocumentTableProps): React.JSX.Element {
   const deleteMutation = useDeleteDocument();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
@@ -216,7 +216,7 @@ export function DocumentTable({
   }: {
     field: DocumentSortField;
     children: React.ReactNode;
-  }): JSX.Element => (
+  }): React.JSX.Element => (
     <TableHead>
       <Button
         variant="ghost"

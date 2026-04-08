@@ -72,7 +72,7 @@ interface DocumentUploadDialogProps {
 /**
  * Dialog zum Hochladen eines neuen Dokuments mit Entity-Auswahl
  */
-export function DocumentUploadDialog({ trigger }: DocumentUploadDialogProps): JSX.Element {
+export function DocumentUploadDialog({ trigger }: DocumentUploadDialogProps): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

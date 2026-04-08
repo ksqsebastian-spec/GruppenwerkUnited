@@ -17,7 +17,7 @@ import {
 import { useAuth } from '@/components/providers/auth-provider';
 import { MobileNav } from './mobile-nav';
 
-export function Header(): JSX.Element {
+export function Header(): React.JSX.Element {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

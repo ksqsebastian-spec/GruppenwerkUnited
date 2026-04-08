@@ -1,4 +1,4 @@
-import type { ReferralData } from "@/types";
+import type { ReferralData } from "./types";
 import { getReferralBlockText } from "./referralBlock";
 
 export function generateMailtoLink(data: ReferralData): string {

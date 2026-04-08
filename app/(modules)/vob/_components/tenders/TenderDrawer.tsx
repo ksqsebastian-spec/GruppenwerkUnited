@@ -151,7 +151,7 @@ export function TenderDrawer({ tender, allMatches = [], companies = [], open, on
             variant="outline"
             className="w-full text-[12px] text-neutral-600 border-neutral-200"
             onClick={async () => {
-              const { generateSingleTenderPdf } = await import('@/lib/pdf-generator')
+              const { generateSingleTenderPdf } = await import('@/lib/modules/vob/pdf-generator')
               const doc = await generateSingleTenderPdf(tender, allMatches)
               const today = new Date().toISOString().slice(0, 10)
               doc.save(`VOB_Tender_${tender.tender_id}_${today}.pdf`)

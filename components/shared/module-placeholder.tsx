@@ -13,7 +13,7 @@ interface ModulePlaceholderProps {
  * Platzhalterseite für Module, die noch migriert werden.
  * Wird durch das echte Modul ersetzt, sobald es migriert wurde.
  */
-export function ModulePlaceholder({ moduleName }: ModulePlaceholderProps): JSX.Element {
+export function ModulePlaceholder({ moduleName }: ModulePlaceholderProps): React.JSX.Element {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
       <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-100">

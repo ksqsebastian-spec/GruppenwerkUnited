@@ -33,7 +33,7 @@ import type { Company } from '@/types';
 /**
  * Firmen-Verwaltung in den Einstellungen
  */
-export function CompanyList(): JSX.Element {
+export function CompanyList(): React.JSX.Element {
   const { data: companies, isLoading, error, refetch } = useCompanies();
   const createMutation = useCreateCompany();
   const updateMutation = useUpdateCompany();
@@ -87,7 +87,7 @@ export function CompanyList(): JSX.Element {
   };
 
   // Render-Funktion für den Hauptinhalt
-  const renderContent = (): JSX.Element => {
+  const renderContent = (): React.JSX.Element => {
     if (isLoading) {
       return <LoadingSpinner text="Firmen werden geladen..." />;
     }

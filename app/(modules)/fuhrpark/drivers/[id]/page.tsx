@@ -33,7 +33,7 @@ import { useDriverDocuments } from '@/hooks/use-documents';
 /**
  * Fahrer-Detailseite
  */
-export default function DriverDetailPage(): JSX.Element {
+export default function DriverDetailPage(): React.JSX.Element {
   const params = useParams();
   const router = useRouter();
   const driverId = params.id as string;
@@ -330,7 +330,7 @@ export default function DriverDetailPage(): JSX.Element {
 /**
  * Hilfskomponente für Detail-Zeilen
  */
-function DetailRow({ label, value }: { label: string; value: string }): JSX.Element {
+function DetailRow({ label, value }: { label: string; value: string }): React.JSX.Element {
   return (
     <div className="flex justify-between border-b pb-2 last:border-0">
       <span className="text-sm text-muted-foreground">{label}</span>

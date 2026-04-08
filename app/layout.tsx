@@ -1,10 +1,7 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'sonner';
 import { Providers } from '@/components/providers';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Werkbank – Gruppenwerk',
@@ -15,10 +12,10 @@ export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <html lang="de">
-      <body className={inter.className}>
+      <body className="font-sans antialiased">
         <Providers>
           {children}
           <Toaster

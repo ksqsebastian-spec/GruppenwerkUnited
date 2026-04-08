@@ -30,7 +30,7 @@ import {
 /**
  * Formular für Führerscheinkontrolle-Einstellungen
  */
-export function SettingsForm(): JSX.Element {
+export function SettingsForm(): React.JSX.Element {
   const { data: settings, isLoading } = useLicenseSettings();
   const updateMutation = useUpdateLicenseSettings();
 

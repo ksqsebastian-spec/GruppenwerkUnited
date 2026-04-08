@@ -53,7 +53,7 @@ export function DriverUvvTable({
   externalData,
   filterStatus,
   hideFilters = false,
-}: DriverUvvTableProps): JSX.Element {
+}: DriverUvvTableProps): React.JSX.Element {
   const [search, setSearch] = useState('');
   const [companyFilter, setCompanyFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');

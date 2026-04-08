@@ -24,7 +24,7 @@ interface WarningCardProps {
 export function WarningCard({
   appointments,
   isLoading = false,
-}: WarningCardProps): JSX.Element {
+}: WarningCardProps): React.JSX.Element {
   if (isLoading) {
     return (
       <Card>

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "../_components/ui/Input";
-import { Button } from "../_components/ui/Button";
+import { Input } from "../ui/Input";
+import { Button } from "../ui/Button";
 
 export function QuickAddForm() {
   const router = useRouter();

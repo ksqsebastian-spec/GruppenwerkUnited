@@ -8,7 +8,7 @@ export const revalidate = 300;
 /**
  * VOB Monitor – Scan-Verlauf
  */
-export default async function VerlaufPage(): Promise<JSX.Element> {
+export default async function VerlaufPage(): Promise<React.JSX.Element> {
   const scans = await getAllScans();
 
   return (

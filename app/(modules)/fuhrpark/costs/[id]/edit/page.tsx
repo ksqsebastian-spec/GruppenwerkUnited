@@ -43,7 +43,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 /**
  * Seite zum Bearbeiten eines Kosteneintrags
  */
-export default function EditCostPage(): JSX.Element {
+export default function EditCostPage(): React.JSX.Element {
   const params = useParams();
   const router = useRouter();
   const costId = params.id as string;

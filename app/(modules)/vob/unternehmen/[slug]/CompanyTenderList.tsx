@@ -138,7 +138,7 @@ export function CompanyTenderList({ tenders }: CompanyTenderListProps) {
     setExporting(true)
     try {
       const selectedTenders = tenders.filter(t => selected.has(t.tender_id))
-      const { generateCompanyPdf } = await import('@/lib/pdf-generator')
+      const { generateCompanyPdf } = await import('@/lib/modules/vob/pdf-generator')
       const companyName = selectedTenders[0]?.company_name ?? 'Ausgewählte'
       const doc = await generateCompanyPdf(companyName, selectedTenders)
       const today = new Date().toISOString().slice(0, 10)

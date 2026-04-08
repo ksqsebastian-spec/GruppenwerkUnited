@@ -24,7 +24,7 @@ function formatCurrency(amount: number): string {
 /**
  * Zusammenfassung der Kosten nach Kategorien
  */
-export function CostSummary({ costs, isLoading = false }: CostSummaryProps): JSX.Element {
+export function CostSummary({ costs, isLoading = false }: CostSummaryProps): React.JSX.Element {
   if (isLoading) {
     return (
       <Card>

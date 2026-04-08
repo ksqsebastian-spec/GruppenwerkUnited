@@ -41,7 +41,7 @@ interface AssignVehicleToDriverProps {
 /**
  * Komponente zum Zuweisen von Fahrern zu einem Fahrzeug
  */
-export function AssignDriverToVehicle({ vehicleId, vehiclePlate }: AssignDriverToVehicleProps): JSX.Element {
+export function AssignDriverToVehicle({ vehicleId, vehiclePlate }: AssignDriverToVehicleProps): React.JSX.Element {
   const [selectedDriverId, setSelectedDriverId] = useState<string>('');
   const [isPrimary, setIsPrimary] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; assignment: VehicleDriver | null }>({
@@ -241,7 +241,7 @@ export function AssignDriverToVehicle({ vehicleId, vehiclePlate }: AssignDriverT
 /**
  * Komponente zum Zuweisen von Fahrzeugen zu einem Fahrer
  */
-export function AssignVehicleToDriver({ driverId, driverName }: AssignVehicleToDriverProps): JSX.Element {
+export function AssignVehicleToDriver({ driverId, driverName }: AssignVehicleToDriverProps): React.JSX.Element {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>('');
   const [isPrimary, setIsPrimary] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; assignment: VehicleDriver | null }>({

@@ -15,7 +15,7 @@ export function ErrorState({
   message,
   onRetry,
   className,
-}: ErrorStateProps): JSX.Element {
+}: ErrorStateProps): React.JSX.Element {
   return (
     <div
       className={cn(

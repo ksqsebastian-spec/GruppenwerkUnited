@@ -23,7 +23,7 @@ import type { AppointmentStatus } from '@/types';
 /**
  * Terminübersicht - Liste aller Termine
  */
-export default function AppointmentsPage(): JSX.Element {
+export default function AppointmentsPage(): React.JSX.Element {
   const [status, setStatus] = useState<AppointmentStatus | 'all'>('all');
 
   const { data: appointments, isLoading, error, refetch } = useAppointments(

@@ -15,7 +15,7 @@ function Calendar({
   classNames,
   showOutsideDays = true,
   ...props
-}: CalendarProps): JSX.Element {
+}: CalendarProps): React.JSX.Element {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}

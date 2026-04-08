@@ -11,7 +11,7 @@ import { useLicenseEmployee } from '@/hooks/use-license-control';
 /**
  * Seite zum Bearbeiten eines Mitarbeiters für Führerscheinkontrolle
  */
-export default function EditLicenseEmployeePage(): JSX.Element {
+export default function EditLicenseEmployeePage(): React.JSX.Element {
   const params = useParams();
   const employeeId = params.id as string;
 

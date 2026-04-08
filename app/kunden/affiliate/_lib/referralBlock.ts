@@ -1,4 +1,4 @@
-import type { ReferralData } from "@/types";
+import type { ReferralData } from "./types";
 
 export function getReferralBlockText(data: ReferralData): string {
   const bankSection =

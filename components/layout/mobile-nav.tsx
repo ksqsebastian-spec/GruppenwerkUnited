@@ -57,7 +57,7 @@ interface MobileNavProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function MobileNav({ open, onOpenChange }: MobileNavProps): JSX.Element | null {
+export function MobileNav({ open, onOpenChange }: MobileNavProps): React.JSX.Element | null {
   const pathname = usePathname();
   const { data: licenseWarningCount } = useLicenseWarningCount();
   const { data: uvvWarningCount } = useUvvWarningCount();

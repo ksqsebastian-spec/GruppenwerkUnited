@@ -46,7 +46,7 @@ export function ConfirmDialog({
   destructive = false,
   variant,
   isLoading = false,
-}: ConfirmDialogProps): JSX.Element {
+}: ConfirmDialogProps): React.JSX.Element {
   const isDestructive = destructive || variant === 'destructive';
 
   return (

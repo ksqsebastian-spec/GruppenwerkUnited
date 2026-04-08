@@ -66,7 +66,7 @@ function formatFileSize(bytes: number): string {
 /**
  * Liste der Dokumente
  */
-export function DocumentList({ documents }: DocumentListProps): JSX.Element {
+export function DocumentList({ documents }: DocumentListProps): React.JSX.Element {
   const deleteMutation = useDeleteDocument();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

@@ -64,7 +64,7 @@ function countActiveFilters(filters: DocumentFiltersType): number {
 /**
  * Filter-Komponente für die Datenablage
  */
-export function DocumentFilters({ filters, onFiltersChange }: DocumentFiltersProps): JSX.Element {
+export function DocumentFilters({ filters, onFiltersChange }: DocumentFiltersProps): React.JSX.Element {
   const { data: documentTypes } = useDocumentTypes();
   const { data: vehicles } = useVehicles({ status: 'active' });
 

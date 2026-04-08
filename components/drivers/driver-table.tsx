@@ -45,7 +45,7 @@ interface DriverTableProps {
 /**
  * Tabelle zur Anzeige von Fahrern
  */
-export function DriverTable({ drivers }: DriverTableProps): JSX.Element {
+export function DriverTable({ drivers }: DriverTableProps): React.JSX.Element {
   const router = useRouter();
   const archiveMutation = useArchiveDriver();
 

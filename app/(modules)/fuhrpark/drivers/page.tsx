@@ -15,7 +15,7 @@ import { useDrivers } from '@/hooks/use-drivers';
 /**
  * Fahrerübersicht - Liste aller Fahrer
  */
-export default function DriversPage(): JSX.Element {
+export default function DriversPage(): React.JSX.Element {
   const [status, setStatus] = useState<'active' | 'archived'>('active');
 
   const { data: drivers, isLoading, error, refetch } = useDrivers({ status });

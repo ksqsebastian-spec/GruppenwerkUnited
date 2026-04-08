@@ -47,7 +47,7 @@ interface EmployeeFormProps {
 /**
  * Formular für Führerscheinkontrolle-Mitarbeiter
  */
-export function EmployeeForm({ employee }: EmployeeFormProps): JSX.Element {
+export function EmployeeForm({ employee }: EmployeeFormProps): React.JSX.Element {
   const router = useRouter();
   const { data: companies = [] } = useCompanies();
   const createMutation = useCreateLicenseEmployee();

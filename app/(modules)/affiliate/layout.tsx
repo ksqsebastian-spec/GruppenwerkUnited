@@ -30,7 +30,7 @@ interface AffiliateLayoutProps {
 /**
  * Affiliate-Modul Layout – Sub-Navigation als Tab-Leiste
  */
-export default function AffiliateLayout({ children }: AffiliateLayoutProps): JSX.Element {
+export default function AffiliateLayout({ children }: AffiliateLayoutProps): React.JSX.Element {
   const pathname = usePathname();
 
   return (

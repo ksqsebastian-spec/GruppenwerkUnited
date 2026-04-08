@@ -10,7 +10,7 @@ interface UvvStatusBadgeProps {
 /**
  * Status-Badge für UVV-Unterweisungen
  */
-export function UvvStatusBadge({ status }: UvvStatusBadgeProps): JSX.Element {
+export function UvvStatusBadge({ status }: UvvStatusBadgeProps): React.JSX.Element {
   const statusConfig: Record<
     UvvCheckStatus,
     { label: string; variant: 'destructive' | 'warning' | 'success' }

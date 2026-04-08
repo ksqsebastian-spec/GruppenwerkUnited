@@ -34,7 +34,7 @@ interface UvvCheckHistoryProps {
 /**
  * Zeigt die Historie aller UVV-Unterweisungen eines Fahrers
  */
-export function UvvCheckHistory({ driverId }: UvvCheckHistoryProps): JSX.Element {
+export function UvvCheckHistory({ driverId }: UvvCheckHistoryProps): React.JSX.Element {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCheck, setSelectedCheck] = useState<UvvCheck | null>(null);
 

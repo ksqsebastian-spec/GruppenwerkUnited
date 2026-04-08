@@ -30,7 +30,7 @@ const statusConfig: Record<LicenseCheckStatus, { label: string; className: strin
 export function LicenseStatusBadge({
   status,
   className,
-}: LicenseStatusBadgeProps): JSX.Element {
+}: LicenseStatusBadgeProps): React.JSX.Element {
   const config = statusConfig[status];
 
   return (

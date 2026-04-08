@@ -64,7 +64,7 @@ export function DocumentUpload({
   entityId,
   onSuccess,
   onCancel,
-}: DocumentUploadProps): JSX.Element {
+}: DocumentUploadProps): React.JSX.Element {
   const router = useRouter();
   const { data: documentTypes } = useDocumentTypes();
   const uploadMutation = useUploadDocument();

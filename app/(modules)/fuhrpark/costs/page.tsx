@@ -25,7 +25,7 @@ import type { CostFilters } from '@/types';
 /**
  * Kostenübersicht - Liste aller Kosten
  */
-export default function CostsPage(): JSX.Element {
+export default function CostsPage(): React.JSX.Element {
   const [filters, setFilters] = useState<CostFilters>({});
 
   const { data: costs, isLoading, error, refetch } = useCosts(filters);

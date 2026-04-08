@@ -10,7 +10,7 @@ import { useVehicle } from '@/hooks/use-vehicles';
 /**
  * Fahrzeug-Detailseite
  */
-export default function VehicleDetailPage(): JSX.Element {
+export default function VehicleDetailPage(): React.JSX.Element {
   const params = useParams();
   const vehicleId = params.id as string;
 

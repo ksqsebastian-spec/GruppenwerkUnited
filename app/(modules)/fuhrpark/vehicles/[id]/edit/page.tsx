@@ -11,7 +11,7 @@ import { useVehicle } from '@/hooks/use-vehicles';
 /**
  * Seite zum Bearbeiten eines Fahrzeugs
  */
-export default function EditVehiclePage(): JSX.Element {
+export default function EditVehiclePage(): React.JSX.Element {
   const params = useParams();
   const vehicleId = params.id as string;
 

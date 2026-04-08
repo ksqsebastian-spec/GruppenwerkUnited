@@ -52,7 +52,7 @@ function sortDocuments(
 /**
  * Datenablage - Zentrale Dokumentenverwaltung
  */
-export default function DocumentsPage(): JSX.Element {
+export default function DocumentsPage(): React.JSX.Element {
   // State für Filter, Suche und Ansicht
   const [filters, setFilters] = useState<DocumentFiltersType>({});
   const [searchQuery, setSearchQuery] = useState('');

@@ -25,7 +25,7 @@ export function PageHeader({
   children,
   backHref,
   className,
-}: PageHeaderProps): JSX.Element {
+}: PageHeaderProps): React.JSX.Element {
   const actionContent = actions || children;
 
   return (

@@ -9,7 +9,7 @@ import { CompanyList, DataExport } from '@/components/settings';
 /**
  * Einstellungen-Seite
  */
-export default function SettingsPage(): JSX.Element {
+export default function SettingsPage(): React.JSX.Element {
   return (
     <AppLayout>
       <div className="space-y-6">

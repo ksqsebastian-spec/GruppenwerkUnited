@@ -84,7 +84,7 @@ export function CurrencyInput({
   placeholder = '0,00',
   disabled,
   ...props
-}: CurrencyInputProps): JSX.Element {
+}: CurrencyInputProps): React.JSX.Element {
   // Interner State für die angezeigte Eingabe
   const [displayValue, setDisplayValue] = React.useState<string>('');
   const [isFocused, setIsFocused] = React.useState(false);

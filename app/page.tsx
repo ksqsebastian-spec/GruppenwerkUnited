@@ -33,7 +33,7 @@ interface ModuleCardProps {
 /**
  * Modul-Karte auf dem Werkbank-Dashboard
  */
-function ModuleCard({ module }: ModuleCardProps): JSX.Element {
+function ModuleCard({ module }: ModuleCardProps): React.JSX.Element {
   const Icon = MODULE_ICONS[module.icon] ?? Wrench;
   const isComingSoon = module.status === 'coming_soon';
 
@@ -106,7 +106,7 @@ function ModuleCard({ module }: ModuleCardProps): JSX.Element {
  * Zeigt alle verfügbaren Module als klickbare Karten an.
  * Neue Module werden automatisch angezeigt, wenn sie in lib/modules.ts eingetragen werden.
  */
-export default function WerkbankDashboard(): JSX.Element {
+export default function WerkbankDashboard(): React.JSX.Element {
   // Module nach Kategorie gruppieren
   const toolModules = MODULES.filter((m) => m.category === 'tool');
   const companyGroups = MODULES.filter((m) => m.category === 'company').reduce<

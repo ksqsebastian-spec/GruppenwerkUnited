@@ -57,3 +57,43 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* === ROI-Modul Designtokens === */
+:root {
+  --roi-bg: #FAFAF8;
+  --roi-surface: #FFFFFF;
+  --roi-surface-2: #F5F4F1;
+  --roi-surface-3: #ECEAE5;
+  --roi-border: #E2DFD9;
+  --roi-border-hover: #D4D0C8;
+  --roi-text: #1A1916;
+  --roi-text-muted: #6B6860;
+  --roi-text-dim: #9B9790;
+  --roi-accent: #2D6A4F;
+  --roi-accent-light: #D8F3DC;
+  --roi-red: #C1440E;
+  --roi-red-light: #FDECE5;
+  --roi-blue: #1B4965;
+  --roi-blue-light: #E3EFF6;
+  --roi-amber: #B5651D;
+  --roi-amber-light: #FFF3E0;
+}
+
+/* === Recruiting/Affiliate Admin Designtokens === */
+:root {
+  --navy: #050234;
+  --navy-light: #0a0654;
+  --orange: #f28900;
+  --orange-dark: #ff6b00;
+  --bg-card: #ffffff;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* Recruiting/Affiliate Admin-Seiten Basisstile */
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

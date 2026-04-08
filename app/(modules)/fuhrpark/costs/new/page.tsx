@@ -9,7 +9,7 @@ import { CostForm } from '@/components/costs';
 /**
  * Seite zum Erfassen neuer Kosten
  */
-export default function NewCostPage(): JSX.Element {
+export default function NewCostPage(): React.JSX.Element {
   return (
     <AppLayout>
       <div className="space-y-6">

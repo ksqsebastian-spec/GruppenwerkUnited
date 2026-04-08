@@ -8,7 +8,7 @@ import { useLicenseControlStats } from '@/hooks/use-license-control';
 /**
  * Statistik-Karten für das Führerscheinkontrolle-Dashboard
  */
-export function LicenseControlStats(): JSX.Element {
+export function LicenseControlStats(): React.JSX.Element {
   const { data: stats, isLoading } = useLicenseControlStats();
 
   if (isLoading) {
