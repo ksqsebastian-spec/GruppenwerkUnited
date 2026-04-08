@@ -86,7 +86,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   } catch (error) {
     console.error('Cron-Job Fehler:', error);
     return NextResponse.json(
-      { error: 'Interner Serverfehler', details: String(error) },
+      { error: 'Interner Serverfehler' },
       { status: 500 }
     );
   }

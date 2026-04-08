@@ -1,5 +1,4 @@
 import { requireAdmin } from '@/lib/modules/affiliate/auth';
-import { validateOrigin } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
 
@@ -62,12 +61,16 @@ export async function GET(request: NextRequest) {
     ];
   });
 
-  function escapeCsv(val: string | number): string {
+  function escapeCsv(val: string | number | null | undefined): string {
+    if (val === null || val === undefined) return '';
     const str = String(val);
-    if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-      return `"${str.replace(/"/g, '""')}"`;
+    // Prevent CSV formula injection: Excel/LibreOffice interpret cells starting
+    // with =, +, -, @, tab, or CR as formulas. Prefix with apostrophe to force text.
+    const safe = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+    if (safe.includes(',') || safe.includes('"') || safe.includes('\n') || safe.includes('\r')) {
+      return `"${safe.replace(/"/g, '""')}"`;
     }
-    return str;
+    return safe;
   }
 
   const csv = [

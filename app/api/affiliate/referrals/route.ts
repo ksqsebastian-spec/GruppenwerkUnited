@@ -4,12 +4,20 @@ import { empfehlungCreateSchema, paginationSchema } from "@/lib/modules/affiliat
 import { checkRateLimit, RATE_LIMITS } from "@/lib/modules/affiliate/rate-limit";
 import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
 
-// GET /api/referrals — list empfehlungen (handwerker sees own via query)
+// GET /api/referrals — list empfehlungen (handwerker sieht nur eigene)
 export async function GET(request: NextRequest) {
   const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
-  const handwerkerId = searchParams.get("handwerker_id");
+
+  // SICHERHEIT: Nicht-Admins dürfen nur ihre eigenen Empfehlungen abrufen
+  const requestedId = searchParams.get("handwerker_id");
+  let handwerkerId: string | null;
+  if (authResult.isAdmin) {
+    handwerkerId = requestedId;
+  } else {
+    handwerkerId = authResult.handwerkerId;
+  }
 
   const pagination = paginationSchema.safeParse({
     page: searchParams.get("page"),

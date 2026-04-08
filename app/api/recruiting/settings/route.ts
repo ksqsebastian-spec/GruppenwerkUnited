@@ -44,7 +44,7 @@ export async function PATCH(request: NextRequest) {
 
   const { praemie_betrag_default } = body as { praemie_betrag_default?: number };
 
-  if (praemie_betrag_default === undefined || typeof praemie_betrag_default !== "number" || praemie_betrag_default < 0) {
+  if (praemie_betrag_default === undefined || typeof praemie_betrag_default !== "number" || praemie_betrag_default < 0 || praemie_betrag_default > 99999 || !isFinite(praemie_betrag_default)) {
     return NextResponse.json(
       { error: "Ungültiger Prämienbetrag" },
       { status: 400 }

@@ -169,11 +169,31 @@ export async function PATCH(request: NextRequest) {
   if (kunde_kontakt !== undefined) updateData.kunde_kontakt = kunde_kontakt;
   if (handwerker_id !== undefined) updateData.handwerker_id = handwerker_id;
 
-  // Bankdaten fields
-  if (iban !== undefined) updateData.iban = iban;
-  if (bic !== undefined) updateData.bic = bic;
-  if (kontoinhaber !== undefined) updateData.kontoinhaber = kontoinhaber;
-  if (bank_name !== undefined) updateData.bank_name = bank_name;
+  // Bankdaten fields — mit Typ- und Längenvalidierung
+  if (iban !== undefined) {
+    if (typeof iban !== 'string' || iban.length > 34) {
+      return NextResponse.json({ error: 'Ungültige IBAN' }, { status: 400 });
+    }
+    updateData.iban = iban;
+  }
+  if (bic !== undefined) {
+    if (typeof bic !== 'string' || bic.length > 11) {
+      return NextResponse.json({ error: 'Ungültige BIC' }, { status: 400 });
+    }
+    updateData.bic = bic;
+  }
+  if (kontoinhaber !== undefined) {
+    if (typeof kontoinhaber !== 'string' || kontoinhaber.length > 120) {
+      return NextResponse.json({ error: 'Ungültiger Kontoinhaber' }, { status: 400 });
+    }
+    updateData.kontoinhaber = kontoinhaber;
+  }
+  if (bank_name !== undefined) {
+    if (typeof bank_name !== 'string' || bank_name.length > 120) {
+      return NextResponse.json({ error: 'Ungültiger Bankname' }, { status: 400 });
+    }
+    updateData.bank_name = bank_name;
+  }
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json(
