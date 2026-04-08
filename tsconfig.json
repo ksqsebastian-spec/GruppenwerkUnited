@@ -37,9 +37,12 @@
     "lib/**/*.ts",
     "hooks/**/*.ts",
     "types/**/*.ts",
-    "middleware.ts",
+    "proxy.ts",
+    "__tests__/**/*.ts",
+    "vitest.config.ts",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    ".next/dev/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
