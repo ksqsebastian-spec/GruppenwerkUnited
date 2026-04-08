@@ -84,13 +84,13 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): JSX.Element {
   const confirmArchive = async (): Promise<void> => {
     await archiveMutation.mutateAsync(vehicle.id);
     setArchiveDialogOpen(false);
-    router.push('/vehicles');
+    router.push('/fuhrpark/vehicles');
   };
 
   const confirmDelete = async (): Promise<void> => {
     await deleteMutation.mutateAsync(vehicle.id);
     setDeleteDialogOpen(false);
-    router.push('/vehicles');
+    router.push('/fuhrpark/vehicles');
   };
 
   /**
@@ -131,7 +131,7 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): JSX.Element {
 
         <div className="flex items-center gap-2">
           <Button variant="outline" asChild>
-            <Link href={`/vehicles/${vehicle.id}/edit`}>
+            <Link href={`/fuhrpark/vehicles/${vehicle.id}/edit`}>
               <Pencil className="mr-2 h-4 w-4" />
               Bearbeiten
             </Link>
@@ -366,7 +366,7 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): JSX.Element {
                 Hier werden die Termine für dieses Fahrzeug angezeigt.
               </p>
               <Button className="mt-4" asChild>
-                <Link href={`/appointments/new?vehicleId=${vehicle.id}`}>
+                <Link href={`/fuhrpark/appointments/new?vehicleId=${vehicle.id}`}>
                   <Calendar className="mr-2 h-4 w-4" />
                   Neuen Termin anlegen
                 </Link>
@@ -382,7 +382,7 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): JSX.Element {
                 Hier werden die Schäden für dieses Fahrzeug angezeigt.
               </p>
               <Button className="mt-4" asChild>
-                <Link href={`/damages/new?vehicleId=${vehicle.id}`}>
+                <Link href={`/fuhrpark/damages/new?vehicleId=${vehicle.id}`}>
                   <AlertTriangle className="mr-2 h-4 w-4" />
                   Schaden melden
                 </Link>
@@ -398,7 +398,7 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): JSX.Element {
                 Hier werden die Kosten für dieses Fahrzeug angezeigt.
               </p>
               <Button className="mt-4" asChild>
-                <Link href={`/costs/new?vehicleId=${vehicle.id}`}>
+                <Link href={`/fuhrpark/costs/new?vehicleId=${vehicle.id}`}>
                   <Receipt className="mr-2 h-4 w-4" />
                   Kosten erfassen
                 </Link>
@@ -410,7 +410,7 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): JSX.Element {
         <TabsContent value="documents" className="space-y-4">
           <div className="flex justify-end">
             <Button asChild>
-              <Link href={`/documents/upload?vehicleId=${vehicle.id}`}>
+              <Link href={`/fuhrpark/documents/upload?vehicleId=${vehicle.id}`}>
                 <FileText className="mr-2 h-4 w-4" />
                 Dokument hochladen
               </Link>
@@ -438,7 +438,7 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): JSX.Element {
                 Hier werden die Fahrer für dieses Fahrzeug angezeigt.
               </p>
               <Button className="mt-4" asChild>
-                <Link href={`/vehicles/${vehicle.id}/assign-driver`}>
+                <Link href={`/fuhrpark/vehicles/${vehicle.id}/assign-driver`}>
                   <User className="mr-2 h-4 w-4" />
                   Fahrer zuweisen
                 </Link>

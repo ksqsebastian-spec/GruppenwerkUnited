@@ -7,8 +7,8 @@ import { Providers } from '@/components/providers';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Fuhrpark Management',
-  description: 'Fuhrparkverwaltung für die Gruppenwerk-Holding',
+  title: 'Werkbank – Gruppenwerk',
+  description: 'Interne Tool-Plattform der Gruppenwerk-Holding',
 };
 
 export default function RootLayout({

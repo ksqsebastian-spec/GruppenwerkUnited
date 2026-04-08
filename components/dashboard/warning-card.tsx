@@ -91,7 +91,7 @@ export function WarningCard({
           )}
         </CardTitle>
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/appointments">
+          <Link href="/fuhrpark/appointments">
             Alle anzeigen
             <ChevronRight className="ml-1 h-4 w-4" />
           </Link>
@@ -106,7 +106,7 @@ export function WarningCard({
           return (
             <Link
               key={appointment.id}
-              href={`/appointments?highlight=${appointment.id}`}
+              href={`/fuhrpark/appointments?highlight=${appointment.id}`}
               className={cn(
                 'flex items-center justify-between p-3 border rounded-lg transition-colors hover:bg-muted/50',
                 isOverdue && 'border-red-200 bg-red-50 hover:bg-red-100'

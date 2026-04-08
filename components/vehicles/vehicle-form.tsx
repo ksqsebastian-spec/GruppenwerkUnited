@@ -138,7 +138,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps): JSX.Element {
         data.is_leased ?? false
       );
 
-      router.push(`/vehicles/${vehicleId}`);
+      router.push(`/fuhrpark/vehicles/${vehicleId}`);
     } catch (error) {
       // Fehler wird bereits durch onError im Hook behandelt (Toast)
       console.error('Fehler beim Speichern des Fahrzeugs:', error);
@@ -179,7 +179,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps): JSX.Element {
                   {(!companies || companies.length === 0) ? (
                     <div className="text-sm text-muted-foreground p-3 border rounded-md bg-muted/50">
                       Keine Firmen vorhanden.{' '}
-                      <a href="/settings" className="text-primary underline hover:no-underline">
+                      <a href="/fuhrpark/settings" className="text-primary underline hover:no-underline">
                         Bitte zuerst eine Firma anlegen.
                       </a>
                     </div>

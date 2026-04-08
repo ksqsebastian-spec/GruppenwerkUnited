@@ -186,7 +186,7 @@ export function DriverUvvTable({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/uvv/drivers/${driver.id}`}>
+                            <Link href={`/fuhrpark/uvv/drivers/${driver.id}`}>
                               <Eye className="mr-2 h-4 w-4" />
                               Details ansehen
                             </Link>

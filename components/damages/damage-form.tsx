@@ -111,10 +111,10 @@ export function DamageForm({ damage }: DamageFormProps): JSX.Element {
         id: damage.id,
         data,
       });
-      router.push(`/damages/${damage.id}`);
+      router.push(`/fuhrpark/damages/${damage.id}`);
     } else {
       const newDamage = await createMutation.mutateAsync(data);
-      router.push(`/damages/${newDamage.id}`);
+      router.push(`/fuhrpark/damages/${newDamage.id}`);
     }
   };
 

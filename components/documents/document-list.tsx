@@ -120,7 +120,7 @@ export function DocumentList({ documents }: DocumentListProps): JSX.Element {
                 <TableCell>
                   {document.vehicle ? (
                     <Link
-                      href={`/vehicles/${document.vehicle.id}`}
+                      href={`/fuhrpark/vehicles/${document.vehicle.id}`}
                       className="hover:underline flex items-center gap-2"
                     >
                       <Car className="h-4 w-4 text-muted-foreground" />
