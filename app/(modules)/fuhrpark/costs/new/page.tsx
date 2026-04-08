@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { CostForm } from '@/components/costs';
@@ -11,7 +10,7 @@ import { CostForm } from '@/components/costs';
  */
 export default function NewCostPage(): React.JSX.Element {
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Kosten erfassen"
@@ -23,6 +22,6 @@ export default function NewCostPage(): React.JSX.Element {
           <CostForm />
         </Suspense>
       </div>
-    </AppLayout>
+    </>
   );
 }

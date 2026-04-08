@@ -98,6 +98,13 @@ export const MODULES: ModuleConfig[] = [
   },
 ];
 
+/**
+ * Icon-Zuordnung für Module.
+ * WICHTIG: Nur in Client-Komponenten importieren (Lucide Icons sind React-Komponenten).
+ * Wird von sidebar.tsx, mobile-nav.tsx und app/page.tsx verwendet.
+ */
+export { MODULE_ICONS } from './module-icons';
+
 /** Nur aktive Module */
 export const ACTIVE_MODULES = MODULES.filter((m) => m.status === 'active');
 

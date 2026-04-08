@@ -4,7 +4,6 @@ import { CompanyCard } from './_components/dashboard/CompanyCard';
 import { TrendChart } from './_components/dashboard/TrendChart';
 import { DownloadReport } from './_components/export/DownloadReport';
 import { RecentFeed } from './RecentFeed';
-import { AppLayout } from '@/components/layout/app-layout';
 
 export const revalidate = 300;
 
@@ -39,7 +38,7 @@ export default async function VobDashboardPage(): Promise<React.JSX.Element> {
   }
 
   return (
-    <AppLayout>
+    <>
       <div className="max-w-[1200px]">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-[18px] font-semibold text-neutral-900">VOB Monitor – Übersicht</h1>
@@ -74,6 +73,6 @@ export default async function VobDashboardPage(): Promise<React.JSX.Element> {
           </div>
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 }

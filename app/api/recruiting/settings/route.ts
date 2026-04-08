@@ -1,8 +1,11 @@
+import { requireAdmin } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
 
-// GET /api/admin/settings — get app settings
+// GET /api/recruiting/settings — get app settings
 export async function GET() {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   const adminClient = createAdminClient();
 
   const { data, error } = await adminClient
@@ -23,8 +26,10 @@ export async function GET() {
   });
 }
 
-// PATCH /api/admin/settings — update app settings
+// PATCH /api/recruiting/settings — update app settings
 export async function PATCH(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   let body: unknown;
   try {
     body = await request.json();

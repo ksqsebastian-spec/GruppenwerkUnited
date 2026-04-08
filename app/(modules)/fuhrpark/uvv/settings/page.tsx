@@ -1,6 +1,5 @@
 'use client';
 
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +10,7 @@ import { SettingsForm, InstructorManagement } from '@/components/uvv-control';
  */
 export default function UvvSettingsPage(): React.JSX.Element {
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="UVV-Einstellungen"
@@ -54,6 +53,6 @@ export default function UvvSettingsPage(): React.JSX.Element {
           </TabsContent>
         </Tabs>
       </div>
-    </AppLayout>
+    </>
   );
 }

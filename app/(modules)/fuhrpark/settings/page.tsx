@@ -1,6 +1,5 @@
 'use client';
 
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Building, Download, Database } from 'lucide-react';
@@ -11,7 +10,7 @@ import { CompanyList, DataExport } from '@/components/settings';
  */
 export default function SettingsPage(): React.JSX.Element {
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Einstellungen"
@@ -39,6 +38,6 @@ export default function SettingsPage(): React.JSX.Element {
           </TabsContent>
         </Tabs>
       </div>
-    </AppLayout>
+    </>
   );
 }

@@ -20,7 +20,7 @@ export function CompanyCard({ company, tenders, trend }: CompanyCardProps) {
   const daysLeft = nextDeadline ? daysUntilDeadline(nextDeadline.deadline_date) : null
 
   return (
-    <Link href={`/unternehmen/${company.slug}`}>
+    <Link href={`/vob/unternehmen/${company.slug}`}>
       <div className="bg-white rounded-xl border border-neutral-200/60 p-4 hover:border-neutral-300 transition-colors cursor-pointer group">
         {/* Name + color */}
         <div className="flex items-center gap-2.5 mb-4">

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Users } from 'lucide-react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { DriverUvvTable, BatchCheckDialog } from '@/components/uvv-control';
@@ -14,7 +13,7 @@ export default function UvvDriversPage(): React.JSX.Element {
   const [batchDialogOpen, setBatchDialogOpen] = useState(false);
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="UVV-Fahrerliste"
@@ -36,6 +35,6 @@ export default function UvvDriversPage(): React.JSX.Element {
         open={batchDialogOpen}
         onOpenChange={setBatchDialogOpen}
       />
-    </AppLayout>
+    </>
   );
 }

@@ -1,11 +1,15 @@
+import { requireAuth } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
 
-// GET /api/referrals/[id] — get single empfehlung
+// GET /api/affiliate/referrals/[id] — einzelne Empfehlung abrufen
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authResult = await requireAuth();
+  if (authResult instanceof NextResponse) return authResult;
+
   const { id } = await params;
   const adminClient = createAdminClient();
 

@@ -14,16 +14,12 @@ import {
   Contact,
   Shield,
   ChevronLeft,
-  FileSearch,
-  TrendingUp,
-  Share2,
-  Star,
   Wrench,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLicenseWarningCount } from '@/hooks/use-license-control';
 import { useUvvWarningCount } from '@/hooks/use-uvv-control';
-import { MODULES, getModuleByRoute, type ModuleConfig } from '@/lib/modules';
+import { MODULES, MODULE_ICONS, getModuleByRoute, type ModuleConfig } from '@/lib/modules';
 
 // Fuhrpark Modul-spezifische Navigation
 const fuhrparkNavigation = [
@@ -51,17 +47,6 @@ const fuhrparkSecondaryNavigation: FuhrparkSecondaryNavItem[] = [
   { name: 'Einstellungen', href: '/fuhrpark/settings', icon: Settings, badgeType: null },
 ];
 
-// Modul-Icon-Zuordnung
-const MODULE_ICONS: Record<string, React.ElementType> = {
-  FileSearch,
-  TrendingUp,
-  Car,
-  Users,
-  Share2,
-  Star,
-  Wrench,
-  LayoutDashboard,
-};
 
 interface SidebarNavItemProps {
   href: string;

@@ -3,7 +3,6 @@
 import { Suspense } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ErrorState } from '@/components/shared/error-state';
@@ -77,10 +76,10 @@ function EditAppointmentContent(): React.JSX.Element {
  */
 export default function EditAppointmentPage(): React.JSX.Element {
   return (
-    <AppLayout>
+    <>
       <Suspense fallback={<LoadingSpinner text="Termin wird geladen..." />}>
         <EditAppointmentContent />
       </Suspense>
-    </AppLayout>
+    </>
   );
 }

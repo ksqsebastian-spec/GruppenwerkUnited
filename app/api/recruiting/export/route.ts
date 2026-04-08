@@ -1,10 +1,13 @@
+import { requireAdmin } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
 
 const VALID_STATUSES = ["offen", "eingestellt", "probezeit_bestanden", "ausgezahlt"] as const;
 
-// GET /api/admin/export — CSV export of all empfehlungen
+// GET /api/recruiting/export — CSV export of all empfehlungen
 export async function GET(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
   const status = searchParams.get("status");
 

@@ -1,6 +1,5 @@
 'use client';
 
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { VehicleForm } from '@/components/vehicles';
 
@@ -9,7 +8,7 @@ import { VehicleForm } from '@/components/vehicles';
  */
 export default function NewVehiclePage(): React.JSX.Element {
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Neues Fahrzeug"
@@ -19,6 +18,6 @@ export default function NewVehiclePage(): React.JSX.Element {
 
         <VehicleForm />
       </div>
-    </AppLayout>
+    </>
   );
 }

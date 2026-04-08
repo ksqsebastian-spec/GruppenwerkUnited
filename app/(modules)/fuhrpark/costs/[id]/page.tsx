@@ -15,7 +15,6 @@ import {
   Download,
   ExternalLink,
 } from 'lucide-react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ErrorState } from '@/components/shared/error-state';
@@ -82,25 +81,25 @@ export default function CostDetailPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <AppLayout>
+      <>
         <LoadingSpinner text="Kosteneintrag wird geladen..." />
-      </AppLayout>
+      </>
     );
   }
 
   if (error || !cost) {
     return (
-      <AppLayout>
+      <>
         <ErrorState
           message="Kosteneintrag konnte nicht geladen werden"
           onRetry={refetch}
         />
-      </AppLayout>
+      </>
     );
   }
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -280,7 +279,7 @@ export default function CostDetailPage(): React.JSX.Element {
           isLoading={deleteMutation.isPending}
         />
       </div>
-    </AppLayout>
+    </>
   );
 }
 

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Settings, Users, Plus } from 'lucide-react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,7 +19,7 @@ export default function UvvControlPage(): React.JSX.Element {
   const [batchDialogOpen, setBatchDialogOpen] = useState(false);
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="UVV-Kontrolle"
@@ -76,6 +75,6 @@ export default function UvvControlPage(): React.JSX.Element {
         open={batchDialogOpen}
         onOpenChange={setBatchDialogOpen}
       />
-    </AppLayout>
+    </>
   );
 }

@@ -18,7 +18,6 @@ import {
   ClipboardCheck,
   Hash,
 } from 'lucide-react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ErrorState } from '@/components/shared/error-state';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
@@ -59,25 +58,25 @@ export default function LicenseEmployeeDetailPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <AppLayout>
+      <>
         <LoadingSpinner text="Mitarbeiter wird geladen..." />
-      </AppLayout>
+      </>
     );
   }
 
   if (error || !employee) {
     return (
-      <AppLayout>
+      <>
         <ErrorState
           message="Mitarbeiter konnte nicht geladen werden"
           onRetry={refetch}
         />
-      </AppLayout>
+      </>
     );
   }
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -312,7 +311,7 @@ export default function LicenseEmployeeDetailPage(): React.JSX.Element {
           isLoading={archiveMutation.isPending}
         />
       </div>
-    </AppLayout>
+    </>
   );
 }
 

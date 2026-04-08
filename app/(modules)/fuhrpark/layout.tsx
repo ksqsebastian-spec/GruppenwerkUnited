@@ -1,13 +1,14 @@
-import type { ReactNode } from 'react';
+'use client';
 
-interface DashboardLayoutProps {
-  children: ReactNode;
+import { AppLayout } from '@/components/layout/app-layout';
+
+interface FuhrparkLayoutProps {
+  children: React.ReactNode;
 }
 
 /**
- * Layout für den Dashboard-Bereich
- * Das AppLayout wird in den einzelnen Seiten verwendet
+ * Fuhrpark-Modul Layout – Werkbank AppLayout (Sidebar + Header + Auth-Guard)
  */
-export default function DashboardLayout({ children }: DashboardLayoutProps): React.JSX.Element {
-  return <>{children}</>;
+export default function FuhrparkLayout({ children }: FuhrparkLayoutProps): React.JSX.Element {
+  return <AppLayout>{children}</AppLayout>;
 }

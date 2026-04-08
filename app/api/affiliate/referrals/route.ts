@@ -1,3 +1,4 @@
+import { requireAuth } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCreateSchema, paginationSchema } from "@/lib/modules/affiliate/validators";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/modules/affiliate/rate-limit";
@@ -5,6 +6,8 @@ import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
 
 // GET /api/referrals — list empfehlungen (handwerker sees own via query)
 export async function GET(request: NextRequest) {
+  const authResult = await requireAuth();
+  if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
   const handwerkerId = searchParams.get("handwerker_id");
 

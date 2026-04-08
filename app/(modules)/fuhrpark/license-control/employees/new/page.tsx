@@ -1,6 +1,5 @@
 'use client';
 
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { EmployeeForm } from '@/components/license-control';
 
@@ -9,7 +8,7 @@ import { EmployeeForm } from '@/components/license-control';
  */
 export default function NewLicenseEmployeePage(): React.JSX.Element {
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Neuer Mitarbeiter"
@@ -19,6 +18,6 @@ export default function NewLicenseEmployeePage(): React.JSX.Element {
 
         <EmployeeForm />
       </div>
-    </AppLayout>
+    </>
   );
 }

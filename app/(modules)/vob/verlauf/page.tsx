@@ -1,7 +1,6 @@
 import { getAllScans } from '@/lib/modules/vob/queries';
 import { formatDate } from '@/lib/utils';
 import { DownloadReport } from '../_components/export/DownloadReport';
-import { AppLayout } from '@/components/layout/app-layout';
 
 export const revalidate = 300;
 
@@ -12,7 +11,7 @@ export default async function VerlaufPage(): Promise<React.JSX.Element> {
   const scans = await getAllScans();
 
   return (
-    <AppLayout>
+    <>
       <div className="max-w-[1200px]">
         <h1 className="text-[18px] font-semibold text-neutral-900 mb-6">Verlauf</h1>
 
@@ -41,6 +40,6 @@ export default async function VerlaufPage(): Promise<React.JSX.Element> {
           </div>
         )}
       </div>
-    </AppLayout>
+    </>
   );
 }

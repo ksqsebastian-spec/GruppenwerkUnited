@@ -2,7 +2,6 @@
 
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { DocumentUpload } from '@/components/documents';
@@ -187,7 +186,7 @@ function DocumentUploadForm(): React.JSX.Element {
  */
 export default function UploadDocumentPage(): React.JSX.Element {
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Dokument hochladen"
@@ -199,6 +198,6 @@ export default function UploadDocumentPage(): React.JSX.Element {
           <DocumentUploadForm />
         </Suspense>
       </div>
-    </AppLayout>
+    </>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { AppointmentForm } from '@/components/appointments';
@@ -11,7 +10,7 @@ import { AppointmentForm } from '@/components/appointments';
  */
 export default function NewAppointmentPage(): React.JSX.Element {
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Neuer Termin"
@@ -23,6 +22,6 @@ export default function NewAppointmentPage(): React.JSX.Element {
           <AppointmentForm />
         </Suspense>
       </div>
-    </AppLayout>
+    </>
   );
 }

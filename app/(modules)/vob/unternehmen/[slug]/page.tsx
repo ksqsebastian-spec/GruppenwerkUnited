@@ -3,7 +3,6 @@ import { ExportButton } from '../../_components/export/ExportButton';
 import { Badge } from '@/components/ui/badge';
 import { notFound } from 'next/navigation';
 import { CompanyTenderList } from './CompanyTenderList';
-import { AppLayout } from '@/components/layout/app-layout';
 
 export const revalidate = 300;
 
@@ -27,7 +26,7 @@ export default async function CompanyPage({ params }: PageProps): Promise<React.
   const activeTenders = tenders.filter((t) => t.status === 'active');
 
   return (
-    <AppLayout>
+    <>
       <div className="max-w-[1200px]">
         <div className="flex items-start justify-between gap-4 mb-8">
           <div>
@@ -64,6 +63,6 @@ export default async function CompanyPage({ params }: PageProps): Promise<React.
         </div>
         <CompanyTenderList tenders={tenders} />
       </div>
-    </AppLayout>
+    </>
   );
 }

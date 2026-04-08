@@ -1,7 +1,6 @@
 'use client';
 
 import { Car, Users, AlertTriangle, Receipt } from 'lucide-react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatCard, WarningCard, QuickActions, RecentActivity } from '@/components/dashboard';
 import {
@@ -29,7 +28,7 @@ export default function DashboardPage(): React.JSX.Element {
   const { data: activities, isLoading: activitiesLoading } = useRecentActivities();
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Dashboard"
@@ -84,6 +83,6 @@ export default function DashboardPage(): React.JSX.Element {
           />
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 }
