@@ -78,7 +78,7 @@ export async function POST(
 
   // Audit log
   await logAudit({
-    userId: "admin",
+    userId: authResult.user.id,
     action: "empfehlung.completed",
     targetType: "empfehlung",
     targetId: id,

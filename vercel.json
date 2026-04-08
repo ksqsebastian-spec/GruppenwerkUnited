@@ -2,7 +2,7 @@
   "framework": "nextjs",
   "crons": [
     {
-      "path": "/api/cron/check-appointments",
+      "path": "/api/cron/appointments",
       "schedule": "0 7 * * *"
     }
   ]
