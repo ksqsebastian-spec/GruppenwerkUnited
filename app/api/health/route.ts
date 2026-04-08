@@ -1,0 +1,13 @@
+import { NextResponse } from 'next/server';
+
+/**
+ * Health-Check Endpoint
+ * Wird für Monitoring und Verfügbarkeitsprüfungen verwendet
+ */
+export async function GET(): Promise<NextResponse> {
+  return NextResponse.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version ?? '1.0.0',
+  });
+}
