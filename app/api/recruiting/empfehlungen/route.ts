@@ -1,4 +1,5 @@
 import { requireAdmin } from '@/lib/modules/recruiting/auth';
+import { validateOrigin } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCreateSchema } from "@/lib/modules/recruiting/validators";
 import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
@@ -10,6 +11,7 @@ const VALID_STATUSES = ["offen", "eingestellt", "probezeit_bestanden", "ausgezah
 export async function POST(request: NextRequest) {
   const authResult = await requireAdmin();
   if (authResult instanceof NextResponse) return authResult;
+  if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   let body: unknown;
   try {
     body = await request.json();
@@ -60,13 +62,13 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.json(
-      { error: "Empfehlung konnte nicht erstellt werden", detail: error.message },
+      { error: "Empfehlung konnte nicht erstellt werden"},
       { status: 500 }
     );
   }
 
   await logAudit({
-    userId: "admin",
+    userId: authResult.user.id,
     action: "empfehlung.created",
     targetType: "empfehlung",
     targetId: data.id,
@@ -81,6 +83,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const authResult = await requireAdmin();
   if (authResult instanceof NextResponse) return authResult;
+  if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   let body: unknown;
   try {
     body = await request.json();
@@ -179,13 +182,13 @@ export async function PATCH(request: NextRequest) {
 
   if (error) {
     return NextResponse.json(
-      { error: "Aktualisierung fehlgeschlagen", detail: error.message },
+      { error: "Aktualisierung fehlgeschlagen"},
       { status: 500 }
     );
   }
 
   await logAudit({
-    userId: "admin",
+    userId: authResult.user.id,
     action: "empfehlung.updated",
     targetType: "empfehlung",
     targetId: id as string,
@@ -200,6 +203,7 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const authResult = await requireAdmin();
   if (authResult instanceof NextResponse) return authResult;
+  if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   const { searchParams } = request.nextUrl;
   const id = searchParams.get("id");
 
@@ -222,13 +226,13 @@ export async function DELETE(request: NextRequest) {
 
   if (error) {
     return NextResponse.json(
-      { error: "Empfehlung konnte nicht gelöscht werden", detail: error.message },
+      { error: "Empfehlung konnte nicht gelöscht werden"},
       { status: 500 }
     );
   }
 
   await logAudit({
-    userId: "admin",
+    userId: authResult.user.id,
     action: "empfehlung.deleted",
     targetType: "empfehlung",
     targetId: id,

@@ -1,4 +1,5 @@
 import { requireAdmin } from '@/lib/modules/affiliate/auth';
+import { validateOrigin } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { handwerkerCreateSchema, handwerkerUpdateSchema, paginationSchema } from "@/lib/modules/affiliate/validators";
 import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
@@ -37,16 +38,20 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      query = query.or(
-        `kunde_name.ilike.%${search}%,empfehler_name.ilike.%${search}%,ref_code.ilike.%${search}%`
-      );
+      // Sicherheit: Sonderzeichen escapen, die PostgREST-Filter manipulieren könnten
+      const sanitized = search.replace(/[%_\\.,()]/g, '');
+      if (sanitized.length > 0) {
+        query = query.or(
+          `kunde_name.ilike.%${sanitized}%,empfehler_name.ilike.%${sanitized}%,ref_code.ilike.%${sanitized}%`
+        );
+      }
     }
 
     const { data, count, error } = await query;
 
     if (error) {
       return NextResponse.json(
-        { error: "Daten konnten nicht geladen werden", detail: error.message },
+        { error: "Daten konnten nicht geladen werden"},
         { status: 500 }
       );
     }
@@ -67,7 +72,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return NextResponse.json(
-      { error: "Handwerker konnten nicht geladen werden", detail: error.message },
+      { error: "Handwerker konnten nicht geladen werden"},
       { status: 500 }
     );
   }
@@ -79,6 +84,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const authResult = await requireAdmin();
   if (authResult instanceof NextResponse) return authResult;
+  if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   let body: unknown;
   try {
     body = await request.json();
@@ -145,14 +151,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: "Handwerker konnte nicht in DB erstellt werden",
-        detail: error.message,
+        
       },
       { status: 500 }
     );
   }
 
   await logAudit({
-    userId: "admin",
+    userId: authResult.user.id,
     action: "handwerker.created",
     targetType: "handwerker",
     targetId: data.id,
@@ -167,6 +173,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const authResult = await requireAdmin();
   if (authResult instanceof NextResponse) return authResult;
+  if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   let body: unknown;
   try {
     body = await request.json();
@@ -214,7 +221,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   await logAudit({
-    userId: "admin",
+    userId: authResult.user.id,
     action: "handwerker.updated",
     targetType: "handwerker",
     targetId: id,
@@ -232,6 +239,7 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const authResult = await requireAdmin();
   if (authResult instanceof NextResponse) return authResult;
+  if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   const { searchParams } = request.nextUrl;
   const id = searchParams.get("id");
 
@@ -263,7 +271,7 @@ export async function DELETE(request: NextRequest) {
 
   if (error) {
     return NextResponse.json(
-      { error: "Handwerker konnte nicht gelöscht werden", detail: error.message },
+      { error: "Handwerker konnte nicht gelöscht werden"},
       { status: 500 }
     );
   }
@@ -274,7 +282,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   await logAudit({
-    userId: "admin",
+    userId: authResult.user.id,
     action: "handwerker.deleted",
     targetType: "handwerker",
     targetId: id,

@@ -1,4 +1,5 @@
 import { requireAdmin } from '@/lib/modules/recruiting/auth';
+import { validateOrigin } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
 
@@ -16,7 +17,7 @@ export async function GET() {
 
   if (error) {
     return NextResponse.json(
-      { error: "Einstellungen konnten nicht geladen werden", detail: error.message },
+      { error: "Einstellungen konnten nicht geladen werden"},
       { status: 500 }
     );
   }
@@ -30,6 +31,7 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   const authResult = await requireAdmin();
   if (authResult instanceof NextResponse) return authResult;
+  if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   let body: unknown;
   try {
     body = await request.json();
@@ -61,7 +63,7 @@ export async function PATCH(request: NextRequest) {
 
   if (error) {
     return NextResponse.json(
-      { error: "Einstellung konnte nicht gespeichert werden", detail: error.message },
+      { error: "Einstellung konnte nicht gespeichert werden"},
       { status: 500 }
     );
   }

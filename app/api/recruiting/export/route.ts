@@ -1,4 +1,5 @@
 import { requireAdmin } from '@/lib/modules/recruiting/auth';
+import { validateOrigin } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
 

@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return NextResponse.json(
-      { error: "Daten konnten nicht geladen werden", detail: error.message },
+      { error: "Daten konnten nicht geladen werden"},
       { status: 500 }
     );
   }
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
       );
     }
     return NextResponse.json(
-      { error: "Empfehlung konnte nicht erstellt werden", detail: error.message },
+      { error: "Empfehlung konnte nicht erstellt werden"},
       { status: 500 }
     );
   }

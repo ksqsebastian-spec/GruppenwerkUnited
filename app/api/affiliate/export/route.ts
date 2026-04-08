@@ -1,4 +1,5 @@
 import { requireAdmin } from '@/lib/modules/affiliate/auth';
+import { validateOrigin } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
 

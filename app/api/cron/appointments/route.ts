@@ -15,7 +15,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json(
       { error: 'Nicht autorisiert' },
       { status: 401 }
@@ -71,7 +71,6 @@ export async function GET(request: Request): Promise<NextResponse> {
     // oder Webhook an externes System senden
 
     // Beispiel für Logging
-    console.log(`Cron-Job ausgeführt: ${overdueAppointments?.length ?? 0} Termine auf überfällig gesetzt, ${upcomingAppointments?.length ?? 0} bevorstehende Termine`);
 
     return NextResponse.json({
       success: true,
