@@ -57,11 +57,10 @@ export function Header(): React.JSX.Element {
         </Button>
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
+        <Link href="/" className="flex items-center shrink-0">
           <div className="h-7 w-7 bg-primary rounded-md flex items-center justify-center">
             <Wrench className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="font-semibold text-sm">Werkbank</span>
         </Link>
 
         {/* Trennlinie */}

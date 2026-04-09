@@ -97,47 +97,12 @@ export default function WerkbankDashboard(): React.JSX.Element {
     return false;
   });
 
-  const toolModules = visibleModules.filter((m) => m.category === 'tool');
-  const companyModules = visibleModules.filter((m) => m.category === 'company');
-
   return (
     <AppLayout>
-      <div className="space-y-10">
-        {/* Begrüßung */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Werkbank</h1>
-          <p className="mt-1 text-gray-500">
-            Wähle ein Modul, um zu starten.
-          </p>
-        </div>
-
-        {/* Allgemeine Tools */}
-        {toolModules.length > 0 && (
-          <section>
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-400">
-              Tools
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {toolModules.map((mod) => (
-                <ModuleCard key={mod.id} module={mod} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Firmen-Module — unter dem Namen der eingeloggten Firma */}
-        {companyModules.length > 0 && (
-          <section>
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-400">
-              {company?.companyName ?? 'Module'}
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {companyModules.map((mod) => (
-                <ModuleCard key={mod.id} module={mod} />
-              ))}
-            </div>
-          </section>
-        )}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {visibleModules.map((mod) => (
+          <ModuleCard key={mod.id} module={mod} />
+        ))}
       </div>
     </AppLayout>
   );
