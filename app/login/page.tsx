@@ -19,22 +19,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 
-import { useAuth } from '@/components/providers/auth-provider';
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
 
 /**
- * E-Mail für den geteilten Werkbank-Account
- */
-const SHARED_ACCOUNT_EMAIL =
-  process.env.NEXT_PUBLIC_SHARED_ACCOUNT_EMAIL ?? 'admin@werkbank.local';
-
-/**
  * Login-Seite der Werkbank-Plattform
- * Einmaliges Passwort für alle internen Nutzer (Phase 1)
+ * Passwort-Schutz via SITE_PASSWORD Umgebungsvariable
  */
 export default function LoginPage(): React.JSX.Element {
   const router = useRouter();
-  const { signIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormData>({
@@ -47,11 +39,22 @@ export default function LoginPage(): React.JSX.Element {
   const onSubmit = async (data: LoginFormData): Promise<void> => {
     setIsLoading(true);
     try {
-      await signIn(SHARED_ACCOUNT_EMAIL, data.password);
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: data.password }),
+      });
+
+      if (!response.ok) {
+        toast.error('Falsches Passwort');
+        return;
+      }
+
       toast.success('Erfolgreich angemeldet');
       router.push('/');
+      router.refresh();
     } catch {
-      toast.error('Falsches Passwort');
+      toast.error('Anmeldung fehlgeschlagen');
     } finally {
       setIsLoading(false);
     }

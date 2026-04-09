@@ -19,7 +19,7 @@ import { MobileNav } from './mobile-nav';
 
 export function Header(): React.JSX.Element {
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSignOut = async (): Promise<void> => {
@@ -67,16 +67,12 @@ export function Header(): React.JSX.Element {
                     <User className="h-5 w-5 text-gray-600" />
                   </div>
                   <span className="hidden sm:block text-sm font-medium">
-                    {user?.email || 'Benutzer'}
+                    Werkbank
                   </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                  {user?.email}
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
+<DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Abmelden
                 </DropdownMenuItem>
