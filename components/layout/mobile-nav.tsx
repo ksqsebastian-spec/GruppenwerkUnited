@@ -72,7 +72,7 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps): React.JSX.Ele
     <div className="relative z-50 lg:hidden">
       {/* Hintergrundoverlay */}
       <div
-        className="fixed inset-0 bg-gray-900/80"
+        className="fixed inset-0 bg-foreground/80"
         onClick={() => onOpenChange(false)}
       />
 
@@ -93,7 +93,7 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps): React.JSX.Ele
           </div>
 
           {/* Navigation */}
-          <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
+          <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-card px-6 pb-4">
             {/* Logo */}
             <div className="flex h-16 shrink-0 items-center">
               <Link
@@ -114,12 +114,12 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps): React.JSX.Ele
                 <Link
                   href="/"
                   onClick={() => onOpenChange(false)}
-                  className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Zur Übersicht
                 </Link>
-                <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {currentModule.name}
                 </p>
               </div>
@@ -146,7 +146,7 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps): React.JSX.Ele
                           'group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-colors',
                           active
                             ? 'bg-primary/10 text-primary'
-                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                            : 'text-foreground/80 hover:bg-muted hover:text-foreground'
                         )}
                       >
                         <Icon
@@ -154,7 +154,7 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps): React.JSX.Ele
                             'h-5 w-5 shrink-0',
                             active
                               ? 'text-primary'
-                              : 'text-gray-400 group-hover:text-gray-600'
+                              : 'text-muted-foreground group-hover:text-muted-foreground'
                           )}
                         />
                         <span className="flex-1">{item.name}</span>
