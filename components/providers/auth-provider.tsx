@@ -1,11 +1,15 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
-/**
- * Vereinfachter Auth-Kontext — Authentifizierung läuft über Middleware (Cookie).
- * Wenn der Benutzer diese Komponente erreicht, ist er bereits eingeloggt.
- */
+/** Firmen-Kontext aus der Session */
+export interface CompanyInfo {
+  companyId: string;
+  companyName: string;
+  isAdmin: boolean;
+  /** Erlaubte Modul-IDs oder '*' für vollen Zugriff */
+  allowedModules: string[] | '*';
+}
 
 interface SimpleUser {
   email: string;
@@ -13,26 +17,52 @@ interface SimpleUser {
 
 interface AuthContextType {
   user: SimpleUser;
-  isLoading: false;
+  company: CompanyInfo | null;
+  isLoading: boolean;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-interface AuthProviderProps {
-  children: React.ReactNode;
-}
+const FALLBACK_USER: SimpleUser = { email: 'Werkbank' };
 
-const WERKBANK_USER: SimpleUser = { email: 'Werkbank' };
+export function AuthProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const [company, setCompany] = useState<CompanyInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element {
+  useEffect(() => {
+    // Firmen-Kontext aus Session laden
+    fetch('/api/auth/me')
+      .then((res) => {
+        if (!res.ok) return null;
+        return res.json() as Promise<{
+          companyId: string;
+          companyName: string;
+          isAdmin: boolean;
+          modules: string[] | '*';
+        }>;
+      })
+      .then((data) => {
+        if (data) {
+          setCompany({
+            companyId: data.companyId,
+            companyName: data.companyName,
+            isAdmin: data.isAdmin,
+            allowedModules: data.modules,
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
+
   const signOut = async (): Promise<void> => {
     await fetch('/api/auth/logout', { method: 'POST' });
     window.location.href = '/login';
   };
 
   return (
-    <AuthContext.Provider value={{ user: WERKBANK_USER, isLoading: false, signOut }}>
+    <AuthContext.Provider value={{ user: FALLBACK_USER, company, isLoading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

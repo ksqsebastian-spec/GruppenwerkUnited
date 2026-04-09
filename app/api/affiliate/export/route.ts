@@ -16,6 +16,11 @@ export async function GET(request: NextRequest) {
     .select("*, handwerker:handwerker_id(name)")
     .order("created_at", { ascending: false });
 
+  // Nicht-Admins exportieren nur Daten ihrer Firma
+  if (!authResult.isAdmin) {
+    query = query.eq("company", authResult.companyId);
+  }
+
   if (status && ["offen", "erledigt", "ausgezahlt"].includes(status)) {
     query = query.eq("status", status);
   }

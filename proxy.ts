@@ -1,15 +1,17 @@
 import { type NextRequest, NextResponse } from 'next/server';
-
-const AUTH_COOKIE = 'werkbank-auth';
+import { SESSION_COOKIE, decodeSession } from '@/lib/auth/session';
+import { ROUTE_TO_MODULE, hasModuleAccess, COMPANY_CONFIGS } from '@/lib/auth/companies';
 
 /**
- * Werkbank Proxy — Cookie-basiertes Passwort-Gate
- * Authentifizierung via SITE_PASSWORD Umgebungsvariable.
+ * Werkbank Proxy — Multi-Tenant Zugriffskontrolle
+ *
+ * Layer 1: Session-Cookie prüfen (HMAC-signiert)
+ * Layer 2: Modul-Zugriff prüfen (Firma darf nur eigene Module sehen)
  */
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
-  // Öffentliche Pfade überspringen
+  // Öffentliche Pfade — kein Auth nötig
   if (
     pathname === '/login' ||
     pathname.startsWith('/api/auth') ||
@@ -18,15 +20,34 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  const authCookie = request.cookies.get(AUTH_COOKIE)?.value;
-  const sitePassword = process.env.SITE_PASSWORD;
+  // Session aus Cookie lesen und verifizieren
+  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  const session = token ? await decodeSession(token) : null;
 
-  if (sitePassword && authCookie === sitePassword) {
-    return NextResponse.next();
+  if (!session) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  const loginUrl = new URL('/login', request.url);
-  return NextResponse.redirect(loginUrl);
+  // Modul-Zugriff prüfen
+  const company = COMPANY_CONFIGS.find((c) => c.id === session.companyId);
+  if (!company) {
+    // Unbekannte Firma — Session ungültig
+    const res = NextResponse.redirect(new URL('/login', request.url));
+    res.cookies.delete(SESSION_COOKIE);
+    return res;
+  }
+
+  // Prüfe ob die Route einem geschützten Modul gehört
+  for (const [routePrefix, moduleId] of Object.entries(ROUTE_TO_MODULE)) {
+    if (pathname === routePrefix || pathname.startsWith(routePrefix + '/')) {
+      if (!hasModuleAccess(company, moduleId)) {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+      break;
+    }
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {

@@ -1,73 +1,35 @@
-import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import type { User } from "@supabase/supabase-js";
+import { NextResponse } from 'next/server';
+import { requireSession, requireAdminSession } from '@/lib/auth/api';
+import type { SessionData } from '@/lib/auth/session';
 
-// validateOrigin und getAllowedOrigins kommen aus der gemeinsamen Implementierung.
-// Re-export für Rückwärtskompatibilität bestehender API-Route-Imports.
-export { validateOrigin, getAllowedOrigins } from "@/lib/api-guards";
+export { validateOrigin, getAllowedOrigins } from '@/lib/api-guards';
 
-interface AuthResult {
-  user: User;
-  /** UUID des Handwerker-Datensatzes; leer wenn Admin ohne Handwerker-Profil */
-  handwerkerId: string;
+/** Auth-Ergebnis für Affiliate API-Routes */
+export interface AffiliateAuthResult {
+  companyId: string;
+  companyName: string;
   isAdmin: boolean;
+  /** companyId als userId für Audit-Logs */
+  user: { id: string };
 }
 
-// Prüft Auth und gibt User-Kontext inkl. Handwerker-ID für API-Routen zurück
-export async function requireAuth(): Promise<AuthResult | NextResponse> {
-  const supabase = await createServerSupabaseClient();
-
-  // SICHERHEIT: getUser() validiert JWT gegen Supabase Auth-Server
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    return NextResponse.json(
-      { error: "Nicht authentifiziert" },
-      { status: 401 }
-    );
-  }
-
-  // SICHERHEIT: Admin-Flag aus app_metadata (nicht user_metadata)
-  const isAdmin = user.app_metadata?.is_admin === true;
-
-  // Handwerker-Datensatz für diesen User laden
-  const adminClient = createAdminClient();
-  const { data: handwerker } = await adminClient
-    .from("handwerker")
-    .select("id")
-    .eq("auth_user_id", user.id)
-    .single();
-
-  if (!handwerker && !isAdmin) {
-    return NextResponse.json(
-      { error: "Kein Handwerker-Profil gefunden" },
-      { status: 403 }
-    );
-  }
-
+function toResult(session: SessionData): AffiliateAuthResult {
   return {
-    user,
-    handwerkerId: handwerker?.id ?? "",
-    isAdmin,
+    companyId: session.companyId,
+    companyName: session.companyName,
+    isAdmin: session.isAdmin,
+    user: { id: session.companyId },
   };
 }
 
-export async function requireAdmin(): Promise<
-  { user: User; isAdmin: true } | NextResponse
-> {
-  const result = await requireAuth();
+export async function requireAuth(): Promise<AffiliateAuthResult | NextResponse> {
+  const result = await requireSession();
   if (result instanceof NextResponse) return result;
+  return toResult(result);
+}
 
-  if (!result.isAdmin) {
-    return NextResponse.json(
-      { error: "Admin-Berechtigung erforderlich" },
-      { status: 403 }
-    );
-  }
-
-  return { user: result.user, isAdmin: true };
+export async function requireAdmin(): Promise<AffiliateAuthResult | NextResponse> {
+  const result = await requireAdminSession();
+  if (result instanceof NextResponse) return result;
+  return toResult(result);
 }

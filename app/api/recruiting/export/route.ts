@@ -18,6 +18,11 @@ export async function GET(request: NextRequest) {
     .select("*, stelle:stelle_id(title)")
     .order("created_at", { ascending: false });
 
+  // Nicht-Admins exportieren nur Daten ihrer Firma
+  if (!authResult.isAdmin) {
+    query = query.eq("company", authResult.companyId);
+  }
+
   if (status && VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
     query = query.eq("status", status);
   }

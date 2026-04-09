@@ -4,20 +4,11 @@ import { empfehlungCreateSchema, paginationSchema } from "@/lib/modules/affiliat
 import { checkRateLimit, RATE_LIMITS } from "@/lib/modules/affiliate/rate-limit";
 import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
 
-// GET /api/referrals — list empfehlungen (handwerker sieht nur eigene)
+// GET /api/affiliate/referrals — Empfehlungen auflisten
 export async function GET(request: NextRequest) {
   const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
-
-  // SICHERHEIT: Nicht-Admins dürfen nur ihre eigenen Empfehlungen abrufen
-  const requestedId = searchParams.get("handwerker_id");
-  let handwerkerId: string | null;
-  if (authResult.isAdmin) {
-    handwerkerId = requestedId;
-  } else {
-    handwerkerId = authResult.handwerkerId;
-  }
 
   const pagination = paginationSchema.safeParse({
     page: searchParams.get("page"),
@@ -37,8 +28,9 @@ export async function GET(request: NextRequest) {
     .order("created_at", { ascending: false })
     .range(offset, offset + pageSize - 1);
 
-  if (handwerkerId) {
-    query = query.eq("handwerker_id", handwerkerId);
+  // SICHERHEIT: Nicht-Admins dürfen nur Empfehlungen ihrer Firma sehen
+  if (!authResult.isAdmin) {
+    query = query.eq("company", authResult.companyId);
   }
 
   if (status && ["offen", "erledigt", "ausgezahlt"].includes(status)) {
@@ -115,11 +107,24 @@ export async function POST(request: NextRequest) {
     refCode = generated as string;
   }
 
+  // Firma aus dem Handwerker ableiten (für korrekte Datentrennung)
+  const handwerkerId = (parsed.data as Record<string, unknown>).handwerker_id as string | undefined;
+  let company = '';
+  if (handwerkerId) {
+    const { data: hw } = await adminClient
+      .from("handwerker")
+      .select("company")
+      .eq("id", handwerkerId)
+      .single();
+    company = hw?.company ?? '';
+  }
+
   const { data, error } = await adminClient
     .from("empfehlungen")
     .insert({
       ...parsed.data,
       ref_code: refCode,
+      company,
     })
     .select()
     .single();
