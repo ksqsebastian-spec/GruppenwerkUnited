@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Header } from './header';
 import { FuhrparkSubnav } from './fuhrpark-subnav';
 import { AuthGuard } from '@/components/auth/auth-guard';
+import { MascotCrab } from '@/components/shared/mascot-crab';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -26,6 +27,9 @@ export function AppLayout({ children }: AppLayoutProps): React.JSX.Element {
         <main className="py-6">
           <div className="px-4 sm:px-6 lg:px-8">{children}</div>
         </main>
+
+        {/* Maskottchen */}
+        <MascotCrab />
       </div>
     </AuthGuard>
   );
