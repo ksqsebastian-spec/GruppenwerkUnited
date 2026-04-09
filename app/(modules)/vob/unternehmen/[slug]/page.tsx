@@ -1,4 +1,4 @@
-import { getCompany, getCompanyTenders, getCompanyStats } from '@/lib/modules/vob/queries';
+import { getCompany, getCompanyTenders } from '@/lib/modules/vob/queries';
 import { ExportButton } from '../../_components/export/ExportButton';
 import { Badge } from '@/components/ui/badge';
 import { notFound } from 'next/navigation';
@@ -18,7 +18,6 @@ export default async function CompanyPage({ params }: PageProps): Promise<React.
   const [company, tenders] = await Promise.all([
     getCompany(slug),
     getCompanyTenders(slug),
-    getCompanyStats(slug),
   ]);
 
   if (!company) notFound();
