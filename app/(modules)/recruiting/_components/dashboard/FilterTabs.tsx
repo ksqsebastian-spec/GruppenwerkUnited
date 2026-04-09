@@ -18,17 +18,9 @@ const tabs: { key: FilterOption; label: string }[] = [
   { key: "ausgezahlt", label: "Ausgezahlt" },
 ];
 
-export function FilterTabs({ active, counts, onChange }: FilterTabsProps) {
+export function FilterTabs({ active, counts, onChange }: FilterTabsProps): React.JSX.Element {
   return (
-    <div
-      role="tablist"
-      style={{
-        display: "flex",
-        gap: "8px",
-        overflowX: "auto",
-        paddingBottom: "4px",
-      }}
-    >
+    <div role="tablist" className="flex gap-2 overflow-x-auto pb-1">
       {tabs.map((tab) => {
         const isActive = active === tab.key;
         return (
@@ -37,20 +29,13 @@ export function FilterTabs({ active, counts, onChange }: FilterTabsProps) {
             role="tab"
             aria-selected={isActive}
             onClick={() => onChange(tab.key)}
-            style={{
-              padding: "8px 16px",
-              fontSize: "13px",
-              fontWeight: isActive ? 600 : 400,
-              border: "none",
-              borderRadius: "var(--radius-sm)",
-              backgroundColor: isActive ? "var(--navy)" : "transparent",
-              color: isActive ? "white" : "var(--text-muted)",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-              transition: "all 0.2s ease",
-            }}
+            className={`px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
+              isActive
+                ? "bg-foreground text-background font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted font-normal"
+            }`}
           >
-            {tab.label}({counts[tab.key]})
+            {tab.label} ({counts[tab.key]})
           </button>
         );
       })}

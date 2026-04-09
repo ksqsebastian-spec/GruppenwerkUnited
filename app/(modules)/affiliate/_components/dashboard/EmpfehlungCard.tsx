@@ -3,15 +3,14 @@
 import type { Empfehlung } from "@/types/affiliate";
 import { Avatar } from "../ui/Avatar";
 import { Badge } from "../ui/Badge";
-import { formatRelativeDate } from "@/lib/modules/affiliate/utils";
-import { getStatusColor } from "@/lib/modules/affiliate/utils";
+import { formatRelativeDate, getStatusColor } from "@/lib/modules/affiliate/utils";
 
 interface EmpfehlungCardProps {
   empfehlung: Empfehlung;
   onClick: () => void;
 }
 
-export function EmpfehlungCard({ empfehlung, onClick }: EmpfehlungCardProps) {
+export function EmpfehlungCard({ empfehlung, onClick }: EmpfehlungCardProps): React.JSX.Element {
   const colors = getStatusColor(empfehlung.status);
   const isAusgezahlt = empfehlung.status === "ausgezahlt";
 
@@ -19,59 +18,21 @@ export function EmpfehlungCard({ empfehlung, onClick }: EmpfehlungCardProps) {
     <button
       onClick={onClick}
       aria-label={`Empfehlung ${empfehlung.kunde_name} – ${empfehlung.status}`}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        width: "100%",
-        padding: "16px",
-        backgroundColor: "var(--bg-card)",
-        borderRadius: "var(--radius)",
-        boxShadow: "var(--shadow-card)",
-        border: "none",
-        borderLeft: `3px solid ${colors.border}`,
-        cursor: "pointer",
-        textAlign: "left",
-        transition: "all 0.2s ease",
-        opacity: isAusgezahlt ? 0.7 : 1,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "var(--shadow-hover)";
-        e.currentTarget.style.transform = "translateY(-1px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "var(--shadow-card)";
-        e.currentTarget.style.transform = "translateY(0)";
-      }}
+      className={`flex items-center gap-3 w-full p-4 bg-card rounded-xl border-l-[3px] border-y border-r border-border text-left transition-colors hover:bg-muted/50 cursor-pointer ${isAusgezahlt ? "opacity-70" : ""}`}
+      style={{ borderLeftColor: colors.border }}
     >
       <Avatar name={empfehlung.kunde_name} status={empfehlung.status} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontWeight: 600,
-            fontSize: "14px",
-            color: "var(--text)",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
+      <div className="flex-1 min-w-0">
+        <div className="font-semibold text-sm text-foreground truncate">
           {empfehlung.kunde_name}
         </div>
-        <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+        <div className="text-xs text-muted-foreground">
           Affiliate: {empfehlung.empfehler_name}
         </div>
       </div>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-end",
-          gap: "4px",
-        }}
-      >
+      <div className="flex flex-col items-end gap-1">
         <Badge status={empfehlung.status} />
-        <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+        <span className="text-[11px] text-muted-foreground">
           {formatRelativeDate(empfehlung.created_at)}
         </span>
       </div>

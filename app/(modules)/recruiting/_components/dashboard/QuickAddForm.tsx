@@ -64,21 +64,9 @@ export function QuickAddForm() {
   const year = new Date().getFullYear();
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{ display: "flex", flexDirection: "column", gap: "16px" }}
-    >
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {generalError && (
-        <div
-          role="alert"
-          style={{
-            padding: "12px",
-            backgroundColor: "var(--red-bg)",
-            color: "var(--red)",
-            borderRadius: "var(--radius-sm)",
-            fontSize: "13px",
-          }}
-        >
+        <div role="alert" className="p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-200">
           {generalError}
         </div>
       )}

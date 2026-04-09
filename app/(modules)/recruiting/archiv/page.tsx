@@ -4,10 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import { Search, Archive, ArrowLeft } from "lucide-react";
 import type { EmpfehlungWithStelle } from "@/types/recruiting";
 import { StatCard } from "../_components/ui/StatCard";
-import { Card } from "../_components/ui/Card";
 import { formatDate, formatCurrency } from "@/lib/modules/recruiting/utils";
 
-export default function ArchivPage() {
+export default function ArchivPage(): JSX.Element {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithStelle[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -41,7 +40,7 @@ export default function ArchivPage() {
     return () => clearTimeout(debounce);
   }, [fetchData]);
 
-  async function handleMoveBack(emp: EmpfehlungWithStelle) {
+  async function handleMoveBack(emp: EmpfehlungWithStelle): Promise<void> {
     try {
       const res = await fetch("/api/recruiting/empfehlungen", {
         method: "PATCH",
@@ -60,39 +59,42 @@ export default function ArchivPage() {
   }
 
   const totalPraemie = empfehlungen.reduce((sum, e) => sum + (e.praemie_betrag ?? 0), 0);
-
-  const cellStyle = { padding: "14px 16px" };
+  const totalPages = Math.ceil(total / 25);
 
   return (
-    <div className="animate-fadeIn" style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <Archive size={28} color="var(--navy)" />
-        <h1 style={{ fontSize: "32px", fontWeight: 800, margin: 0, color: "var(--navy)" }}>Archiv</h1>
+    <div className="animate-fadeIn flex flex-col gap-8">
+      <div className="flex items-center gap-3">
+        <Archive size={22} className="text-muted-foreground" />
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">Archiv</h1>
       </div>
 
-      <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-        <StatCard label="Archiviert" value={total} bgColor="#eff6ff" color="#2563eb" />
-        <StatCard label="Ausgezahlt gesamt" value={formatCurrency(totalPraemie)} bgColor="#f5f3ff" color="#7c3aed" />
+      {/* Statistiken */}
+      <div className="grid grid-cols-2 gap-px bg-border rounded-xl overflow-hidden border border-border">
+        <StatCard label="Archiviert" value={total} />
+        <StatCard label="Ausgezahlt gesamt" value={formatCurrency(totalPraemie)} />
       </div>
 
-      {/* Search */}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "14px 18px", backgroundColor: "white", border: "2px solid var(--border)", borderRadius: "14px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-        <Search size={20} color="var(--orange)" />
+      {/* Suche */}
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-xl">
+        <Search size={16} className="text-muted-foreground shrink-0" />
         <input
           placeholder="Name, Ref-Code suchen..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          style={{ border: "none", outline: "none", flex: 1, fontSize: "15px", backgroundColor: "transparent", color: "var(--text)", fontWeight: 500 }}
+          className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
         />
       </div>
 
-      {/* Table */}
-      <Card style={{ padding: 0, overflow: "auto", borderRadius: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", tableLayout: "auto" }}>
+      {/* Tabelle */}
+      <div className="bg-card rounded-xl border border-border overflow-hidden overflow-x-auto">
+        <table className="w-full text-sm border-collapse">
           <thead>
-            <tr style={{ textAlign: "left", background: "linear-gradient(135deg, #050234 0%, #0a0654 100%)" }}>
+            <tr className="bg-muted">
               {["Empfehler", "Stelle", "Ref", "Prämie", "Ausgezahlt am", "Erstellt", "Aktionen"].map((h) => (
-                <th key={h} style={{ padding: "16px 16px", fontWeight: 700, color: "rgba(255,255,255,0.8)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.8px", whiteSpace: "nowrap" }}>
+                <th
+                  key={h}
+                  className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap"
+                >
                   {h}
                 </th>
               ))}
@@ -100,64 +102,61 @@ export default function ArchivPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: "15px" }}>Laden...</td></tr>
+              <tr>
+                <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                  Wird geladen...
+                </td>
+              </tr>
             ) : empfehlungen.length === 0 ? (
-              <tr><td colSpan={7} style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: "15px" }}>Noch keine archivierten Einträge</td></tr>
+              <tr>
+                <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                  Noch keine archivierten Einträge
+                </td>
+              </tr>
             ) : (
-              empfehlungen.map((emp, i) => (
-                <tr
-                  key={emp.id}
-                  style={{
-                    borderBottom: "1px solid var(--border)",
-                    backgroundColor: i % 2 === 0 ? "white" : "#f8f7f4",
-                  }}
-                >
+              empfehlungen.map((emp) => (
+                <tr key={emp.id} className="border-t border-border hover:bg-muted/50 transition-colors">
                   {/* Empfehler */}
-                  <td style={{ ...cellStyle, fontWeight: 600 }}>
+                  <td className="px-4 py-3 font-semibold text-foreground">
                     {emp.empfehler_name}
-                    <div style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 400 }}>{emp.empfehler_email}</div>
+                    <div className="text-xs text-muted-foreground font-normal">{emp.empfehler_email}</div>
                   </td>
 
                   {/* Stelle */}
-                  <td style={cellStyle}>
-                    <div style={{ fontWeight: 600 }}>{emp.stelle?.title ?? "–"}</div>
+                  <td className="px-4 py-3">
+                    <div className="font-semibold text-foreground">{emp.stelle?.title ?? "–"}</div>
                   </td>
 
                   {/* Ref */}
-                  <td style={{ ...cellStyle, fontFamily: "monospace", fontSize: "12px", color: "var(--blue)", fontWeight: 700 }}>{emp.ref_code}</td>
+                  <td className="px-4 py-3 font-mono text-xs font-semibold text-foreground">{emp.ref_code}</td>
 
                   {/* Prämie */}
-                  <td style={{ ...cellStyle, fontWeight: 700, color: "var(--green)" }}>
+                  <td className="px-4 py-3 font-semibold text-foreground">
                     {emp.praemie_betrag ? formatCurrency(emp.praemie_betrag) : "–"}
                   </td>
 
                   {/* Ausgezahlt am */}
-                  <td style={{ ...cellStyle, whiteSpace: "nowrap" }}>
+                  <td className="px-4 py-3 whitespace-nowrap">
                     {emp.ausgezahlt_am ? (
-                      <span style={{ background: "#7C3AED", color: "white", padding: "4px 12px", borderRadius: "12px", fontSize: "12px", fontWeight: 700 }}>
+                      <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-muted border border-border text-foreground">
                         {formatDate(emp.ausgezahlt_am)}
                       </span>
                     ) : "–"}
                   </td>
 
                   {/* Erstellt */}
-                  <td style={{ ...cellStyle, whiteSpace: "nowrap", color: "var(--text-muted)" }}>
+                  <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                     {formatDate(emp.created_at)}
                   </td>
 
                   {/* Aktionen */}
-                  <td style={cellStyle}>
+                  <td className="px-4 py-3">
                     <button
                       onClick={() => handleMoveBack(emp)}
-                      style={{
-                        background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-                        border: "none", borderRadius: "10px", padding: "8px 12px", cursor: "pointer",
-                        color: "white", fontWeight: 700, fontSize: "12px", display: "flex", alignItems: "center", gap: "4px",
-                        boxShadow: "0 2px 8px rgba(37,99,235,0.3)",
-                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-foreground hover:bg-muted transition-colors whitespace-nowrap cursor-pointer"
                       title="Zurück zur Auszahlung"
                     >
-                      <ArrowLeft size={14} /> Zur Auszahlung
+                      <ArrowLeft size={13} /> Zur Auszahlung
                     </button>
                   </td>
                 </tr>
@@ -165,35 +164,25 @@ export default function ArchivPage() {
             )}
           </tbody>
         </table>
-      </Card>
+      </div>
 
-      {/* Pagination */}
+      {/* Seitennavigation */}
       {total > 25 && (
-        <div style={{ display: "flex", justifyContent: "center", gap: "10px", alignItems: "center" }}>
+        <div className="flex justify-center gap-3 items-center">
           <button
             disabled={page === 1}
             onClick={() => setPage((p) => p - 1)}
-            style={{
-              padding: "12px 24px", border: "none", borderRadius: "24px",
-              background: page === 1 ? "var(--border)" : "linear-gradient(135deg, #050234 0%, #0a0654 100%)",
-              color: page === 1 ? "var(--text-muted)" : "white",
-              cursor: page === 1 ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "14px",
-            }}
+            className="px-5 py-2 rounded-lg text-sm font-medium border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Zurück
           </button>
-          <span style={{ padding: "8px 20px", fontSize: "15px", fontWeight: 700, color: "var(--navy)" }}>
-            Seite {page} von {Math.ceil(total / 25)}
+          <span className="px-4 py-2 text-sm font-medium text-foreground">
+            Seite {page} von {totalPages}
           </span>
           <button
             disabled={page * 25 >= total}
             onClick={() => setPage((p) => p + 1)}
-            style={{
-              padding: "12px 24px", border: "none", borderRadius: "24px",
-              background: page * 25 >= total ? "var(--border)" : "linear-gradient(135deg, #f28900 0%, #ff6b00 100%)",
-              color: page * 25 >= total ? "var(--text-muted)" : "white",
-              cursor: page * 25 >= total ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "14px",
-            }}
+            className="px-5 py-2 rounded-lg text-sm font-medium border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Weiter
           </button>

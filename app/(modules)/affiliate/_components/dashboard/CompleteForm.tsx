@@ -11,10 +11,7 @@ interface CompleteFormProps {
   provisionProzent: number;
 }
 
-export function CompleteForm({
-  empfehlungId,
-  provisionProzent,
-}: CompleteFormProps) {
+export function CompleteForm({ empfehlungId, provisionProzent }: CompleteFormProps): React.JSX.Element {
   const router = useRouter();
   const [betrag, setBetrag] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,7 +20,7 @@ export function CompleteForm({
   const numericBetrag = parseFloat(betrag) || 0;
   const provision = berechneProvision(numericBetrag, provisionProzent);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     if (numericBetrag <= 0) {
       setError("Bitte einen gültigen Betrag eingeben");
@@ -34,14 +31,11 @@ export function CompleteForm({
     setError("");
 
     try {
-      const res = await fetch(
-        `/api/referrals/${empfehlungId}/complete`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rechnungsbetrag: numericBetrag }),
-        }
-      );
+      const res = await fetch(`/api/referrals/${empfehlungId}/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rechnungsbetrag: numericBetrag }),
+      });
 
       const data = await res.json();
       if (!res.ok) {
@@ -59,41 +53,15 @@ export function CompleteForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{ display: "flex", flexDirection: "column", gap: "16px" }}
-    >
-      <div
-        style={{
-          borderTop: "1px solid var(--border)",
-          paddingTop: "20px",
-          marginTop: "8px",
-        }}
-      >
-        <h3
-          style={{
-            fontSize: "14px",
-            fontWeight: 600,
-            color: "var(--text-muted)",
-            textAlign: "center",
-            marginBottom: "16px",
-          }}
-        >
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="border-t border-border pt-5 mt-2">
+        <h3 className="text-sm font-semibold text-muted-foreground text-center mb-4">
           Job erledigt?
         </h3>
       </div>
 
       {error && (
-        <div
-          role="alert"
-          style={{
-            padding: "12px",
-            backgroundColor: "var(--red-bg)",
-            color: "var(--red)",
-            borderRadius: "var(--radius-sm)",
-            fontSize: "13px",
-          }}
-        >
+        <div role="alert" className="p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-200">
           {error}
         </div>
       )}
@@ -111,27 +79,12 @@ export function CompleteForm({
       />
 
       {numericBetrag > 0 && (
-        <div
-          style={{
-            fontSize: "14px",
-            color: "var(--green)",
-            fontWeight: 600,
-            textAlign: "center",
-          }}
-          aria-live="polite"
-        >
+        <p className="text-sm font-semibold text-foreground text-center" aria-live="polite">
           Provision: {provisionProzent}% = {formatCurrency(provision)}
-        </div>
+        </p>
       )}
 
-      <Button
-        type="submit"
-        loading={loading}
-        size="lg"
-        style={{
-          backgroundColor: "var(--green)",
-        }}
-      >
+      <Button type="submit" loading={loading} size="lg" className="bg-green-600 hover:bg-green-700 text-white">
         ✓ Job erledigt
       </Button>
     </form>

@@ -12,7 +12,7 @@ import {
 } from "@/lib/modules/affiliate/email-templates";
 import { generateReceipt } from "@/lib/modules/affiliate/pdf-receipt";
 
-export default function EmailConfiguratorPage() {
+export default function EmailConfiguratorPage(): JSX.Element {
   const [empfehlungen, setAffiliateen] = useState<EmpfehlungWithHandwerker[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string>("");
@@ -46,7 +46,7 @@ export default function EmailConfiguratorPage() {
       })
     : null;
 
-  async function copyToClipboard(text: string, type: "subject" | "body" | "all") {
+  async function copyToClipboard(text: string, type: "subject" | "body" | "all"): Promise<void> {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(type);
@@ -69,86 +69,57 @@ export default function EmailConfiguratorPage() {
       : "";
 
   return (
-    <div
-      className="animate-fadeIn"
-      style={{ display: "flex", flexDirection: "column", gap: "32px" }}
-    >
+    <div className="animate-fadeIn flex flex-col gap-8">
       <div>
-        <h1 style={{ fontSize: "32px", fontWeight: 800, margin: 0, color: "var(--navy)" }}>
-          E-Mail Konfigurator
-        </h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "15px", margin: "10px 0 0 0", lineHeight: 1.6 }}>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">E-Mail Konfigurator</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Wähle eine Affiliate, um die Auszahlungs-E-Mail zu generieren.
         </p>
       </div>
 
       {/* Affiliate cards */}
       <div>
-        <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--orange)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "14px" }}>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Affiliate auswählen
-        </div>
+        </p>
 
         {loading ? (
-          <Card style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)", borderRadius: "20px" }}>
-            Laden...
+          <Card className="p-10 text-center text-sm text-muted-foreground">
+            Wird geladen...
           </Card>
         ) : empfehlungen.length === 0 ? (
-          <Card style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)", borderRadius: "20px" }}>
+          <Card className="p-10 text-center text-sm text-muted-foreground">
             Keine Affiliateen vorhanden.
           </Card>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div className="flex flex-col gap-2.5">
             {empfehlungen.map((emp) => {
               const isSelected = selectedId === emp.id;
               return (
                 <button
                   key={emp.id}
                   onClick={() => setSelectedId(emp.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "16px",
-                    padding: "16px 20px",
-                    borderRadius: "16px",
-                    border: isSelected ? "2px solid var(--orange)" : "2px solid var(--border)",
-                    backgroundColor: isSelected ? "var(--orange-bg)" : "white",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    transition: "all 0.2s ease",
-                    boxShadow: isSelected ? "0 4px 16px rgba(242,137,0,0.15)" : "0 2px 8px rgba(0,0,0,0.03)",
-                    width: "100%",
-                  }}
+                  className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl border-2 text-left transition-colors ${
+                    isSelected
+                      ? "border-foreground bg-muted"
+                      : "border-border bg-card hover:bg-muted/50"
+                  }`}
                 >
-                  <div
-                    style={{
-                      width: "42px",
-                      height: "42px",
-                      borderRadius: "12px",
-                      background: isSelected ? "linear-gradient(135deg, #f28900, #ff6b00)" : "#f0eff8",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <User size={20} color={isSelected ? "white" : "var(--navy)"} />
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isSelected ? "bg-foreground" : "bg-muted"}`}>
+                    <User size={18} className={isSelected ? "text-background" : "text-muted-foreground"} />
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                      <span style={{ fontWeight: 700, fontSize: "15px", color: "var(--navy)" }}>
-                        {emp.empfehler_name}
-                      </span>
-                      <ArrowRight size={14} color="var(--text-muted)" />
-                      <span style={{ fontSize: "14px", color: "var(--text-muted)" }}>
-                        {emp.kunde_name}
-                      </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-sm text-foreground">{emp.empfehler_name}</span>
+                      <ArrowRight size={13} className="text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">{emp.kunde_name}</span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "4px" }}>
-                      <span style={{ fontFamily: "monospace", fontSize: "12px", color: "var(--blue)", fontWeight: 700, background: "var(--blue-bg)", padding: "2px 8px", borderRadius: "6px" }}>
+                    <div className="flex items-center gap-2.5 mt-1">
+                      <span className="font-mono text-xs font-semibold text-foreground bg-muted px-2 py-0.5 rounded-md border border-border">
                         {emp.ref_code}
                       </span>
                       {emp.provision_betrag && (
-                        <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--green)" }}>
+                        <span className="text-xs font-semibold text-foreground">
                           {formatCurrency(emp.provision_betrag)}
                         </span>
                       )}
@@ -161,26 +132,16 @@ export default function EmailConfiguratorPage() {
         )}
       </div>
 
-      {/* Generated email */}
+      {/* Generierte E-Mail */}
       {generatedEmail && selected && (
-        <Card style={{ padding: 0, borderRadius: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
-          {/* Subject */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "20px 24px",
-              borderBottom: "1px solid var(--border)",
-              background: "linear-gradient(135deg, #050234 0%, #0a0654 100%)",
-              borderRadius: "20px 20px 0 0",
-            }}
-          >
+        <Card className="p-0 overflow-hidden">
+          {/* Betreff-Header */}
+          <div className="flex justify-between items-center px-6 py-5 bg-foreground border-b border-border rounded-t-xl">
             <div>
-              <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>
+              <span className="text-[11px] text-background/50 font-semibold uppercase tracking-wider">
                 Betreff
               </span>
-              <div style={{ fontSize: "16px", fontWeight: 600, marginTop: "4px", color: "white" }}>
+              <div className="text-base font-semibold mt-1 text-background">
                 {generatedEmail.subject}
               </div>
             </div>
@@ -189,23 +150,16 @@ export default function EmailConfiguratorPage() {
               size="sm"
               onClick={() => copyToClipboard(generatedEmail.subject, "subject")}
               aria-label="Betreff kopieren"
-              style={{ color: "rgba(255,255,255,0.7)" }}
+              className="text-background/70 hover:text-background hover:bg-white/10"
             >
               {copied === "subject" ? <Check size={16} /> : <Copy size={16} />}
             </Button>
           </div>
 
-          {/* Body */}
-          <div style={{ padding: "24px" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "12px",
-              }}
-            >
-              <span style={{ fontSize: "12px", color: "var(--orange)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>
+          {/* Nachrichtentext */}
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Nachricht
               </span>
               <Button
@@ -215,44 +169,19 @@ export default function EmailConfiguratorPage() {
                 aria-label="Nachricht kopieren"
               >
                 {copied === "body" ? (
-                  <>
-                    <Check size={14} /> Kopiert
-                  </>
+                  <><Check size={14} /> Kopiert</>
                 ) : (
-                  <>
-                    <Copy size={14} /> Kopieren
-                  </>
+                  <><Copy size={14} /> Kopieren</>
                 )}
               </Button>
             </div>
-            <pre
-              style={{
-                whiteSpace: "pre-wrap",
-                fontFamily: "Inter, sans-serif",
-                fontSize: "15px",
-                lineHeight: 1.8,
-                color: "var(--text)",
-                backgroundColor: "#f8f7f4",
-                padding: "24px",
-                borderRadius: "14px",
-                border: "1px solid var(--border)",
-                margin: 0,
-              }}
-            >
+            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground bg-muted p-6 rounded-xl border border-border m-0">
               {generatedEmail.body}
             </pre>
           </div>
 
-          {/* Actions */}
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              padding: "20px 24px",
-              borderTop: "1px solid var(--border)",
-              flexWrap: "wrap",
-            }}
-          >
+          {/* Aktionen */}
+          <div className="flex gap-3 px-6 py-5 border-t border-border flex-wrap">
             <Button
               size="lg"
               onClick={() =>
@@ -263,19 +192,12 @@ export default function EmailConfiguratorPage() {
               }
             >
               {copied === "all" ? (
-                <>
-                  <Check size={18} /> Alles kopiert!
-                </>
+                <><Check size={18} /> Alles kopiert!</>
               ) : (
-                <>
-                  <Copy size={18} /> Alles kopieren
-                </>
+                <><Copy size={18} /> Alles kopieren</>
               )}
             </Button>
-            <a
-              href={mailtoLink}
-              style={{ textDecoration: "none" }}
-            >
+            <a href={mailtoLink}>
               <Button variant="secondary" size="lg">
                 <Mail size={18} /> In Mail-App öffnen
               </Button>
@@ -302,18 +224,11 @@ export default function EmailConfiguratorPage() {
       )}
 
       {!selectedId && !loading && empfehlungen.length > 0 && (
-        <Card
-          style={{
-            textAlign: "center",
-            padding: "48px",
-            color: "var(--text-muted)",
-            fontSize: "16px",
-            borderRadius: "20px",
-            background: "linear-gradient(135deg, #f8f7f4 0%, #eff6ff 100%)",
-          }}
-        >
-          <Mail size={40} color="var(--orange)" style={{ marginBottom: "16px" }} />
-          <div>Wähle oben eine Affiliate aus, um die E-Mail zu generieren.</div>
+        <Card className="p-12 text-center">
+          <Mail size={36} className="text-muted-foreground mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground">
+            Wähle oben eine Affiliate aus, um die E-Mail zu generieren.
+          </p>
         </Card>
       )}
     </div>
