@@ -67,6 +67,11 @@ export function matchCompanyByPassword(password: string): CompanyConfig | null {
       return company;
     }
   }
+  // Fallback: APP_PASSWORD (altes Single-Password-System) → Admin-Zugang
+  const appPassword = process.env.APP_PASSWORD;
+  if (appPassword && password === appPassword) {
+    return COMPANY_CONFIGS.find((c) => c.isAdmin) ?? null;
+  }
   return null;
 }
 
