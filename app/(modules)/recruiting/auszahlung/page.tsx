@@ -129,7 +129,7 @@ export default function AuszahlungPage() {
   function CopyField({ label, value, copyKey }: { label: string; value: string | null; copyKey: string }) {
     if (!value) return null;
     return (
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", backgroundColor: "#f8f7f4", borderRadius: "10px", border: "1px solid var(--border)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", backgroundColor: "hsl(var(--muted))", borderRadius: "10px", border: "1px solid var(--border)" }}>
         <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", minWidth: "80px" }}>{label}</span>
         <span style={{ flex: 1, fontSize: "14px", fontWeight: 600, fontFamily: "monospace", color: "var(--navy)" }}>{value}</span>
         <button
@@ -158,7 +158,7 @@ export default function AuszahlungPage() {
       </div>
 
       {/* Search */}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "14px 18px", backgroundColor: "white", border: "2px solid var(--border)", borderRadius: "14px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "14px 18px", backgroundColor: "hsl(var(--card))", border: "2px solid var(--border)", borderRadius: "14px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
         <Search size={20} color="var(--orange)" />
         <input
           placeholder="Name, Ref-Code suchen..."
@@ -192,7 +192,7 @@ export default function AuszahlungPage() {
                     key={emp.id}
                     style={{
                       borderBottom: expandedId === emp.id ? "none" : "1px solid var(--border)",
-                      backgroundColor: expandedId === emp.id ? "rgba(37,99,235,0.04)" : i % 2 === 0 ? "white" : "#f8f7f4",
+                      backgroundColor: expandedId === emp.id ? "rgba(37,99,235,0.04)" : i % 2 === 0 ? "hsl(var(--card))" : "hsl(var(--muted))",
                       cursor: "pointer",
                       transition: "background-color 0.15s ease",
                     }}

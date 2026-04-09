@@ -269,7 +269,7 @@ export default function StellenPage() {
                   fontSize: "14px",
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-sm)",
-                  backgroundColor: "white",
+                  backgroundColor: "hsl(var(--card))",
                   color: "var(--text)",
                   outline: "none",
                   resize: "vertical",
@@ -323,7 +323,7 @@ export default function StellenPage() {
                   : { label: "INAKTIV", color: "#dc2626", shadow: "rgba(220,38,38,0.3)" };
 
                 return (
-                  <tr key={stelle.id} style={{ borderBottom: "1px solid var(--border)", backgroundColor: i % 2 === 0 ? "white" : "#f8f7f4" }}>
+                  <tr key={stelle.id} style={{ borderBottom: "1px solid var(--border)", backgroundColor: i % 2 === 0 ? "hsl(var(--card))" : "hsl(var(--muted))" }}>
                     <td style={{ padding: "16px 18px", fontWeight: 600 }}>{stelle.title}</td>
                     <td style={{ padding: "16px 18px", maxWidth: "250px", color: stelle.description ? "var(--text)" : "var(--text-muted)" }}>
                       {stelle.description ? (

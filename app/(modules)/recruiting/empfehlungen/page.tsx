@@ -274,7 +274,7 @@ export default function EmpfehlungenPage() {
                 value={data.stelle_id}
                 onChange={(e) => setData({ ...data, stelle_id: e.target.value })}
                 required
-                style={{ width: "100%", padding: "14px 18px", border: "2px solid var(--border)", borderRadius: "14px", fontSize: "15px", fontWeight: 500, backgroundColor: "white", color: "var(--text)", cursor: "pointer" }}
+                style={{ width: "100%", padding: "14px 18px", border: "2px solid var(--border)", borderRadius: "14px", fontSize: "15px", fontWeight: 500, backgroundColor: "hsl(var(--card))", color: "var(--text)", cursor: "pointer" }}
               >
                 <option value="">Stelle auswählen...</option>
                 {stellen.map((st) => (
@@ -294,7 +294,7 @@ export default function EmpfehlungenPage() {
           </label>
 
           {bankdaten && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px", padding: "18px", backgroundColor: "#f8f7f4", borderRadius: "14px", border: "2px solid var(--border)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px", padding: "18px", backgroundColor: "hsl(var(--muted))", borderRadius: "14px", border: "2px solid var(--border)" }}>
               <Input label="IBAN" placeholder="DE89 3704 0044 0532 0130 00" value={bankFormData.iban} onChange={(e) => setBankFormData({ ...bankFormData, iban: e.target.value })} />
               <Input label="BIC" placeholder="COBADEFFXXX" value={bankFormData.bic} onChange={(e) => setBankFormData({ ...bankFormData, bic: e.target.value })} />
               <Input label="Kontoinhaber" placeholder="Name des Kontoinhabers" value={bankFormData.kontoinhaber} onChange={(e) => setBankFormData({ ...bankFormData, kontoinhaber: e.target.value })} />
@@ -338,7 +338,7 @@ export default function EmpfehlungenPage() {
 
       {/* Search */}
       <div style={{ display: "flex", gap: "16px", alignItems: "center", flexWrap: "wrap" }}>
-        <div style={{ flex: 1, minWidth: "220px", display: "flex", alignItems: "center", gap: "10px", padding: "14px 18px", backgroundColor: "white", border: "2px solid var(--border)", borderRadius: "14px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+        <div style={{ flex: 1, minWidth: "220px", display: "flex", alignItems: "center", gap: "10px", padding: "14px 18px", backgroundColor: "hsl(var(--card))", border: "2px solid var(--border)", borderRadius: "14px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
           <Search size={20} color="var(--orange)" />
           <input
             placeholder="Name, Ref-Code suchen..."
@@ -372,7 +372,7 @@ export default function EmpfehlungenPage() {
                   key={emp.id}
                   style={{
                     borderBottom: "1px solid var(--border)",
-                    backgroundColor: editingEmp?.id === emp.id ? "rgba(242,137,0,0.06)" : i % 2 === 0 ? "white" : "#f8f7f4",
+                    backgroundColor: editingEmp?.id === emp.id ? "rgba(242,137,0,0.06)" : i % 2 === 0 ? "hsl(var(--card))" : "hsl(var(--muted))",
                     transition: "background-color 0.15s ease",
                   }}
                 >
