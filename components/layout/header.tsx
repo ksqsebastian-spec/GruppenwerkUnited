@@ -19,7 +19,7 @@ import { MobileNav } from './mobile-nav';
 
 export function Header(): React.JSX.Element {
   const router = useRouter();
-  const { signOut } = useAuth();
+  const { company, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSignOut = async (): Promise<void> => {
@@ -67,7 +67,7 @@ export function Header(): React.JSX.Element {
                     <User className="h-5 w-5 text-gray-600" />
                   </div>
                   <span className="hidden sm:block text-sm font-medium">
-                    Werkbank
+                    {company?.companyName ?? 'Werkbank'}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
