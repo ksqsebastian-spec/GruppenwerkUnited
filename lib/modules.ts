@@ -87,15 +87,6 @@ export const MODULES: ModuleConfig[] = [
     schema: 'affiliate',
     status: 'active',
   },
-  {
-    id: 'reviews',
-    name: 'Reviews',
-    description: 'Kundenbewertungen überwachen und beantworten',
-    route: '/reviews',
-    icon: 'Star',
-    category: 'tool',
-    status: 'coming_soon',
-  },
 ];
 
 /**
