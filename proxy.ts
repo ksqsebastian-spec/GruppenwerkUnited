@@ -1,27 +1,36 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { updateSession } from '@/lib/supabase/middleware';
+
+const AUTH_COOKIE = 'werkbank-auth';
 
 /**
- * Werkbank Proxy (ehemals Middleware)
- *
- * Phase 1: Supabase-Session-basierter Schutz (geteilter Account).
- * Phase 2 (geplant): Cookie-Gate mit APP_PASSWORD env-Variable,
- *   damit auch Module ohne Supabase-Auth geschützt werden können.
- *
- * Nicht geschützte Pfade: /login, /api/*, statische Assets
+ * Werkbank Proxy — Cookie-basiertes Passwort-Gate
+ * Authentifizierung via SITE_PASSWORD Umgebungsvariable.
  */
 export async function proxy(request: NextRequest): Promise<NextResponse> {
-  return updateSession(request);
+  const { pathname } = request.nextUrl;
+
+  // Öffentliche Pfade überspringen
+  if (
+    pathname === '/login' ||
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/kunden')
+  ) {
+    return NextResponse.next();
+  }
+
+  const authCookie = request.cookies.get(AUTH_COOKIE)?.value;
+  const sitePassword = process.env.SITE_PASSWORD;
+
+  if (sitePassword && authCookie === sitePassword) {
+    return NextResponse.next();
+  }
+
+  const loginUrl = new URL('/login', request.url);
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {
   matcher: [
-    /*
-     * Alle Routen abgleichen außer:
-     * - _next/static  (statische Dateien)
-     * - _next/image   (Bildoptimierung)
-     * - favicon.ico, Bilddateien
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
