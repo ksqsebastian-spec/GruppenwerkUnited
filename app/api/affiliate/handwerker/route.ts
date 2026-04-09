@@ -119,7 +119,9 @@ export async function POST(request: NextRequest) {
 
   const adminClient = createAdminClient();
 
-  // Create Supabase Auth user for this handwerker (Magic Link based)
+  // Optionaler Supabase-Auth-Benutzer für Magic-Link-Login
+  // Fehler werden ignoriert — auth_user_id ist nullable und für den Kern-Workflow nicht notwendig
+  let authUserId: string | null = null;
   const { data: authUser, error: authError } =
     await adminClient.auth.admin.createUser({
       email: parsed.data.email,
@@ -127,24 +129,44 @@ export async function POST(request: NextRequest) {
       app_metadata: { is_admin: false },
     });
 
-  if (authError) {
-    if (authError.message.includes("already")) {
-      return NextResponse.json(
-        { error: "E-Mail-Adresse bereits registriert" },
-        { status: 409 }
-      );
+  if (!authError && authUser?.user?.id) {
+    authUserId = authUser.user.id;
+  } else if (authError) {
+    // Doppelte E-Mail in Auth → bestehenden User suchen
+    if (authError.message?.toLowerCase().includes("already")) {
+      const { data: existing } = await adminClient.auth.admin.listUsers();
+      const found = existing?.users?.find((u) => u.email === parsed.data.email);
+      if (found) authUserId = found.id;
+    }
+    // Alle anderen Auth-Fehler werden geloggt, aber nicht abgebrochen
+    if (!authUserId) {
+      console.error('Handwerker Auth-User konnte nicht erstellt werden (nicht kritisch):', authError.message);
+    }
+  }
+
+  // Prüfen ob E-Mail bereits als Handwerker existiert
+  const { data: existing } = await adminClient
+    .from("handwerker")
+    .select("id")
+    .eq("email", parsed.data.email)
+    .maybeSingle();
+
+  if (existing) {
+    // Auth-User aufräumen falls gerade neu erstellt
+    if (authUserId) {
+      await adminClient.auth.admin.deleteUser(authUserId).catch(() => {});
     }
     return NextResponse.json(
-      { error: "Auth-Benutzer konnte nicht erstellt werden" },
-      { status: 500 }
+      { error: "E-Mail-Adresse bereits als Handwerker registriert" },
+      { status: 409 }
     );
   }
 
-  // Insert handwerker record (company aus Session)
+  // Handwerker-Datensatz anlegen
   const { data, error } = await adminClient
     .from("handwerker")
     .insert({
-      auth_user_id: authUser.user.id,
+      auth_user_id: authUserId,
       name: parsed.data.name,
       email: parsed.data.email,
       telefon: parsed.data.telefon || null,
@@ -155,13 +177,18 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    // Clean up auth user if DB insert fails
-    await adminClient.auth.admin.deleteUser(authUser.user.id);
+    // Auth-User aufräumen falls DB-Insert scheitert
+    if (authUserId) {
+      await adminClient.auth.admin.deleteUser(authUserId).catch(() => {});
+    }
+    if (error.code === "23505") {
+      return NextResponse.json(
+        { error: "E-Mail-Adresse bereits als Handwerker registriert" },
+        { status: 409 }
+      );
+    }
     return NextResponse.json(
-      {
-        error: "Handwerker konnte nicht in DB erstellt werden",
-        
-      },
+      { error: "Handwerker konnte nicht gespeichert werden" },
       { status: 500 }
     );
   }
