@@ -9,7 +9,7 @@ import { Button } from "../_components/ui/Button";
 import { Input } from "../_components/ui/Input";
 import { formatDate, formatCurrency } from "@/lib/modules/affiliate/utils";
 
-export default function EmpfehlungenPage() {
+export default function EmpfehlungenPage(): JSX.Element {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithHandwerker[]>([]);
   const [handwerker, setHandwerker] = useState<Handwerker[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +46,7 @@ export default function EmpfehlungenPage() {
   const [editingBetragId, setEditingBetragId] = useState<string | null>(null);
   const [editBetrag, setEditBetrag] = useState("");
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -68,7 +68,7 @@ export default function EmpfehlungenPage() {
     }
   }, [page, search]);
 
-  const fetchHandwerker = useCallback(async () => {
+  const fetchHandwerker = useCallback(async (): Promise<void> => {
     try {
       const res = await fetch("/api/affiliate/handwerker");
       if (!res.ok) throw new Error();
@@ -88,7 +88,7 @@ export default function EmpfehlungenPage() {
     return () => clearTimeout(debounce);
   }, [fetchData]);
 
-  async function handleCreate(e: React.FormEvent) {
+  async function handleCreate(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setFormLoading(true);
     setFormError("");
@@ -119,7 +119,7 @@ export default function EmpfehlungenPage() {
         return;
       }
 
-      // If bankdaten were provided, update them
+      // Bankdaten speichern falls angegeben
       if (showBankdaten && (bankFormData.iban || bankFormData.bic || bankFormData.kontoinhaber || bankFormData.bank_name)) {
         const created = await res.json().catch(() => null);
         if (created?.id) {
@@ -149,7 +149,7 @@ export default function EmpfehlungenPage() {
     }
   }
 
-  async function handleMoveToAuszahlung(emp: EmpfehlungWithHandwerker) {
+  async function handleMoveToAuszahlung(emp: EmpfehlungWithHandwerker): Promise<void> {
     try {
       const res = await fetch("/api/affiliate/empfehlungen", {
         method: "PATCH",
@@ -167,7 +167,7 @@ export default function EmpfehlungenPage() {
     }
   }
 
-  async function handleDelete(emp: EmpfehlungWithHandwerker) {
+  async function handleDelete(emp: EmpfehlungWithHandwerker): Promise<void> {
     if (!confirm(`"${emp.empfehler_name}" wirklich löschen?`)) return;
 
     try {
@@ -183,7 +183,7 @@ export default function EmpfehlungenPage() {
     }
   }
 
-  async function handleUpdateBetrag(emp: EmpfehlungWithHandwerker) {
+  async function handleUpdateBetrag(emp: EmpfehlungWithHandwerker): Promise<void> {
     const value = parseFloat(editBetrag);
     if (isNaN(value) || value < 0) return;
 
@@ -205,7 +205,7 @@ export default function EmpfehlungenPage() {
     }
   }
 
-  function startEditing(emp: EmpfehlungWithHandwerker) {
+  function startEditing(emp: EmpfehlungWithHandwerker): void {
     setEditingEmp(emp);
     setEditFormData({
       handwerker_id: emp.handwerker?.id ?? "",
@@ -217,7 +217,7 @@ export default function EmpfehlungenPage() {
     setShowForm(false);
   }
 
-  async function handleSaveEdit(e: React.FormEvent) {
+  async function handleSaveEdit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     if (!editingEmp) return;
     setEditLoading(true);
@@ -259,8 +259,7 @@ export default function EmpfehlungenPage() {
       .reduce((sum, e) => sum + (e.provision_betrag ?? 0), 0),
   };
 
-  const cellStyle = { padding: "14px 16px" };
-
+  // Formular-Render-Hilfsfunktion (Erstellen oder Bearbeiten)
   function renderForm(
     mode: "create" | "edit",
     data: typeof formData,
@@ -271,28 +270,26 @@ export default function EmpfehlungenPage() {
     bankdaten: boolean,
     setBankdaten: (v: boolean) => void,
     onCancel: () => void,
-  ) {
+  ): JSX.Element {
     return (
-      <Card style={{ borderLeft: "5px solid var(--orange)", borderRadius: "20px", boxShadow: "0 4px 20px rgba(242,137,0,0.1)" }}>
-        <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-          <h2 style={{ fontSize: "20px", fontWeight: 700, margin: 0, color: "var(--navy)" }}>
+      <Card className="p-5">
+        <form onSubmit={onSubmit} className="flex flex-col gap-5">
+          <h2 className="text-base font-semibold text-foreground">
             {mode === "create" ? "Neuen Affiliate erstellen" : "Affiliate bearbeiten"}
           </h2>
           {error && (
-            <div role="alert" style={{ color: "var(--red)", fontSize: "14px", fontWeight: 600, backgroundColor: "var(--red-bg)", padding: "12px 16px", borderRadius: "12px" }}>
+            <div role="alert" className="text-sm font-medium text-destructive bg-destructive/10 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: 700, color: "var(--navy)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Kunde
-              </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground">Kunde</label>
               <select
                 value={data.handwerker_id}
                 onChange={(e) => setData({ ...data, handwerker_id: e.target.value })}
                 required
-                style={{ width: "100%", padding: "14px 18px", border: "2px solid var(--border)", borderRadius: "14px", fontSize: "15px", fontWeight: 500, backgroundColor: "hsl(var(--card))", color: "var(--text)", cursor: "pointer" }}
+                className="w-full px-3 py-2 text-sm bg-card text-foreground border border-border rounded-lg outline-none transition-colors focus:border-foreground/40 cursor-pointer"
               >
                 <option value="">Kunde auswählen...</option>
                 {handwerker.map((hw) => (
@@ -305,13 +302,18 @@ export default function EmpfehlungenPage() {
             <Input label="Affiliate E-Mail (PayPal)" type="email" value={data.empfehler_email} onChange={(e) => setData({ ...data, empfehler_email: e.target.value })} required />
           </div>
 
-          <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontSize: "14px", fontWeight: 600, color: "var(--navy)" }}>
-            <input type="checkbox" checked={bankdaten} onChange={(e) => setBankdaten(e.target.checked)} style={{ width: "20px", height: "20px", accentColor: "var(--orange)", cursor: "pointer" }} />
+          <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-foreground">
+            <input
+              type="checkbox"
+              checked={bankdaten}
+              onChange={(e) => setBankdaten(e.target.checked)}
+              className="w-4 h-4 cursor-pointer"
+            />
             Bankdaten hinzufügen
           </label>
 
           {bankdaten && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px", padding: "18px", backgroundColor: "hsl(var(--muted))", borderRadius: "14px", border: "2px solid var(--border)" }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-muted rounded-lg border border-border">
               <Input label="IBAN" placeholder="DE89 3704 0044 0532 0130 00" value={bankFormData.iban} onChange={(e) => setBankFormData({ ...bankFormData, iban: e.target.value })} />
               <Input label="BIC" placeholder="COBADEFFXXX" value={bankFormData.bic} onChange={(e) => setBankFormData({ ...bankFormData, bic: e.target.value })} />
               <Input label="Kontoinhaber" placeholder="Name des Kontoinhabers" value={bankFormData.kontoinhaber} onChange={(e) => setBankFormData({ ...bankFormData, kontoinhaber: e.target.value })} />
@@ -319,8 +321,8 @@ export default function EmpfehlungenPage() {
             </div>
           )}
 
-          <div style={{ display: "flex", gap: "12px" }}>
-            <Button type="submit" loading={isLoading} size="lg" style={{ flex: 1 }}>
+          <div className="flex gap-3">
+            <Button type="submit" loading={isLoading} size="lg" className="flex-1">
               {mode === "create" ? "Affiliate erstellen" : "Änderungen speichern"}
             </Button>
             <Button type="button" variant="ghost" size="lg" onClick={onCancel}>Abbrechen</Button>
@@ -331,9 +333,10 @@ export default function EmpfehlungenPage() {
   }
 
   return (
-    <div className="animate-fadeIn" style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ fontSize: "32px", fontWeight: 800, margin: 0, color: "var(--navy)" }}>Affiliate</h1>
+    <div className="animate-fadeIn flex flex-col gap-8">
+      {/* Seitenkopf */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">Affiliate</h1>
         {!editingEmp && (
           <Button onClick={() => { setShowForm(!showForm); setEditingEmp(null); }} size="lg">
             {showForm ? "Abbrechen" : "+ Neuer Affiliate"}
@@ -341,11 +344,13 @@ export default function EmpfehlungenPage() {
         )}
       </div>
 
-      <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-        <StatCard label="Offen" value={stats.total} bgColor="#fff7ed" color="#ea580c" />
-        <StatCard label="Provision (offen)" value={formatCurrency(stats.provision)} bgColor="#f5f3ff" color="#7c3aed" />
+      {/* Statistik-Raster */}
+      <div className="grid grid-cols-2 gap-px bg-border rounded-xl overflow-hidden border border-border">
+        <StatCard label="Offen" value={stats.total} />
+        <StatCard label="Provision (offen)" value={formatCurrency(stats.provision)} />
       </div>
 
+      {/* Formular */}
       {showForm && !editingEmp &&
         renderForm("create", formData, setFormData, handleCreate, formLoading, formError, showBankdaten, setShowBankdaten, () => setShowForm(false))
       }
@@ -353,26 +358,27 @@ export default function EmpfehlungenPage() {
         renderForm("edit", editFormData, setEditFormData, handleSaveEdit, editLoading, editError, showBankdaten, setShowBankdaten, () => setEditingEmp(null))
       }
 
-      {/* Search */}
-      <div style={{ display: "flex", gap: "16px", alignItems: "center", flexWrap: "wrap" }}>
-        <div style={{ flex: 1, minWidth: "220px", display: "flex", alignItems: "center", gap: "10px", padding: "14px 18px", backgroundColor: "hsl(var(--card))", border: "2px solid var(--border)", borderRadius: "14px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-          <Search size={20} color="var(--orange)" />
-          <input
-            placeholder="Name, Ref-Code suchen..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            style={{ border: "none", outline: "none", flex: 1, fontSize: "15px", backgroundColor: "transparent", color: "var(--text)", fontWeight: 500 }}
-          />
-        </div>
+      {/* Suche */}
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-xl">
+        <Search size={16} className="text-muted-foreground shrink-0" />
+        <input
+          placeholder="Name, Ref-Code suchen..."
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+        />
       </div>
 
-      {/* Table */}
-      <Card style={{ padding: 0, overflow: "auto", borderRadius: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", tableLayout: "auto" }}>
+      {/* Tabelle */}
+      <Card className="p-0 overflow-auto">
+        <table className="w-full border-collapse text-sm">
           <thead>
-            <tr style={{ textAlign: "left", background: "linear-gradient(135deg, #050234 0%, #0a0654 100%)" }}>
+            <tr className="bg-muted">
               {["Affiliate", "Kunde", "Provision %", "Ref", "Betrag", "Provision", "Datum", "Aktionen"].map((h) => (
-                <th key={h} style={{ padding: "16px 16px", fontWeight: 700, color: "rgba(255,255,255,0.8)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.8px", whiteSpace: "nowrap" }}>
+                <th
+                  key={h}
+                  className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap"
+                >
                   {h}
                 </th>
               ))}
@@ -380,59 +386,83 @@ export default function EmpfehlungenPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: "15px" }}>Laden...</td></tr>
+              <tr>
+                <td colSpan={8} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                  Wird geladen...
+                </td>
+              </tr>
             ) : empfehlungen.length === 0 ? (
-              <tr><td colSpan={8} style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: "15px" }}>Keine offenen Einträge</td></tr>
+              <tr>
+                <td colSpan={8} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                  Keine offenen Einträge
+                </td>
+              </tr>
             ) : (
-              empfehlungen.map((emp, i) => (
+              empfehlungen.map((emp) => (
                 <tr
                   key={emp.id}
-                  style={{
-                    borderBottom: "1px solid var(--border)",
-                    backgroundColor: editingEmp?.id === emp.id ? "rgba(242,137,0,0.06)" : i % 2 === 0 ? "hsl(var(--card))" : "hsl(var(--muted))",
-                    transition: "background-color 0.15s ease",
-                  }}
+                  className={`border-b border-border hover:bg-muted/50 transition-colors ${editingEmp?.id === emp.id ? "bg-muted/30" : ""}`}
                 >
-                  <td style={{ ...cellStyle, fontWeight: 600 }}>
+                  {/* Affiliate Name + E-Mail */}
+                  <td className="px-4 py-3 text-sm text-foreground font-semibold">
                     {emp.empfehler_name}
-                    <div style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 400 }}>{emp.empfehler_email}</div>
+                    <div className="text-xs text-muted-foreground font-normal">{emp.empfehler_email}</div>
                   </td>
-                  <td style={cellStyle}>{emp.handwerker?.name ?? "–"}</td>
-                  <td style={cellStyle}>
-                    <span style={{ background: "linear-gradient(135deg, #f28900, #ff6b00)", color: "white", padding: "4px 12px", borderRadius: "12px", fontSize: "13px", fontWeight: 700 }}>
+
+                  {/* Kunde */}
+                  <td className="px-4 py-3 text-sm text-foreground">
+                    {emp.handwerker?.name ?? "–"}
+                  </td>
+
+                  {/* Provision % */}
+                  <td className="px-4 py-3">
+                    <span className="px-3 py-1 rounded-lg text-xs font-semibold border border-border text-foreground bg-muted">
                       {emp.handwerker?.provision_prozent ?? "–"}%
                     </span>
                   </td>
-                  <td style={{ ...cellStyle, fontFamily: "monospace", fontSize: "12px", color: "var(--blue)", fontWeight: 700 }}>{emp.ref_code}</td>
 
-                  {/* Betrag */}
-                  <td style={cellStyle}>
+                  {/* Ref-Code */}
+                  <td className="px-4 py-3 font-mono text-xs font-semibold text-foreground">
+                    {emp.ref_code}
+                  </td>
+
+                  {/* Betrag (inline editierbar) */}
+                  <td className="px-4 py-3">
                     {editingBetragId === emp.id ? (
-                      <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                      <div className="flex gap-1.5 items-center">
                         <input
-                          type="number" step="0.01" min="0" value={editBetrag}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editBetrag}
                           onChange={(e) => setEditBetrag(e.target.value)}
-                          style={{ width: "90px", padding: "8px 10px", border: "2px solid var(--orange)", borderRadius: "10px", fontSize: "14px", fontWeight: 700 }}
-                          onKeyDown={(e) => { if (e.key === "Enter") handleUpdateBetrag(emp); if (e.key === "Escape") setEditingBetragId(null); }}
+                          className="w-24 px-2 py-1.5 border border-border rounded-lg text-sm font-semibold bg-card text-foreground outline-none focus:border-foreground/40"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleUpdateBetrag(emp);
+                            if (e.key === "Escape") setEditingBetragId(null);
+                          }}
                           autoFocus
                         />
-                        <button onClick={() => handleUpdateBetrag(emp)} style={{ background: "#16a34a", border: "none", borderRadius: "8px", padding: "6px", cursor: "pointer", display: "flex", alignItems: "center" }}>
-                          <Check size={14} color="white" />
+                        <button
+                          onClick={() => handleUpdateBetrag(emp)}
+                          className="p-1.5 bg-[#16a34a] rounded-md flex items-center cursor-pointer border-0"
+                        >
+                          <Check size={12} color="white" />
                         </button>
-                        <button onClick={() => setEditingBetragId(null)} style={{ background: "var(--border)", border: "none", borderRadius: "8px", padding: "6px", cursor: "pointer", display: "flex", alignItems: "center" }}>
-                          <X size={14} color="var(--text-muted)" />
+                        <button
+                          onClick={() => setEditingBetragId(null)}
+                          className="p-1.5 bg-muted rounded-md flex items-center cursor-pointer border border-border"
+                        >
+                          <X size={12} className="text-muted-foreground" />
                         </button>
                       </div>
                     ) : (
                       <button
-                        onClick={() => { setEditingBetragId(emp.id); setEditBetrag(emp.rechnungsbetrag ? String(emp.rechnungsbetrag) : ""); }}
-                        style={{
-                          background: emp.rechnungsbetrag ? "linear-gradient(135deg, #f28900, #ff6b00)" : "var(--border)",
-                          border: "none", cursor: "pointer", fontWeight: 700,
-                          color: emp.rechnungsbetrag ? "white" : "var(--text-muted)",
-                          padding: "6px 16px", borderRadius: "16px", fontSize: "13px",
-                          boxShadow: emp.rechnungsbetrag ? "0 2px 8px rgba(242,137,0,0.3)" : "none",
+                        onClick={() => {
+                          setEditingBetragId(emp.id);
+                          setEditBetrag(emp.rechnungsbetrag ? String(emp.rechnungsbetrag) : "");
                         }}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold border border-border hover:bg-muted transition-colors cursor-pointer ${emp.rechnungsbetrag ? "text-foreground" : "text-muted-foreground"}`}
                         title="Klicke um Betrag einzutragen"
                       >
                         {emp.rechnungsbetrag ? formatCurrency(emp.rechnungsbetrag) : "–"}
@@ -440,36 +470,37 @@ export default function EmpfehlungenPage() {
                     )}
                   </td>
 
-                  <td style={{ ...cellStyle, fontWeight: 700, color: "var(--green)" }}>
+                  {/* Provision */}
+                  <td className="px-4 py-3 text-sm font-semibold text-foreground">
                     {emp.provision_betrag ? formatCurrency(emp.provision_betrag) : "–"}
                   </td>
-                  <td style={{ ...cellStyle, whiteSpace: "nowrap", color: "var(--text-muted)" }}>{formatDate(emp.created_at)}</td>
+
+                  {/* Datum */}
+                  <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                    {formatDate(emp.created_at)}
+                  </td>
 
                   {/* Aktionen */}
-                  <td style={cellStyle}>
-                    <div style={{ display: "flex", gap: "6px" }}>
-                      <button
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
                         onClick={() => startEditing(emp)}
-                        style={{
-                          background: editingEmp?.id === emp.id ? "var(--orange)" : "linear-gradient(135deg, #050234, #0a0654)",
-                          border: "none", borderRadius: "10px", padding: "8px 14px", cursor: "pointer",
-                          color: "white", fontWeight: 700, fontSize: "12px", display: "flex", alignItems: "center", gap: "4px",
-                        }}
+                        className="flex items-center gap-1"
                       >
-                        <Pencil size={14} /> Bearbeiten
-                      </button>
-                      <button
+                        <Pencil size={12} /> Bearbeiten
+                      </Button>
+                      <Button
+                        size="sm"
                         onClick={() => handleMoveToAuszahlung(emp)}
-                        style={{
-                          background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-                          border: "none", borderRadius: "10px", padding: "8px 14px", cursor: "pointer",
-                          color: "white", fontWeight: 700, fontSize: "12px", display: "flex", alignItems: "center", gap: "4px",
-                          boxShadow: "0 2px 8px rgba(37,99,235,0.3)",
-                        }}
+                        className="flex items-center gap-1"
                       >
-                        <ArrowRight size={14} /> Zur Auszahlung
-                      </button>
-                      <Button size="sm" variant="danger" onClick={() => handleDelete(emp)}>Löschen</Button>
+                        <ArrowRight size={12} /> Zur Auszahlung
+                      </Button>
+                      <Button size="sm" variant="danger" onClick={() => handleDelete(emp)}>
+                        Löschen
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -481,31 +512,21 @@ export default function EmpfehlungenPage() {
 
       {/* Pagination */}
       {total > 25 && (
-        <div style={{ display: "flex", justifyContent: "center", gap: "10px", alignItems: "center" }}>
+        <div className="flex justify-center gap-3 items-center">
           <button
             disabled={page === 1}
             onClick={() => setPage((p) => p - 1)}
-            style={{
-              padding: "12px 24px", border: "none", borderRadius: "24px",
-              background: page === 1 ? "var(--border)" : "linear-gradient(135deg, #050234 0%, #0a0654 100%)",
-              color: page === 1 ? "var(--text-muted)" : "white",
-              cursor: page === 1 ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "14px",
-            }}
+            className="px-6 py-2.5 rounded-lg text-sm font-medium border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Zurück
           </button>
-          <span style={{ padding: "8px 20px", fontSize: "15px", fontWeight: 700, color: "var(--navy)" }}>
+          <span className="px-5 py-2 text-sm font-semibold text-foreground">
             Seite {page} von {Math.ceil(total / 25)}
           </span>
           <button
             disabled={page * 25 >= total}
             onClick={() => setPage((p) => p + 1)}
-            style={{
-              padding: "12px 24px", border: "none", borderRadius: "24px",
-              background: page * 25 >= total ? "var(--border)" : "linear-gradient(135deg, #f28900 0%, #ff6b00 100%)",
-              color: page * 25 >= total ? "var(--text-muted)" : "white",
-              cursor: page * 25 >= total ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "14px",
-            }}
+            className="px-6 py-2.5 rounded-lg text-sm font-medium border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Weiter
           </button>

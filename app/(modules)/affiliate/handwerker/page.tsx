@@ -5,8 +5,33 @@ import type { Handwerker, EmpfehlungWithHandwerker } from "@/types/affiliate";
 import { Card } from "../_components/ui/Card";
 import { Button } from "../_components/ui/Button";
 import { Input } from "../_components/ui/Input";
+import { Check, X } from "lucide-react";
 
-export default function KundePage() {
+// Statusanzeige je nach Aktivität und Archivstatus
+function getStatusDisplay(hw: Handwerker, archivedIds: Set<string>): { label: string; className: string } {
+  if (!hw.active && archivedIds.has(hw.id)) {
+    return { label: "Archiv", className: "text-[#2563eb] bg-[#2563eb]/10 border-[#2563eb]/20" };
+  }
+  if (hw.active) {
+    return { label: "Aktiv", className: "text-[#16a34a] bg-[#16a34a]/10 border-[#16a34a]/20" };
+  }
+  return { label: "Inaktiv", className: "text-destructive bg-destructive/10 border-destructive/20" };
+}
+
+// Farbe für Affiliate-Status-Badges
+const AFFILIATE_STATUS_CLASSES: Record<string, string> = {
+  offen: "text-[#ea580c] bg-[#ea580c]/10 border-[#ea580c]/20",
+  erledigt: "text-[#16a34a] bg-[#16a34a]/10 border-[#16a34a]/20",
+  ausgezahlt: "text-[#2563eb] bg-[#2563eb]/10 border-[#2563eb]/20",
+};
+
+const AFFILIATE_STATUS_LABELS: Record<string, string> = {
+  offen: "Offen",
+  erledigt: "Erledigt",
+  ausgezahlt: "Ausgezahlt",
+};
+
+export default function KundePage(): JSX.Element {
   const [handwerker, setHandwerker] = useState<Handwerker[]>([]);
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithHandwerker[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +42,7 @@ export default function KundePage() {
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (): Promise<void> => {
     try {
       const [hwRes, empRes] = await Promise.all([
         fetch("/api/affiliate/handwerker"),
@@ -42,12 +67,12 @@ export default function KundePage() {
     fetchData();
   }, [fetchData]);
 
-  // Get set of handwerker IDs that have ausgezahlt empfehlungen (archived)
+  // Handwerker-IDs mit ausgezahlten Empfehlungen (archiviert)
   const archivedHandwerkerIds = new Set(
     empfehlungen.filter((e) => e.status === "ausgezahlt").map((e) => e.handwerker_id)
   );
 
-  // Map handwerker_id → linked affiliate names + status
+  // Affiliates je Handwerker zuordnen
   const affiliatesByHandwerker = new Map<string, { name: string; email: string; status: string }[]>();
   for (const emp of empfehlungen) {
     const list = affiliatesByHandwerker.get(emp.handwerker_id) || [];
@@ -55,17 +80,7 @@ export default function KundePage() {
     affiliatesByHandwerker.set(emp.handwerker_id, list);
   }
 
-  function getStatusDisplay(hw: Handwerker) {
-    if (!hw.active && archivedHandwerkerIds.has(hw.id)) {
-      return { label: "ARCHIV", color: "#2563eb", shadow: "rgba(37,99,235,0.3)" };
-    }
-    if (hw.active) {
-      return { label: "AKTIV", color: "#16a34a", shadow: "rgba(22,163,74,0.3)" };
-    }
-    return { label: "INAKTIV", color: "#dc2626", shadow: "rgba(220,38,38,0.3)" };
-  }
-
-  async function handleCreate(e: React.FormEvent) {
+  async function handleCreate(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setFormLoading(true);
     setFormError("");
@@ -99,7 +114,7 @@ export default function KundePage() {
     }
   }
 
-  async function handleUpdateProvision(id: string) {
+  async function handleUpdateProvision(id: string): Promise<void> {
     const value = parseFloat(editProvision);
     if (isNaN(value) || value < 0 || value > 50) return;
 
@@ -112,11 +127,11 @@ export default function KundePage() {
       setEditingId(null);
       fetchData();
     } catch {
-      // silent fail
+      // Fehler still ignorieren
     }
   }
 
-  async function handleToggleStatus(hw: Handwerker) {
+  async function handleToggleStatus(hw: Handwerker): Promise<void> {
     try {
       await fetch("/api/affiliate/handwerker", {
         method: "PATCH",
@@ -125,11 +140,11 @@ export default function KundePage() {
       });
       fetchData();
     } catch {
-      // silent fail
+      // Fehler still ignorieren
     }
   }
 
-  async function handleDelete(hw: Handwerker) {
+  async function handleDelete(hw: Handwerker): Promise<void> {
     if (!confirm(`Kunde "${hw.name}" wirklich löschen? Das kann nicht rückgängig gemacht werden.`)) return;
 
     try {
@@ -146,24 +161,26 @@ export default function KundePage() {
   }
 
   return (
-    <div className="animate-fadeIn" style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ fontSize: "32px", fontWeight: 800, margin: 0, color: "var(--navy)" }}>Kunde verwalten</h1>
+    <div className="animate-fadeIn flex flex-col gap-8">
+      {/* Seitenkopf */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">Kunde verwalten</h1>
         <Button onClick={() => setShowForm(!showForm)} size="lg">
           {showForm ? "Abbrechen" : "+ Neuer Kunde"}
         </Button>
       </div>
 
+      {/* Anlegen-Formular */}
       {showForm && (
-        <Card style={{ borderLeft: "5px solid var(--orange)", borderRadius: "20px", boxShadow: "0 4px 20px rgba(242,137,0,0.1)" }}>
-          <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-            <h2 style={{ fontSize: "20px", fontWeight: 700, margin: 0, color: "var(--navy)" }}>Neuen Kunde anlegen</h2>
+        <Card className="p-5">
+          <form onSubmit={handleCreate} className="flex flex-col gap-5">
+            <h2 className="text-base font-semibold text-foreground">Neuen Kunde anlegen</h2>
             {formError && (
-              <div role="alert" style={{ color: "var(--red)", fontSize: "14px", fontWeight: 600, backgroundColor: "var(--red-bg)", padding: "12px 16px", borderRadius: "12px" }}>
+              <div role="alert" className="text-sm font-medium text-destructive bg-destructive/10 px-4 py-3 rounded-lg">
                 {formError}
               </div>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
               <Input label="E-Mail" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
               <Input label="Telefon" type="tel" value={formData.telefon} onChange={(e) => setFormData({ ...formData, telefon: e.target.value })} placeholder="z.B. +49 123 456789" />
@@ -174,12 +191,16 @@ export default function KundePage() {
         </Card>
       )}
 
-      <Card style={{ padding: 0, overflow: "auto", borderRadius: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+      {/* Tabelle */}
+      <Card className="p-0 overflow-auto">
+        <table className="w-full border-collapse text-sm">
           <thead>
-            <tr style={{ textAlign: "left", background: "linear-gradient(135deg, #050234 0%, #0a0654 100%)" }}>
+            <tr className="bg-muted">
               {["Name", "E-Mail", "Telefon", "Affiliate", "Provision %", "Status", "Erstellt", "Aktionen"].map((h) => (
-                <th key={h} style={{ padding: "16px 18px", fontWeight: 700, color: "rgba(255,255,255,0.8)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.8px" }}>
+                <th
+                  key={h}
+                  className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap"
+                >
                   {h}
                 </th>
               ))}
@@ -187,78 +208,116 @@ export default function KundePage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: "15px" }}>Laden...</td></tr>
+              <tr>
+                <td colSpan={8} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                  Wird geladen...
+                </td>
+              </tr>
             ) : handwerker.length === 0 ? (
-              <tr><td colSpan={8} style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: "15px" }}>Noch keine Kunde angelegt</td></tr>
+              <tr>
+                <td colSpan={8} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                  Noch keine Kunden angelegt
+                </td>
+              </tr>
             ) : (
-              handwerker.map((hw, i) => {
-                const status = getStatusDisplay(hw);
+              handwerker.map((hw) => {
+                const status = getStatusDisplay(hw, archivedHandwerkerIds);
                 return (
-                  <tr key={hw.id} style={{ borderBottom: "1px solid var(--border)", backgroundColor: i % 2 === 0 ? "white" : "#f8f7f4" }}>
-                    <td style={{ padding: "16px 18px", fontWeight: 600 }}>{hw.name}</td>
-                    <td style={{ padding: "16px 18px" }}>{hw.email}</td>
-                    <td style={{ padding: "16px 18px", color: hw.telefon ? "var(--text)" : "var(--text-muted)" }}>
+                  <tr key={hw.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                    {/* Name */}
+                    <td className="px-4 py-3 text-sm text-foreground font-semibold">
+                      {hw.name}
+                    </td>
+
+                    {/* E-Mail */}
+                    <td className="px-4 py-3 text-sm text-foreground">
+                      {hw.email}
+                    </td>
+
+                    {/* Telefon */}
+                    <td className={`px-4 py-3 text-sm ${hw.telefon ? "text-foreground" : "text-muted-foreground"}`}>
                       {hw.telefon || "–"}
                     </td>
-                    <td style={{ padding: "16px 18px" }}>
+
+                    {/* Verknüpfte Affiliates */}
+                    <td className="px-4 py-3">
                       {(() => {
                         const affiliates = affiliatesByHandwerker.get(hw.id);
                         if (!affiliates || affiliates.length === 0) {
-                          return <span style={{ color: "var(--text-muted)" }}>–</span>;
+                          return <span className="text-muted-foreground">–</span>;
                         }
                         return affiliates.map((a, idx) => (
-                          <div key={idx} style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: idx < affiliates.length - 1 ? "4px" : 0 }}>
-                            <span style={{ fontWeight: 600, fontSize: "13px" }}>{a.name}</span>
-                            <span style={{
-                              fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "8px", color: "white",
-                              backgroundColor: a.status === "offen" ? "#ea580c" : a.status === "erledigt" ? "#16a34a" : "#2563eb",
-                            }}>
-                              {a.status === "offen" ? "OFFEN" : a.status === "erledigt" ? "ERLEDIGT" : "AUSGEZAHLT"}
+                          <div
+                            key={idx}
+                            className={`flex items-center gap-2 ${idx < affiliates.length - 1 ? "mb-1" : ""}`}
+                          >
+                            <span className="text-sm font-semibold text-foreground">{a.name}</span>
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${AFFILIATE_STATUS_CLASSES[a.status] ?? "text-muted-foreground border-border"}`}>
+                              {AFFILIATE_STATUS_LABELS[a.status] ?? a.status}
                             </span>
                           </div>
                         ));
                       })()}
                     </td>
-                    <td style={{ padding: "16px 18px" }}>
+
+                    {/* Provision % (inline editierbar) */}
+                    <td className="px-4 py-3">
                       {editingId === hw.id ? (
-                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                        <div className="flex gap-1.5 items-center">
                           <input
-                            type="number" step="0.01" min="0" max="50" value={editProvision}
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="50"
+                            value={editProvision}
                             onChange={(e) => setEditProvision(e.target.value)}
-                            style={{ width: "70px", padding: "8px 10px", border: "2px solid var(--orange)", borderRadius: "10px", fontSize: "14px", fontWeight: 700 }}
+                            className="w-20 px-2 py-1.5 border border-border rounded-lg text-sm font-semibold bg-card text-foreground outline-none focus:border-foreground/40"
                           />
-                          <Button size="sm" onClick={() => handleUpdateProvision(hw.id)}>OK</Button>
-                          <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>X</Button>
+                          <button
+                            onClick={() => handleUpdateProvision(hw.id)}
+                            className="p-1.5 bg-[#16a34a] rounded-md flex items-center cursor-pointer border-0"
+                          >
+                            <Check size={12} color="white" />
+                          </button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="p-1.5 bg-muted rounded-md flex items-center cursor-pointer border border-border"
+                          >
+                            <X size={12} className="text-muted-foreground" />
+                          </button>
                         </div>
                       ) : (
                         <button
                           onClick={() => { setEditingId(hw.id); setEditProvision(String(hw.provision_prozent)); }}
-                          style={{ background: "linear-gradient(135deg, #f28900, #ff6b00)", border: "none", cursor: "pointer", fontWeight: 700, color: "white", padding: "6px 16px", borderRadius: "16px", fontSize: "14px", boxShadow: "0 2px 8px rgba(242,137,0,0.3)" }}
+                          className="px-3 py-1 rounded-lg text-xs font-semibold border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
                           title="Klicke zum Bearbeiten"
                         >
                           {hw.provision_prozent}%
                         </button>
                       )}
                     </td>
-                    <td style={{ padding: "16px 18px" }}>
+
+                    {/* Status */}
+                    <td className="px-4 py-3">
                       <button
                         onClick={() => handleToggleStatus(hw)}
-                        style={{
-                          fontSize: "12px", fontWeight: 700, color: "white",
-                          backgroundColor: status.color,
-                          padding: "6px 14px", borderRadius: "16px", border: "none", cursor: "pointer",
-                          boxShadow: `0 2px 8px ${status.shadow}`,
-                        }}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${status.className}`}
                         title={hw.active ? "Klicke um zu deaktivieren" : "Klicke um zu aktivieren"}
                       >
                         {status.label}
                       </button>
                     </td>
-                    <td style={{ padding: "16px 18px", whiteSpace: "nowrap", color: "var(--text-muted)" }}>
+
+                    {/* Erstellt */}
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(hw.created_at).toLocaleDateString("de-DE")}
                     </td>
-                    <td style={{ padding: "16px 18px" }}>
-                      <Button size="sm" variant="danger" onClick={() => handleDelete(hw)}>Löschen</Button>
+
+                    {/* Aktionen */}
+                    <td className="px-4 py-3">
+                      <Button size="sm" variant="danger" onClick={() => handleDelete(hw)}>
+                        Löschen
+                      </Button>
                     </td>
                   </tr>
                 );
