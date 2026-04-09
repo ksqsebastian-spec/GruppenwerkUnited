@@ -223,7 +223,7 @@ export default function AdminDashboardPage() {
             alignItems: "center",
             gap: "10px",
             padding: "14px 18px",
-            backgroundColor: "white",
+            backgroundColor: "hsl(var(--card))",
             border: "2px solid var(--border)",
             borderRadius: "14px",
             boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
@@ -255,7 +255,7 @@ export default function AdminDashboardPage() {
               fontSize: "13px",
               fontWeight: 700,
               border: "2px solid var(--border)",
-              backgroundColor: "white",
+              backgroundColor: "hsl(var(--card))",
               color: "var(--navy)",
               cursor: "pointer",
             }}
@@ -270,7 +270,7 @@ export default function AdminDashboardPage() {
               fontSize: "13px",
               fontWeight: 700,
               border: "2px solid var(--border)",
-              backgroundColor: "white",
+              backgroundColor: "hsl(var(--card))",
               color: "var(--text-muted)",
               cursor: "pointer",
             }}
@@ -322,7 +322,7 @@ export default function AdminDashboardPage() {
                     gap: "16px",
                     padding: "20px 24px",
                     border: "none",
-                    backgroundColor: isExpanded ? "rgba(242,137,0,0.04)" : "white",
+                    backgroundColor: isExpanded ? "rgba(242,137,0,0.04)" : "hsl(var(--card))",
                     cursor: "pointer",
                     textAlign: "left",
                     transition: "background-color 0.15s ease",
@@ -441,7 +441,7 @@ export default function AdminDashboardPage() {
                             key={emp.id}
                             style={{
                               borderBottom: "1px solid var(--border)",
-                              backgroundColor: i % 2 === 0 ? "white" : "#f8f7f4",
+                              backgroundColor: i % 2 === 0 ? "hsl(var(--card))" : "hsl(var(--muted))",
                             }}
                           >
                             {/* Affiliate name + email */}
