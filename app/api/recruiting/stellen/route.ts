@@ -35,6 +35,11 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false })
       .range(offset, offset + pageSize - 1);
 
+    // Nicht-Admins sehen nur Empfehlungen ihrer Firma
+    if (!authResult.isAdmin) {
+      query = query.eq("company", authResult.companyId);
+    }
+
     if (status && VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
       query = query.eq("status", status);
     }
@@ -66,11 +71,17 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // Default: list all stellen
-  const { data, error } = await adminClient
+  // Default: Stellen auflisten (Nicht-Admins nur eigene Firma)
+  let stellenQuery = adminClient
     .from("stellen")
     .select("*")
     .order("title");
+
+  if (!authResult.isAdmin) {
+    stellenQuery = stellenQuery.eq("company", authResult.companyId);
+  }
+
+  const { data, error } = await stellenQuery;
 
   if (error) {
     return NextResponse.json(
@@ -115,6 +126,7 @@ export async function POST(request: NextRequest) {
     .insert({
       title: parsed.data.title,
       description: parsed.data.description || null,
+      company: authResult.companyId,
     })
     .select()
     .single();
@@ -177,12 +189,17 @@ export async function PATCH(request: NextRequest) {
     .eq("id", id)
     .single();
 
-  const { data, error } = await adminClient
+  let updateQuery = adminClient
     .from("stellen")
     .update(parsed.data)
-    .eq("id", id)
-    .select()
-    .single();
+    .eq("id", id);
+
+  // Nicht-Admins dürfen nur Stellen ihrer Firma bearbeiten
+  if (!authResult.isAdmin) {
+    updateQuery = updateQuery.eq("company", authResult.companyId);
+  }
+
+  const { data, error } = await updateQuery.select().single();
 
   if (error || !data) {
     return NextResponse.json(
@@ -220,11 +237,17 @@ export async function DELETE(request: NextRequest) {
 
   const adminClient = createAdminClient();
 
-  const { data: stelle, error: fetchError } = await adminClient
+  // Stelle laden — Nicht-Admins nur ihre Firma
+  let fetchQuery = adminClient
     .from("stellen")
     .select("title")
-    .eq("id", id)
-    .single();
+    .eq("id", id);
+
+  if (!authResult.isAdmin) {
+    fetchQuery = fetchQuery.eq("company", authResult.companyId);
+  }
+
+  const { data: stelle, error: fetchError } = await fetchQuery.single();
 
   if (fetchError || !stelle) {
     return NextResponse.json(

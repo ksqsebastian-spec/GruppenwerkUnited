@@ -18,9 +18,9 @@ export async function GET(
     .select("*")
     .eq("id", id);
 
-  // SICHERHEIT: Nicht-Admins dürfen nur eigene Empfehlungen abrufen
+  // SICHERHEIT: Nicht-Admins dürfen nur Empfehlungen ihrer Firma abrufen
   if (!authResult.isAdmin) {
-    query = query.eq("handwerker_id", authResult.handwerkerId);
+    query = query.eq("company", authResult.companyId);
   }
 
   const { data, error } = await query.single();

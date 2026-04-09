@@ -15,13 +15,18 @@ export async function POST(
 
   const adminClient = createAdminClient();
 
-  // Fetch the empfehlung (must be 'offen')
-  const { data: empfehlung, error: fetchError } = await adminClient
+  // Empfehlung laden (muss 'offen' sein, Nicht-Admins nur ihre Firma)
+  let fetchQuery = adminClient
     .from("empfehlungen")
     .select("*")
     .eq("id", id)
-    .eq("status", "offen")
-    .single();
+    .eq("status", "offen");
+
+  if (!authResult.isAdmin) {
+    fetchQuery = fetchQuery.eq("company", authResult.companyId);
+  }
+
+  const { data: empfehlung, error: fetchError } = await fetchQuery.single();
 
   if (fetchError || !empfehlung) {
     return NextResponse.json(

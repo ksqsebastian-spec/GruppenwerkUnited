@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
     .insert({
       ...parsed.data,
       ref_code: refCode,
+      company: authResult.companyId,
     })
     .select("*, handwerker:handwerker_id(id, name, email, telefon, provision_prozent)")
     .single();
@@ -202,10 +203,17 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const { error } = await adminClient
+  let updateQuery = adminClient
     .from("empfehlungen")
     .update(updateData)
     .eq("id", id);
+
+  // Nicht-Admins dürfen nur Empfehlungen ihrer Firma bearbeiten
+  if (!authResult.isAdmin) {
+    updateQuery = updateQuery.eq("company", authResult.companyId);
+  }
+
+  const { error } = await updateQuery;
 
   if (error) {
     return NextResponse.json(
@@ -246,10 +254,17 @@ export async function DELETE(request: NextRequest) {
     .eq("id", id)
     .single();
 
-  const { error } = await adminClient
+  let deleteQuery = adminClient
     .from("empfehlungen")
     .delete()
     .eq("id", id);
+
+  // Nicht-Admins dürfen nur Empfehlungen ihrer Firma löschen
+  if (!authResult.isAdmin) {
+    deleteQuery = deleteQuery.eq("company", authResult.companyId);
+  }
+
+  const { error } = await deleteQuery;
 
   if (error) {
     return NextResponse.json(

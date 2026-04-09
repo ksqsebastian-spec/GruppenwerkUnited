@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
 
 const VALID_STATUSES = ["offen", "eingestellt", "probezeit_bestanden", "ausgezahlt"] as const;
 
-// GET /api/referrals — list empfehlungen
+// GET /api/recruiting/referrals — Empfehlungen auflisten
 export async function GET(request: NextRequest) {
   const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
@@ -30,6 +30,11 @@ export async function GET(request: NextRequest) {
     .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(offset, offset + pageSize - 1);
+
+  // SICHERHEIT: Nicht-Admins dürfen nur Empfehlungen ihrer Firma sehen
+  if (!authResult.isAdmin) {
+    query = query.eq("company", authResult.companyId);
+  }
 
   if (stelleId) {
     query = query.eq("stelle_id", stelleId);
@@ -117,12 +122,25 @@ export async function POST(request: NextRequest) {
     .single();
   const praemieBetrag = Number(settings?.value ?? 1000);
 
+  // Firma aus der Stelle ableiten (für korrekte Datentrennung)
+  const stelleId = (parsed.data as Record<string, unknown>).stelle_id as string | undefined;
+  let company = '';
+  if (stelleId) {
+    const { data: stelle } = await adminClient
+      .from("stellen")
+      .select("company")
+      .eq("id", stelleId)
+      .single();
+    company = stelle?.company ?? '';
+  }
+
   const { data, error } = await adminClient
     .from("empfehlungen")
     .insert({
       ...parsed.data,
       ref_code: refCode,
       praemie_betrag: praemieBetrag,
+      company,
     })
     .select()
     .single();

@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { useLicenseWarningCount } from '@/hooks/use-license-control';
 import { useUvvWarningCount } from '@/hooks/use-uvv-control';
 import { MODULES, MODULE_ICONS, getModuleByRoute, type ModuleConfig } from '@/lib/modules';
+import { useAuth } from '@/components/providers/auth-provider';
 
 // Fuhrpark Modul-spezifische Navigation
 const fuhrparkNavigation = [
@@ -101,11 +102,20 @@ function SidebarNavItem({
   );
 }
 
-/** Werkbank-Übersicht: alle Module als Karten */
+/** Werkbank-Übersicht: Module nach Firmen-Zugang gefiltert */
 function WerkbankModuleNav({ pathname }: { pathname: string }): React.JSX.Element {
-  // Module nach Kategorie gruppieren
-  const tools = MODULES.filter((m) => m.category === 'tool');
-  const companies = Array.from(new Set(MODULES.filter((m) => m.category === 'company').map((m) => m.company)));
+  const { company } = useAuth();
+
+  // Nur erlaubte Module anzeigen
+  const allowedModules = company?.allowedModules;
+  const visibleModules = MODULES.filter((m) => {
+    if (allowedModules === '*') return true;
+    if (Array.isArray(allowedModules)) return allowedModules.includes(m.id);
+    return false;
+  });
+
+  const tools = visibleModules.filter((m) => m.category === 'tool');
+  const companyModules = visibleModules.filter((m) => m.category === 'company');
 
   const renderModuleItem = (mod: ModuleConfig): React.JSX.Element => {
     const Icon = MODULE_ICONS[mod.icon] ?? Wrench;
@@ -126,30 +136,28 @@ function WerkbankModuleNav({ pathname }: { pathname: string }): React.JSX.Elemen
     <nav className="flex flex-1 flex-col">
       <ul role="list" className="flex flex-1 flex-col gap-y-7">
         {/* Allgemeine Tools */}
-        <li>
-          <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
-            Tools
-          </div>
-          <ul role="list" className="-mx-2 space-y-1">
-            {tools.map(renderModuleItem)}
-          </ul>
-        </li>
+        {tools.length > 0 && (
+          <li>
+            <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+              Tools
+            </div>
+            <ul role="list" className="-mx-2 space-y-1">
+              {tools.map(renderModuleItem)}
+            </ul>
+          </li>
+        )}
 
-        {/* Firmen-Module */}
-        {companies.map((company) => {
-          const companyModules = MODULES.filter((m) => m.company === company);
-          const companyName = companyModules[0]?.companyName ?? company ?? '';
-          return (
-            <li key={company}>
-              <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                {companyName}
-              </div>
-              <ul role="list" className="-mx-2 space-y-1">
-                {companyModules.map(renderModuleItem)}
-              </ul>
-            </li>
-          );
-        })}
+        {/* Firmen-Module — unter dem Namen der eingeloggten Firma */}
+        {companyModules.length > 0 && (
+          <li>
+            <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+              {company?.companyName ?? 'Module'}
+            </div>
+            <ul role="list" className="-mx-2 space-y-1">
+              {companyModules.map(renderModuleItem)}
+            </ul>
+          </li>
+        )}
       </ul>
     </nav>
   );

@@ -33,6 +33,11 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false })
       .range(offset, offset + pageSize - 1);
 
+    // Nicht-Admins sehen nur Empfehlungen ihrer Firma
+    if (!authResult.isAdmin) {
+      query = query.eq("company", authResult.companyId);
+    }
+
     if (status && ["offen", "erledigt", "ausgezahlt"].includes(status)) {
       query = query.eq("status", status);
     }
@@ -64,11 +69,17 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // Default: list all handwerker
-  const { data, error } = await adminClient
+  // Default: Handwerker auflisten (Nicht-Admins nur eigene Firma)
+  let handwerkerQuery = adminClient
     .from("handwerker")
     .select("*")
     .order("name");
+
+  if (!authResult.isAdmin) {
+    handwerkerQuery = handwerkerQuery.eq("company", authResult.companyId);
+  }
+
+  const { data, error } = await handwerkerQuery;
 
   if (error) {
     return NextResponse.json(
@@ -129,7 +140,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Insert handwerker record
+  // Insert handwerker record (company aus Session)
   const { data, error } = await adminClient
     .from("handwerker")
     .insert({
@@ -138,6 +149,7 @@ export async function POST(request: NextRequest) {
       email: parsed.data.email,
       telefon: parsed.data.telefon || null,
       provision_prozent: parsed.data.provision_prozent,
+      company: authResult.companyId,
     })
     .select()
     .single();
@@ -203,12 +215,17 @@ export async function PATCH(request: NextRequest) {
     .eq("id", id)
     .single();
 
-  const { data, error } = await adminClient
+  let updateQuery = adminClient
     .from("handwerker")
     .update(parsed.data)
-    .eq("id", id)
-    .select()
-    .single();
+    .eq("id", id);
+
+  // Nicht-Admins dürfen nur Handwerker ihrer Firma bearbeiten
+  if (!authResult.isAdmin) {
+    updateQuery = updateQuery.eq("company", authResult.companyId);
+  }
+
+  const { data, error } = await updateQuery.select().single();
 
   if (error || !data) {
     return NextResponse.json(
@@ -246,12 +263,17 @@ export async function DELETE(request: NextRequest) {
 
   const adminClient = createAdminClient();
 
-  // Get handwerker to find auth_user_id
-  const { data: hw, error: fetchError } = await adminClient
+  // Handwerker laden — Nicht-Admins nur ihre Firma
+  let fetchQuery = adminClient
     .from("handwerker")
     .select("auth_user_id, name")
-    .eq("id", id)
-    .single();
+    .eq("id", id);
+
+  if (!authResult.isAdmin) {
+    fetchQuery = fetchQuery.eq("company", authResult.companyId);
+  }
+
+  const { data: hw, error: fetchError } = await fetchQuery.single();
 
   if (fetchError || !hw) {
     return NextResponse.json(

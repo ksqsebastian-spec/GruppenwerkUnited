@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const AUTH_COOKIE = 'werkbank-auth';
+import { matchCompanyByPassword } from '@/lib/auth/companies';
+import { SESSION_COOKIE, encodeSession } from '@/lib/auth/session';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   let body: unknown;
@@ -11,24 +11,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const { password } = body as { password?: string };
-  const sitePassword = process.env.SITE_PASSWORD;
 
-  if (!sitePassword) {
-    return NextResponse.json(
-      { error: 'Passwort nicht konfiguriert' },
-      { status: 500 }
-    );
+  if (!password) {
+    return NextResponse.json({ error: 'Passwort erforderlich' }, { status: 400 });
   }
 
-  if (!password || password !== sitePassword) {
-    return NextResponse.json(
-      { error: 'Falsches Passwort' },
-      { status: 401 }
-    );
+  const company = matchCompanyByPassword(password);
+
+  if (!company) {
+    return NextResponse.json({ error: 'Falsches Passwort' }, { status: 401 });
   }
 
-  const response = NextResponse.json({ success: true });
-  response.cookies.set(AUTH_COOKIE, sitePassword, {
+  const token = await encodeSession({
+    companyId: company.id,
+    companyName: company.name,
+    isAdmin: company.isAdmin,
+  });
+
+  const response = NextResponse.json({
+    companyId: company.id,
+    companyName: company.name,
+    isAdmin: company.isAdmin,
+  });
+
+  response.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
