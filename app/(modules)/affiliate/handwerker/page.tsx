@@ -31,7 +31,7 @@ const AFFILIATE_STATUS_LABELS: Record<string, string> = {
   ausgezahlt: "Ausgezahlt",
 };
 
-export default function KundePage(): JSX.Element {
+export default function KundePage(): React.JSX.Element {
   const [handwerker, setHandwerker] = useState<Handwerker[]>([]);
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithHandwerker[]>([]);
   const [loading, setLoading] = useState(true);

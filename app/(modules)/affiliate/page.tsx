@@ -29,7 +29,7 @@ interface KundeGroup {
   empfehlungen: EmpfehlungWithHandwerker[];
 }
 
-export default function AdminDashboardPage(): JSX.Element {
+export default function AdminDashboardPage(): React.JSX.Element {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithHandwerker[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

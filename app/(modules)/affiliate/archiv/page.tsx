@@ -6,7 +6,7 @@ import type { EmpfehlungWithHandwerker } from "@/types/affiliate";
 import { StatCard } from "../_components/ui/StatCard";
 import { formatDate, formatCurrency } from "@/lib/modules/affiliate/utils";
 
-export default function ArchivPage(): JSX.Element {
+export default function ArchivPage(): React.JSX.Element {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithHandwerker[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

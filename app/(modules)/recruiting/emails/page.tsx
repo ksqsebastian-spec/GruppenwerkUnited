@@ -12,7 +12,7 @@ import {
 } from "@/lib/modules/recruiting/email-templates";
 import { generateReceipt } from "@/lib/modules/recruiting/pdf-receipt";
 
-export default function EmailConfiguratorPage(): JSX.Element {
+export default function EmailConfiguratorPage(): React.JSX.Element {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithStelle[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string>("");

@@ -8,7 +8,7 @@ import { Card } from "../_components/ui/Card";
 import { Button } from "../_components/ui/Button";
 import { formatDate, formatCurrency } from "@/lib/modules/affiliate/utils";
 
-export default function AuszahlungPage(): JSX.Element {
+export default function AuszahlungPage(): React.JSX.Element {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithHandwerker[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -160,7 +160,7 @@ export default function AuszahlungPage(): JSX.Element {
   const totalProvision = empfehlungen.reduce((sum, e) => sum + (e.provision_betrag ?? 0), 0);
 
   // Kopierfeld-Hilfskomponente für Zahlungsdaten
-  function CopyField({ label, value, copyKey }: { label: string; value: string | null; copyKey: string }): JSX.Element | null {
+  function CopyField({ label, value, copyKey }: { label: string; value: string | null; copyKey: string }): React.JSX.Element | null {
     if (!value) return null;
     return (
       <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg border border-border">

@@ -12,7 +12,7 @@ import {
 } from "@/lib/modules/affiliate/email-templates";
 import { generateReceipt } from "@/lib/modules/affiliate/pdf-receipt";
 
-export default function EmailConfiguratorPage(): JSX.Element {
+export default function EmailConfiguratorPage(): React.JSX.Element {
   const [empfehlungen, setAffiliateen] = useState<EmpfehlungWithHandwerker[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string>("");

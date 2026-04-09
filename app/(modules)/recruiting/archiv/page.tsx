@@ -6,7 +6,7 @@ import type { EmpfehlungWithStelle } from "@/types/recruiting";
 import { StatCard } from "../_components/ui/StatCard";
 import { formatDate, formatCurrency } from "@/lib/modules/recruiting/utils";
 
-export default function ArchivPage(): JSX.Element {
+export default function ArchivPage(): React.JSX.Element {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithStelle[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

@@ -9,7 +9,7 @@ import { Button } from "../_components/ui/Button";
 import { Input } from "../_components/ui/Input";
 import { formatDate, formatCurrency } from "@/lib/modules/affiliate/utils";
 
-export default function EmpfehlungenPage(): JSX.Element {
+export default function EmpfehlungenPage(): React.JSX.Element {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithHandwerker[]>([]);
   const [handwerker, setHandwerker] = useState<Handwerker[]>([]);
   const [loading, setLoading] = useState(true);
@@ -270,7 +270,7 @@ export default function EmpfehlungenPage(): JSX.Element {
     bankdaten: boolean,
     setBankdaten: (v: boolean) => void,
     onCancel: () => void,
-  ): JSX.Element {
+  ): React.JSX.Element {
     return (
       <Card className="p-5">
         <form onSubmit={onSubmit} className="flex flex-col gap-5">
