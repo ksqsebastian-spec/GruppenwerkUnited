@@ -22,12 +22,15 @@ function b64urlEncode(buf: ArrayBuffer | Uint8Array): string {
     .replace(/=/g, '');
 }
 
-function b64urlDecode(str: string): Uint8Array {
+function b64urlDecode(str: string): Uint8Array<ArrayBuffer> {
   const b64 = str.replace(/-/g, '+').replace(/_/g, '/');
   const pad = b64.length % 4;
-  return Uint8Array.from(atob(pad ? b64 + '='.repeat(4 - pad) : b64), (c) =>
-    c.charCodeAt(0)
-  );
+  const decoded = atob(pad ? b64 + '='.repeat(4 - pad) : b64);
+  const result = new Uint8Array(decoded.length);
+  for (let i = 0; i < decoded.length; i++) {
+    result[i] = decoded.charCodeAt(i);
+  }
+  return result;
 }
 
 async function importKey(): Promise<CryptoKey> {
