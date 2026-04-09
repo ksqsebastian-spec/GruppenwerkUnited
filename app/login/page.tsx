@@ -51,8 +51,8 @@ export default function LoginPage(): React.JSX.Element {
       }
 
       toast.success('Erfolgreich angemeldet');
-      router.push('/');
-      router.refresh();
+      // Hard-Redirect damit der Auth-Provider neu initialisiert wird
+      window.location.href = '/';
     } catch {
       toast.error('Anmeldung fehlgeschlagen');
     } finally {
