@@ -1,14 +1,19 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
-import type { User, Session } from '@supabase/supabase-js';
+import { createContext, useContext } from 'react';
+
+/**
+ * Vereinfachter Auth-Kontext — Authentifizierung läuft über Middleware (Cookie).
+ * Wenn der Benutzer diese Komponente erreicht, ist er bereits eingeloggt.
+ */
+
+interface SimpleUser {
+  email: string;
+}
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  user: SimpleUser;
+  isLoading: false;
   signOut: () => Promise<void>;
 }
 
@@ -18,52 +23,16 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
+const WERKBANK_USER: SimpleUser = { email: 'Werkbank' };
+
 export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Initiale Session laden
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
-
-    // Auf Auth-Änderungen hören
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signIn = async (email: string, password: string): Promise<void> => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      throw new Error(
-        'Anmeldung fehlgeschlagen. Bitte prüfe E-Mail und Passwort.'
-      );
-    }
-  };
-
   const signOut = async (): Promise<void> => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      throw new Error('Abmelden fehlgeschlagen.');
-    }
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user: WERKBANK_USER, isLoading: false, signOut }}>
       {children}
     </AuthContext.Provider>
   );
@@ -72,9 +41,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error(
-      'useAuth muss innerhalb eines AuthProviders verwendet werden'
-    );
+    throw new Error('useAuth muss innerhalb eines AuthProviders verwendet werden');
   }
   return context;
 }
