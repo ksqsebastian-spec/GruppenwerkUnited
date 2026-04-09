@@ -607,39 +607,46 @@ ALTER TABLE empfehlungen             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_settings             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_log                ENABLE ROW LEVEL SECURITY;
 
--- Fuhrpark: voller Zugriff für eingeloggte Nutzer
-CREATE POLICY "companies_all"        ON companies        FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "vehicles_select"      ON vehicles         FOR SELECT TO authenticated USING (true);
-CREATE POLICY "vehicles_insert"      ON vehicles         FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "vehicles_update"      ON vehicles         FOR UPDATE TO authenticated USING (true);
-CREATE POLICY "vehicles_delete"      ON vehicles         FOR DELETE TO authenticated USING (true);
-CREATE POLICY "drivers_all"          ON drivers          FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "vehicle_drivers_all"  ON vehicle_drivers  FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "appointments_all"     ON appointments     FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "damages_all"          ON damages          FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "damage_images_all"    ON damage_images    FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "costs_all"            ON costs            FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "mileage_logs_all"     ON mileage_logs     FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "documents_all"        ON documents        FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- ============================================================================
+-- WICHTIG: Diese App nutzt Supabase-Anon-Key mit eigenem Cookie-basierten
+-- Auth-System (KEIN Supabase Auth). Deshalb müssen alle Fuhrpark-Policies
+-- der Rolle "anon" statt "authenticated" Zugriff gewähren.
+-- Zugriffskontrolle übernimmt der Werkbank-Proxy (proxy.ts / middleware.ts).
+-- ============================================================================
 
--- Lookup-Tabellen: lesend + admin-Write
-CREATE POLICY "appointment_types_all" ON appointment_types FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "damage_types_all"      ON damage_types      FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "cost_types_all"        ON cost_types        FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "document_types_all"    ON document_types    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Fuhrpark: voller Zugriff über Anon-Key (App nutzt kein Supabase Auth)
+CREATE POLICY "companies_all"        ON companies        FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "vehicles_select"      ON vehicles         FOR SELECT TO anon USING (true);
+CREATE POLICY "vehicles_insert"      ON vehicles         FOR INSERT TO anon WITH CHECK (true);
+CREATE POLICY "vehicles_update"      ON vehicles         FOR UPDATE TO anon USING (true);
+CREATE POLICY "vehicles_delete"      ON vehicles         FOR DELETE TO anon USING (true);
+CREATE POLICY "drivers_all"          ON drivers          FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "vehicle_drivers_all"  ON vehicle_drivers  FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "appointments_all"     ON appointments     FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "damages_all"          ON damages          FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "damage_images_all"    ON damage_images    FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "costs_all"            ON costs            FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "mileage_logs_all"     ON mileage_logs     FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "documents_all"        ON documents        FOR ALL TO anon USING (true) WITH CHECK (true);
+
+-- Lookup-Tabellen: lesend + schreibend über Anon-Key
+CREATE POLICY "appointment_types_all" ON appointment_types FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "damage_types_all"      ON damage_types      FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "cost_types_all"        ON cost_types        FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "document_types_all"    ON document_types    FOR ALL TO anon USING (true) WITH CHECK (true);
 
 -- Führerscheinkontrolle
-CREATE POLICY "license_settings_select" ON license_check_settings FOR SELECT TO authenticated USING (true);
-CREATE POLICY "license_settings_update" ON license_check_settings FOR UPDATE TO authenticated USING (true);
-CREATE POLICY "license_inspectors_all"  ON license_check_inspectors FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "license_employees_all"   ON license_check_employees  FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "license_checks_all"      ON license_checks           FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "license_settings_select" ON license_check_settings FOR SELECT TO anon USING (true);
+CREATE POLICY "license_settings_update" ON license_check_settings FOR UPDATE TO anon USING (true);
+CREATE POLICY "license_inspectors_all"  ON license_check_inspectors FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "license_employees_all"   ON license_check_employees  FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "license_checks_all"      ON license_checks           FOR ALL TO anon USING (true) WITH CHECK (true);
 
 -- UVV
-CREATE POLICY "uvv_settings_select" ON uvv_settings   FOR SELECT TO authenticated USING (true);
-CREATE POLICY "uvv_settings_update" ON uvv_settings   FOR UPDATE TO authenticated USING (true);
-CREATE POLICY "uvv_instructors_all" ON uvv_instructors FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "uvv_checks_all"      ON uvv_checks      FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "uvv_settings_select" ON uvv_settings   FOR SELECT TO anon USING (true);
+CREATE POLICY "uvv_settings_update" ON uvv_settings   FOR UPDATE TO anon USING (true);
+CREATE POLICY "uvv_instructors_all" ON uvv_instructors FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "uvv_checks_all"      ON uvv_checks      FOR ALL TO anon USING (true) WITH CHECK (true);
 
 -- Affiliate + Recruiting: nur service_role (alle API-Routen nutzen Admin-Client)
 CREATE POLICY "handwerker_service_role"   ON handwerker   FOR ALL TO service_role USING (true) WITH CHECK (true);
