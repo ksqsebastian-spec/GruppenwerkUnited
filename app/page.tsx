@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Wrench, ArrowRight, Clock } from 'lucide-react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { MODULES, MODULE_ICONS, type ModuleConfig } from '@/lib/modules';
+import { useAuth } from '@/components/providers/auth-provider';
 
 interface ModuleCardProps {
   module: ModuleConfig;
@@ -86,16 +87,18 @@ function ModuleCard({ module }: ModuleCardProps): React.JSX.Element {
  * Neue Module werden automatisch angezeigt, wenn sie in lib/modules.ts eingetragen werden.
  */
 export default function WerkbankDashboard(): React.JSX.Element {
-  // Module nach Kategorie gruppieren
-  const toolModules = MODULES.filter((m) => m.category === 'tool');
-  const companyGroups = MODULES.filter((m) => m.category === 'company').reduce<
-    Record<string, ModuleConfig[]>
-  >((acc, mod) => {
-    const key = mod.company ?? 'sonstige';
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(mod);
-    return acc;
-  }, {});
+  const { company } = useAuth();
+
+  // Nur erlaubte Module anzeigen
+  const allowedModules = company?.allowedModules;
+  const visibleModules = MODULES.filter((m) => {
+    if (allowedModules === '*') return true;
+    if (Array.isArray(allowedModules)) return allowedModules.includes(m.id);
+    return false;
+  });
+
+  const toolModules = visibleModules.filter((m) => m.category === 'tool');
+  const companyModules = visibleModules.filter((m) => m.category === 'company');
 
   return (
     <AppLayout>
@@ -109,33 +112,32 @@ export default function WerkbankDashboard(): React.JSX.Element {
         </div>
 
         {/* Allgemeine Tools */}
-        <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-400">
-            Tools
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {toolModules.map((mod) => (
-              <ModuleCard key={mod.id} module={mod} />
-            ))}
-          </div>
-        </section>
+        {toolModules.length > 0 && (
+          <section>
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-400">
+              Tools
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {toolModules.map((mod) => (
+                <ModuleCard key={mod.id} module={mod} />
+              ))}
+            </div>
+          </section>
+        )}
 
-        {/* Firmen-Module */}
-        {Object.entries(companyGroups).map(([company, modules]) => {
-          const companyName = modules[0]?.companyName ?? company;
-          return (
-            <section key={company}>
-              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-400">
-                {companyName}
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {modules.map((mod) => (
-                  <ModuleCard key={mod.id} module={mod} />
-                ))}
-              </div>
-            </section>
-          );
-        })}
+        {/* Firmen-Module — unter dem Namen der eingeloggten Firma */}
+        {companyModules.length > 0 && (
+          <section>
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-400">
+              {company?.companyName ?? 'Module'}
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {companyModules.map((mod) => (
+                <ModuleCard key={mod.id} module={mod} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </AppLayout>
   );
