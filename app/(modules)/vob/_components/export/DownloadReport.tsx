@@ -8,12 +8,12 @@ interface DownloadReportProps {
   label?: string
 }
 
-export function DownloadReport({ url, label = 'Bericht' }: DownloadReportProps) {
+export function DownloadReport({ url, label = 'Bericht' }: DownloadReportProps): React.JSX.Element | null {
   if (!url) return null
 
   return (
     <a href={url} download target="_blank" rel="noopener noreferrer">
-      <Button variant="outline" size="sm" className="text-[11px] text-neutral-500 border-neutral-200 hover:bg-neutral-50">
+      <Button variant="outline" size="sm" className="text-xs text-muted-foreground border-border hover:bg-muted hover:text-foreground">
         <Download size={12} className="mr-1" />
         {label}
       </Button>

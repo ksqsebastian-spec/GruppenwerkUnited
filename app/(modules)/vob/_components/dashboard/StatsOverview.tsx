@@ -10,7 +10,7 @@ interface StatsOverviewProps {
   totalTenders: number
 }
 
-export function StatsOverview({ latestScan, totalActive, totalMatched, totalTenders }: StatsOverviewProps) {
+export function StatsOverview({ latestScan, totalActive, totalMatched, totalTenders }: StatsOverviewProps): React.JSX.Element {
   const items = [
     {
       label: 'Letzter Scan',
@@ -35,12 +35,12 @@ export function StatsOverview({ latestScan, totalActive, totalMatched, totalTend
   ]
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-neutral-200/60 rounded-xl overflow-hidden border border-neutral-200/60">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border rounded-xl overflow-hidden border border-border">
       {items.map(item => (
-        <div key={item.label} className="bg-white p-5">
-          <p className="text-[11px] text-neutral-400 mb-3">{item.label}</p>
-          <p className="text-[28px] font-semibold text-neutral-900 leading-none tracking-tight">{item.value}</p>
-          <p className="text-[11px] text-neutral-400 mt-2">{item.sub}</p>
+        <div key={item.label} className="bg-card p-5">
+          <p className="text-xs text-muted-foreground mb-3">{item.label}</p>
+          <p className="text-[28px] font-semibold text-foreground leading-none tracking-tight">{item.value}</p>
+          <p className="text-xs text-muted-foreground mt-2">{item.sub}</p>
         </div>
       ))}
     </div>

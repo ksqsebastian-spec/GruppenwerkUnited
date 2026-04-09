@@ -41,7 +41,7 @@ export default async function VobDashboardPage(): Promise<React.JSX.Element> {
     <>
       <div className="max-w-[1200px]">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-[18px] font-semibold text-neutral-900">VOB Monitor – Übersicht</h1>
+          <h1 className="text-lg font-semibold tracking-tight text-foreground">VOB Monitor</h1>
           <DownloadReport url={latestScan?.report_url ?? null} />
         </div>
         <StatsOverview
@@ -51,7 +51,7 @@ export default async function VobDashboardPage(): Promise<React.JSX.Element> {
           totalTenders={totalTenders}
         />
         <div className="mt-10">
-          <p className="text-[13px] font-medium text-neutral-900 mb-4">Unternehmen</p>
+          <p className="text-sm font-medium text-foreground mb-4">Unternehmen</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {companies.map((company) => (
               <CompanyCard
@@ -65,8 +65,8 @@ export default async function VobDashboardPage(): Promise<React.JSX.Element> {
         </div>
         <div className="mt-10 grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4">
           <TrendChart trends={trends} />
-          <div className="bg-white rounded-xl border border-neutral-200/60 p-5">
-            <p className="text-[13px] font-medium text-neutral-900 mb-4">
+          <div className="bg-card rounded-xl border border-border p-5">
+            <p className="text-sm font-medium text-foreground mb-4">
               Neueste Ausschreibungen
             </p>
             <RecentFeed tenders={recentTenders} latestScanDate={latestScan?.scan_date} />

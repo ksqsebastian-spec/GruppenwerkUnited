@@ -18,7 +18,7 @@ interface TrendChartProps {
 
 type TimeFrame = 'week' | 'month' | '6months'
 
-export function TrendChart({ trends }: TrendChartProps) {
+export function TrendChart({ trends }: TrendChartProps): React.JSX.Element {
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('month')
 
   const companyMap = new Map<string, { name: string; color: string }>()
@@ -53,18 +53,18 @@ export function TrendChart({ trends }: TrendChartProps) {
 
   if (chartData.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-neutral-200/60 p-6">
-        <p className="text-[13px] font-medium text-neutral-900 mb-2">Trend</p>
-        <p className="text-[12px] text-neutral-400">Noch keine Trenddaten.</p>
+      <div className="bg-card rounded-xl border border-border p-6">
+        <p className="text-sm font-medium text-foreground mb-2">Trend</p>
+        <p className="text-xs text-muted-foreground">Noch keine Trenddaten.</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-xl border border-neutral-200/60 p-6">
+    <div className="bg-card rounded-xl border border-border p-6">
       <div className="flex items-center justify-between mb-6">
-        <p className="text-[13px] font-medium text-neutral-900">Trend</p>
-        <div className="flex gap-px bg-neutral-100 rounded-lg p-px">
+        <p className="text-sm font-medium text-foreground">Trend</p>
+        <div className="flex gap-px bg-muted rounded-lg p-px">
           {([
             ['week', 'Woche'],
             ['month', 'Monat'],
@@ -73,10 +73,10 @@ export function TrendChart({ trends }: TrendChartProps) {
             <button
               key={key}
               onClick={() => setTimeFrame(key)}
-              className={`px-2.5 py-1 text-[11px] rounded-md transition-colors ${
+              className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
                 timeFrame === key
-                  ? 'bg-white text-neutral-900 shadow-sm font-medium'
-                  : 'text-neutral-400 hover:text-neutral-600'
+                  ? 'bg-card text-foreground shadow-sm font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {label}
@@ -90,47 +90,50 @@ export function TrendChart({ trends }: TrendChartProps) {
           <AreaChart data={chartData}>
             <defs>
               <linearGradient id="g-gesamt" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#171717" stopOpacity={0.06} />
-                <stop offset="100%" stopColor="#171717" stopOpacity={0} />
+                <stop offset="0%" stopColor="#1A1916" stopOpacity={0.06} />
+                <stop offset="100%" stopColor="#1A1916" stopOpacity={0} />
               </linearGradient>
               {companies.map(([slug, { color }]) => (
                 <linearGradient key={slug} id={`g-${slug}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={color} stopOpacity={0.08} />
+                  <stop offset="0%" stopColor={color} stopOpacity={0.1} />
                   <stop offset="100%" stopColor={color} stopOpacity={0} />
                 </linearGradient>
               ))}
             </defs>
-            <CartesianGrid stroke="#f5f5f5" vertical={false} />
+            <CartesianGrid stroke="hsl(38 16% 87%)" vertical={false} />
             <XAxis
               dataKey="week"
-              tick={{ fontSize: 10, fill: '#a3a3a3' }}
+              tick={{ fontSize: 11, fill: '#6B6860', fontFamily: 'var(--font-sans)' }}
               stroke="transparent"
               tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: '#a3a3a3' }}
+              tick={{ fontSize: 11, fill: '#6B6860', fontFamily: 'var(--font-sans)' }}
               stroke="transparent"
               tickLine={false}
               width={28}
             />
             <Tooltip
               contentStyle={{
-                borderRadius: '8px',
-                border: '1px solid #e5e5e5',
-                fontSize: '11px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                borderRadius: '10px',
+                border: '1px solid hsl(38 16% 87%)',
+                fontSize: '12px',
+                fontFamily: 'var(--font-sans)',
+                boxShadow: '0 4px 16px rgba(26,25,22,0.06)',
+                backgroundColor: '#ffffff',
+                color: '#1A1916',
               }}
             />
             <Area
               type="monotone"
               dataKey="_gesamt"
               name="Gesamt"
-              stroke="#171717"
+              stroke="#1A1916"
               strokeWidth={2}
               strokeDasharray="4 2"
               fill="url(#g-gesamt)"
               dot={false}
-              activeDot={{ r: 3, fill: '#171717', strokeWidth: 0 }}
+              activeDot={{ r: 3, fill: '#1A1916', strokeWidth: 0 }}
             />
             {companies.map(([slug, { name, color }]) => (
               <Area
@@ -149,14 +152,14 @@ export function TrendChart({ trends }: TrendChartProps) {
         </ResponsiveContainer>
       </div>
 
-      {/* Legend */}
+      {/* Legende */}
       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-4">
-        <span className="flex items-center gap-1.5 text-[11px] text-neutral-900 font-medium">
-          <span className="w-4 h-px border-t-2 border-dashed border-neutral-900" />
+        <span className="flex items-center gap-1.5 text-xs text-foreground font-medium">
+          <span className="w-4 h-px border-t-2 border-dashed border-foreground" />
           Gesamt
         </span>
         {companies.map(([slug, { name, color }]) => (
-          <span key={slug} className="flex items-center gap-1.5 text-[11px] text-neutral-400">
+          <span key={slug} className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
             {name}
           </span>

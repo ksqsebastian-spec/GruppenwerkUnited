@@ -16,7 +16,7 @@ export function AppLayout({ children }: AppLayoutProps): React.JSX.Element {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         {/* Haupt-Header mit Modul-Navigation */}
         <Header />
 

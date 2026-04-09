@@ -44,7 +44,7 @@ export function Header(): React.JSX.Element {
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-3 border-b bg-white px-4 shadow-sm sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-3 border-b bg-card px-4 shadow-sm sm:px-6 lg:px-8">
         {/* Mobile Menu Button */}
         <Button
           variant="ghost"
