@@ -114,7 +114,6 @@ function WerkbankModuleNav({ pathname }: { pathname: string }): React.JSX.Elemen
     return false;
   });
 
-  const tools = visibleModules.filter((m) => m.category === 'tool');
   const companyModules = visibleModules.filter((m) => m.category === 'company');
 
   const renderModuleItem = (mod: ModuleConfig): React.JSX.Element => {
@@ -135,18 +134,6 @@ function WerkbankModuleNav({ pathname }: { pathname: string }): React.JSX.Elemen
   return (
     <nav className="flex flex-1 flex-col">
       <ul role="list" className="flex flex-1 flex-col gap-y-7">
-        {/* Allgemeine Tools */}
-        {tools.length > 0 && (
-          <li>
-            <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
-              Tools
-            </div>
-            <ul role="list" className="-mx-2 space-y-1">
-              {tools.map(renderModuleItem)}
-            </ul>
-          </li>
-        )}
-
         {/* Firmen-Module — unter dem Namen der eingeloggten Firma */}
         {companyModules.length > 0 && (
           <li>
