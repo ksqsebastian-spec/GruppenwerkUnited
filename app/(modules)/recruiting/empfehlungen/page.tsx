@@ -29,6 +29,7 @@ export default function EmpfehlungenPage(): React.JSX.Element {
   const [showBankdaten, setShowBankdaten] = useState(false);
   const [formData, setFormData] = useState({
     stelle_id: "",
+    kandidat_name: "",
     kandidat_kontakt: "",
     empfehler_name: "",
     empfehler_email: "",
@@ -44,6 +45,7 @@ export default function EmpfehlungenPage(): React.JSX.Element {
   const [editingEmp, setEditingEmp] = useState<EmpfehlungWithStelle | null>(null);
   const [editFormData, setEditFormData] = useState({
     stelle_id: "",
+    kandidat_name: "",
     kandidat_kontakt: "",
     empfehler_name: "",
     empfehler_email: "",
@@ -112,7 +114,7 @@ export default function EmpfehlungenPage(): React.JSX.Element {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          kandidat_name: selectedStelle.title,
+          kandidat_name: formData.kandidat_name || selectedStelle.title,
           kandidat_kontakt: formData.kandidat_kontakt || undefined,
           empfehler_name: formData.empfehler_name,
           empfehler_email: formData.empfehler_email,
@@ -121,21 +123,22 @@ export default function EmpfehlungenPage(): React.JSX.Element {
         }),
       });
 
+      // Response-Body einmal lesen (darf nicht zweimal konsumiert werden)
+      const responseData = await res.json().catch(() => null);
+
       if (!res.ok) {
-        const data = await res.json();
-        setFormError(data.detail || data.error || "Fehler beim Erstellen");
+        setFormError(responseData?.detail || responseData?.error || "Fehler beim Erstellen");
         return;
       }
 
       // Falls Bankdaten angegeben wurden, separat speichern
       if (showBankdaten && (bankFormData.iban || bankFormData.bic || bankFormData.kontoinhaber || bankFormData.bank_name)) {
-        const created = await res.json().catch(() => null);
-        if (created?.id) {
+        if (responseData?.id) {
           await fetch("/api/recruiting/empfehlungen", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              id: created.id,
+              id: responseData.id,
               iban: bankFormData.iban || null,
               bic: bankFormData.bic || null,
               kontoinhaber: bankFormData.kontoinhaber || null,
@@ -146,7 +149,7 @@ export default function EmpfehlungenPage(): React.JSX.Element {
       }
 
       setShowForm(false);
-      setFormData({ stelle_id: "", kandidat_kontakt: "", empfehler_name: "", empfehler_email: "", position: "" });
+      setFormData({ stelle_id: "", kandidat_name: "", kandidat_kontakt: "", empfehler_name: "", empfehler_email: "", position: "" });
       setBankFormData({ iban: "", bic: "", kontoinhaber: "", bank_name: "" });
       setShowBankdaten(false);
       fetchData();
@@ -195,6 +198,7 @@ export default function EmpfehlungenPage(): React.JSX.Element {
     setEditingEmp(emp);
     setEditFormData({
       stelle_id: emp.stelle?.id ?? "",
+      kandidat_name: emp.kandidat_name ?? "",
       kandidat_kontakt: emp.kandidat_kontakt ?? "",
       empfehler_name: emp.empfehler_name,
       empfehler_email: emp.empfehler_email,
@@ -211,7 +215,6 @@ export default function EmpfehlungenPage(): React.JSX.Element {
     setEditError("");
 
     try {
-      const selectedStelle = stellen.find((s) => s.id === editFormData.stelle_id);
       const res = await fetch("/api/recruiting/empfehlungen", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -220,8 +223,8 @@ export default function EmpfehlungenPage(): React.JSX.Element {
           empfehler_name: editFormData.empfehler_name,
           empfehler_email: editFormData.empfehler_email,
           stelle_id: editFormData.stelle_id,
+          kandidat_name: editFormData.kandidat_name || undefined,
           kandidat_kontakt: editFormData.kandidat_kontakt || undefined,
-          kandidat_name: selectedStelle?.title ?? undefined,
           position: editFormData.position || undefined,
         }),
       });
@@ -288,6 +291,7 @@ export default function EmpfehlungenPage(): React.JSX.Element {
                 ))}
               </select>
             </div>
+            <Input label="Kandidat Name" value={data.kandidat_name} onChange={(e) => setData({ ...data, kandidat_name: e.target.value })} placeholder="Name des Kandidaten" required />
             <Input label="Kandidat Kontakt (optional)" value={data.kandidat_kontakt} onChange={(e) => setData({ ...data, kandidat_kontakt: e.target.value })} placeholder="E-Mail oder Telefon" />
             <Input label="Empfehler Name" value={data.empfehler_name} onChange={(e) => setData({ ...data, empfehler_name: e.target.value })} required />
             <Input label="Empfehler E-Mail" type="email" value={data.empfehler_email} onChange={(e) => setData({ ...data, empfehler_email: e.target.value })} required />
