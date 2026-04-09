@@ -100,6 +100,11 @@ CREATE OR REPLACE TRIGGER trg_vob_tenders_updated_at
 -- Kombinierte Sicht: Ausschreibungen mit Unternehmenszuordnung und Scan-Info
 -- ============================================================================
 
+-- Vorhandene Objekte entfernen (falls als Tabelle oder Materialized View angelegt)
+DROP TABLE IF EXISTS vob.vob_dashboard CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS vob.vob_dashboard CASCADE;
+DROP VIEW IF EXISTS vob.vob_dashboard CASCADE;
+
 CREATE OR REPLACE VIEW vob.vob_dashboard AS
 SELECT
   t.id                                          AS tender_id,
@@ -142,6 +147,10 @@ LEFT JOIN vob.companies     c ON c.id = m.company_id;
 -- Wöchentliche Ausschreibungsanzahl pro Unternehmen
 -- ============================================================================
 
+DROP TABLE IF EXISTS vob.company_weekly_stats CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS vob.company_weekly_stats CASCADE;
+DROP VIEW IF EXISTS vob.company_weekly_stats CASCADE;
+
 CREATE OR REPLACE VIEW vob.company_weekly_stats AS
 SELECT
   c.name                                        AS company_name,
@@ -161,6 +170,10 @@ GROUP BY c.name, c.slug, c.color, s.calendar_week, s.year, s.scan_date;
 -- VIEW: company_trends
 -- Wöchentliche Statistik + Vorwochenvergleich
 -- ============================================================================
+
+DROP TABLE IF EXISTS vob.company_trends CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS vob.company_trends CASCADE;
+DROP VIEW IF EXISTS vob.company_trends CASCADE;
 
 CREATE OR REPLACE VIEW vob.company_trends AS
 SELECT
