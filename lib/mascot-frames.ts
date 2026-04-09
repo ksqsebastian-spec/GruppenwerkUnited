@@ -1,10 +1,10 @@
 /**
  * Pixel-Art Frames für den Werkbank-Maskottchen-Krebs.
- * Raster: 14 × 14 Logik-Pixel (je 6 SVG-Einheiten → 84×84 SVG).
+ * Raster: 14 × 14 Logik-Pixel (je 5 SVG-Einheiten → 70×70 SVG).
  * Reihen 0-3:  Prop-Bereich (Hammer, Zzz …)
  * Reihen 4-9:  Körper (rechteckig, wie der Claude-Krebs)
  * Reihe 6-7:   Klauen-Reihen (volle Breite, 2px Überhang links/rechts)
- * Reihen 11-13: Beine
+ * Reihen 10-12: Beine (direkt unter Körper, keine Lücke)
  */
 
 const B = '#2563EB'; // Körper (Blau)
@@ -28,7 +28,7 @@ export type AnimName =
 // Körper: gleichmäßig rechteckig (cols 2-11, 10px breit)
 // Klauen: Reihen 6-7 gehen bis cols 0 und 13 (je 2px Überhang)
 // Augen:  2×2 bei (rows 5-6, cols 4-5) und (rows 5-6, cols 8-9)
-// Beine:  cols 3-4 und 7-8, rows 11-13
+// Beine:  cols 3-4 und 7-8, rows 10-12 (direkt unter Körper)
 const BASE: PixelFrame = [
   [_,_,_,_,_,_,_,_,_,_,_,_,_,_], // 0  Prop-Bereich
   [_,_,_,_,_,_,_,_,_,_,_,_,_,_], // 1
@@ -40,17 +40,23 @@ const BASE: PixelFrame = [
   [B,B,B,B,B,B,B,B,B,B,B,B,B,B], // 7  Klauen (voll, 14 breit)
   [_,_,B,B,B,B,B,B,B,B,B,B,_,_], // 8  Körper unten
   [_,_,B,B,B,B,B,B,B,B,B,B,_,_], // 9  Körper unten
-  [_,_,_,_,_,_,_,_,_,_,_,_,_,_], // 10 Lücke
-  [_,_,_,B,B,_,_,B,B,_,_,_,_,_], // 11 Beine (cols 3-4 und 7-8)
+  [_,_,_,B,B,_,_,B,B,_,_,_,_,_], // 10 Beine (cols 3-4 und 7-8)
+  [_,_,_,B,B,_,_,B,B,_,_,_,_,_], // 11
   [_,_,_,B,B,_,_,B,B,_,_,_,_,_], // 12
-  [_,_,_,B,B,_,_,B,B,_,_,_,_,_], // 13
+  [_,_,_,_,_,_,_,_,_,_,_,_,_,_], // 13 leer
 ];
 
 const cl = (f: PixelFrame): PixelFrame => f.map(r => [...r]);
 
-// ─── 1. IDLE (2 Frames, 2 fps) ───────────────────────────────────────────────
-const i1 = cl(BASE); i1[5][4] = D; i1[5][8] = D; // leichter Augen-Glanz
-export const IDLE: PixelFrame[] = [cl(BASE), i1];
+// ─── 1. IDLE (4 Frames, 3 fps) ───────────────────────────────────────────────
+// Leichtes Schaukeln: Körper-Pixel wechseln für subtile Bewegung
+const i1 = cl(BASE);
+i1[5][4] = D; i1[5][8] = D;             // Augen-Glanz oben links
+const i2 = cl(BASE);
+i2[9][2] = D; i2[9][11] = D;            // Körper unten leicht dunkler
+const i3 = cl(BASE);
+i3[5][5] = D; i3[5][9] = D;             // Augen-Glanz oben rechts
+export const IDLE: PixelFrame[] = [cl(BASE), i1, i2, i3];
 
 // ─── 2. BLINK (5 Frames, 10 fps) ─────────────────────────────────────────────
 const blHalf = cl(BASE);
@@ -60,8 +66,8 @@ blClosed[6][4]=D; blClosed[6][5]=D; blClosed[6][8]=D; blClosed[6][9]=D; // Linie
 export const BLINK: PixelFrame[] = [cl(BASE), blHalf, blClosed, blHalf, cl(BASE)];
 
 // ─── 3. WALK (4 Frames, 10 fps) ──────────────────────────────────────────────
-const wL = cl(BASE); wL[11][3]=_; wL[12][3]=_; wL[13][3]=_; // linkes Bein gehoben
-const wR = cl(BASE); wR[11][7]=_; wR[12][7]=_; wR[13][7]=_; // rechtes Bein gehoben
+const wL = cl(BASE); wL[10][3]=_; wL[11][3]=_; wL[12][3]=_; // linkes Bein gehoben
+const wR = cl(BASE); wR[10][7]=_; wR[11][7]=_; wR[12][7]=_; // rechtes Bein gehoben
 export const WALK: PixelFrame[] = [cl(BASE), wL, cl(BASE), wR];
 
 // ─── 4. HAMMER (6 Frames, 7 fps) ─────────────────────────────────────────────
@@ -87,9 +93,9 @@ export const HAMMER: PixelFrame[] = [hm0, hm1, hm1, hm2, hm3, cl(BASE)];
 // ─── 5. TYPE (4 Frames, 10 fps) ──────────────────────────────────────────────
 function addLaptop(base: PixelFrame): PixelFrame {
   const f = cl(base);
-  f[11] = [_,_,_,L,L,L,L,L,L,_,_,_,_,_]; // Bildschirm (cols 3-8)
-  f[12] = [_,_,_,L,_,_,_,_,L,_,_,_,_,_];
-  f[13] = [_,_,_,K,K,K,K,K,K,_,_,_,_,_]; // Tastatur
+  f[10] = [_,_,_,L,L,L,L,L,L,_,_,_,_,_]; // Bildschirm (cols 3-8)
+  f[11] = [_,_,_,L,_,_,_,_,L,_,_,_,_,_];
+  f[12] = [_,_,_,K,K,K,K,K,K,_,_,_,_,_]; // Tastatur
   return f;
 }
 const ty1 = addLaptop(BASE); ty1[9][2]  = D; // linke Klaue tippt
@@ -158,9 +164,9 @@ export const ANIM_FRAMES: Record<AnimName, PixelFrame[]> = {
   peek: PEEK, celebrate: CELEBRATE,
 };
 export const ANIM_FPS: Record<AnimName, number> = {
-  idle: 2, blink: 10, walk: 10, hammer: 7,
+  idle: 3, blink: 10, walk: 10, hammer: 7,
   type: 10, wave: 7, dance: 8, sleep: 2,
-  peek: 2, celebrate: 8,
+  peek: 3, celebrate: 8,
 };
 export const ANIM_LOOP: Record<AnimName, boolean> = {
   idle: true, blink: false, walk: true, hammer: false,

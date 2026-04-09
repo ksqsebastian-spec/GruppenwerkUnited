@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { ANIM_FRAMES, ANIM_FPS, ANIM_LOOP, type PixelFrame, type AnimName } from '@/lib/mascot-frames';
 
-const PX   = 6;  // SVG-Einheiten pro Logik-Pixel
+const PX   = 5;  // SVG-Einheiten pro Logik-Pixel
 const COLS = 14;
 const ROWS = 14;
 
@@ -82,7 +82,7 @@ export function MascotCrab(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
-    const id = setInterval(pickNext, 4200);
+    const id = setInterval(pickNext, 2500);
     return () => clearInterval(id);
   }, [pickNext]);
 
