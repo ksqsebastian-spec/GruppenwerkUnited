@@ -61,8 +61,8 @@ export default function LoginPage(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <Card className="w-full max-w-md shadow-sm border-border">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
             <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center">
