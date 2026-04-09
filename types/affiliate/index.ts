@@ -8,6 +8,7 @@ export interface Handwerker {
   telefon: string | null;
   provision_prozent: number;
   active: boolean;
+  company: string;
   created_at: string;
   updated_at: string;
 }
@@ -28,6 +29,7 @@ export interface Empfehlung {
   bic: string | null;
   kontoinhaber: string | null;
   bank_name: string | null;
+  company: string;
   created_at: string;
   updated_at: string;
 }

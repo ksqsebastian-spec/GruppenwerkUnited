@@ -281,6 +281,7 @@ CREATE TABLE handwerker (
   provision_prozent DECIMAL(5,2) NOT NULL DEFAULT 0
     CHECK (provision_prozent >= 0 AND provision_prozent <= 50),
   active           BOOLEAN     NOT NULL DEFAULT true,
+  company          TEXT        NOT NULL DEFAULT '',
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -291,6 +292,7 @@ CREATE TABLE stellen (
   title       TEXT        NOT NULL,
   description TEXT,
   active      BOOLEAN     NOT NULL DEFAULT true,
+  company     TEXT        NOT NULL DEFAULT '',
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -321,6 +323,8 @@ CREATE TABLE empfehlungen (
   kandidat_kontakt TEXT,
   position         TEXT,
   praemie_betrag   DECIMAL(10,2),
+  -- Multi-Tenant: Firma für Datentrennung (abgeleitet aus handwerker.company oder stellen.company)
+  company          TEXT          NOT NULL DEFAULT '',
   created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
@@ -428,12 +432,16 @@ CREATE INDEX idx_uvv_checks_next_due       ON uvv_checks(next_check_due);
 
 CREATE INDEX idx_handwerker_email          ON handwerker(email);
 CREATE INDEX idx_handwerker_active         ON handwerker(active);
+CREATE INDEX idx_handwerker_company        ON handwerker(company);
+
+CREATE INDEX idx_stellen_company           ON stellen(company);
 
 CREATE INDEX idx_empfehlungen_ref_code     ON empfehlungen(ref_code);
 CREATE INDEX idx_empfehlungen_handwerker   ON empfehlungen(handwerker_id);
 CREATE INDEX idx_empfehlungen_stelle       ON empfehlungen(stelle_id);
 CREATE INDEX idx_empfehlungen_status       ON empfehlungen(status);
 CREATE INDEX idx_empfehlungen_created_at   ON empfehlungen(created_at DESC);
+CREATE INDEX idx_empfehlungen_company      ON empfehlungen(company);
 
 CREATE INDEX idx_audit_log_user            ON audit_log(user_id);
 CREATE INDEX idx_audit_log_target          ON audit_log(target_type, target_id);
@@ -500,6 +508,22 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- company-Feld bei Empfehlung automatisch aus Handwerker bzw. Stelle ableiten
+CREATE OR REPLACE FUNCTION set_empfehlung_company()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  IF (NEW.company IS NULL OR NEW.company = '') THEN
+    IF NEW.handwerker_id IS NOT NULL THEN
+      SELECT company INTO NEW.company FROM handwerker WHERE id = NEW.handwerker_id;
+    ELSIF NEW.stelle_id IS NOT NULL THEN
+      SELECT company INTO NEW.company FROM stellen WHERE id = NEW.stelle_id;
+    END IF;
+    NEW.company := COALESCE(NEW.company, '');
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
 -- ============================================================================
 -- TRIGGER
 -- ============================================================================
@@ -547,6 +571,10 @@ CREATE TRIGGER update_stellen_updated_at
 CREATE TRIGGER update_empfehlungen_updated_at
   BEFORE UPDATE ON empfehlungen
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trg_empfehlung_company
+  BEFORE INSERT ON empfehlungen
+  FOR EACH ROW EXECUTE FUNCTION set_empfehlung_company();
 
 -- ============================================================================
 -- ROW LEVEL SECURITY (RLS)
