@@ -51,12 +51,13 @@ export default function ROIPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    // Daten aus dem dedizierten roi-Schema laden
     const [jobsRes, configRes] = await Promise.all([
-      supabase.from("jobs").select("*").order("datum"),
-      supabase.from("config").select("*").limit(1).single(),
+      supabase.schema("roi").from("jobs").select("*").order("datum"),
+      supabase.schema("roi").from("config").select("*").limit(1).single(),
     ]);
     setJobs((jobsRes.data as Job[]) || []);
-    setConfig(configRes.data as Config);
+    setConfig((configRes.data as Config) ?? null);
     setLoading(false);
   }, []);
 
@@ -68,13 +69,29 @@ export default function ROIPage() {
     if (!config) return;
     const updated = { ...config, [key]: value };
     setConfig(updated);
-    await supabase.from("config").update({ [key]: value }).eq("id", config.id);
+    // Konfiguration im roi-Schema aktualisieren
+    await supabase.schema("roi").from("config").update({ [key]: value }).eq("id", config.id);
   };
 
-  if (loading || !config) {
+  // Ladevorgang abwarten
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-text-dim font-mono text-sm">Laden...</div>
+      </div>
+    );
+  }
+
+  // Konfiguration fehlt (Datenbank nicht eingerichtet)
+  if (!config) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <p className="text-text-dim font-mono text-sm mb-2">Keine Konfiguration gefunden</p>
+          <p className="text-text-dim font-mono text-xs">
+            Bitte die Datenbank einrichten — Migration 009_roi_schema.sql ausführen.
+          </p>
+        </div>
       </div>
     );
   }

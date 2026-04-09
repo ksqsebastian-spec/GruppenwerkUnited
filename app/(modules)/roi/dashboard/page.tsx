@@ -17,7 +17,9 @@ export default function DashboardPage() {
   const [uploads, setUploads] = useState<Upload[]>([]);
 
   const fetchJobs = useCallback(async () => {
+    // Aufträge aus dem roi-Schema laden
     const { data } = await supabase
+      .schema("roi")
       .from("jobs")
       .select("*")
       .order("datum", { ascending: false })
@@ -27,7 +29,9 @@ export default function DashboardPage() {
   }, []);
 
   const fetchUploads = useCallback(async () => {
+    // Upload-Protokoll aus dem roi-Schema laden
     const { data } = await supabase
+      .schema("roi")
       .from("uploads")
       .select("*")
       .order("created_at", { ascending: false })

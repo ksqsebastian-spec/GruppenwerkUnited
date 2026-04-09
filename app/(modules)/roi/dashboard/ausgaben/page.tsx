@@ -13,7 +13,9 @@ export default function AusgabenPage() {
   const [filter, setFilter] = useState<"all" | "recurring" | "onetime">("all");
 
   const fetchPurchases = useCallback(async () => {
+    // Einkäufe aus dem roi-Schema laden
     const { data } = await supabase
+      .schema("roi")
       .from("purchases")
       .select("*")
       .order("purchased_at", { ascending: false });
@@ -26,7 +28,8 @@ export default function AusgabenPage() {
   }, [fetchPurchases]);
 
   const handleDelete = async (id: string) => {
-    await supabase.from("purchases").delete().eq("id", id);
+    // Einkauf aus dem roi-Schema löschen
+    await supabase.schema("roi").from("purchases").delete().eq("id", id);
     fetchPurchases();
   };
 

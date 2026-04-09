@@ -138,7 +138,8 @@ export default function JobGrid({ jobs, onUpdate }: JobGridProps) {
         value = rawValue.slice(0, 500);
       }
 
-      await supabase.from("jobs").update({ [key]: value }).eq("id", jobId);
+      // Auftrag im roi-Schema aktualisieren
+      await supabase.schema("roi").from("jobs").update({ [key]: value }).eq("id", jobId);
       setSaving(null);
       onUpdate();
     },
@@ -147,7 +148,8 @@ export default function JobGrid({ jobs, onUpdate }: JobGridProps) {
 
   const handleAddRow = async () => {
     const now = new Date();
-    await supabase.from("jobs").insert({
+    // Neuen Auftrag im roi-Schema anlegen
+    await supabase.schema("roi").from("jobs").insert({
       jahr: now.getFullYear(),
       monat: MONATE[now.getMonth()],
       datum: now.toISOString().split("T")[0],
@@ -156,7 +158,8 @@ export default function JobGrid({ jobs, onUpdate }: JobGridProps) {
   };
 
   const handleDelete = async (jobId: string) => {
-    await supabase.from("jobs").delete().eq("id", jobId);
+    // Auftrag aus dem roi-Schema löschen
+    await supabase.schema("roi").from("jobs").delete().eq("id", jobId);
     onUpdate();
   };
 

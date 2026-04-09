@@ -213,8 +213,9 @@ export default function FileImport({ onImportComplete }: FileImportProps) {
       return job;
     });
 
-    // Batch insert (Supabase supports bulk)
+    // Stapel-Import in das roi-Schema
     const { error: insertError } = await supabase
+      .schema("roi")
       .from("jobs")
       .insert(jobsToInsert);
 
@@ -224,8 +225,8 @@ export default function FileImport({ onImportComplete }: FileImportProps) {
       return;
     }
 
-    // Log the upload
-    await supabase.from("uploads").insert({
+    // Upload-Protokoll im roi-Schema speichern
+    await supabase.schema("roi").from("uploads").insert({
       filename: parsed.filename,
       rows_imported: jobsToInsert.length,
       rows_skipped: parsed.rows.length - nonEmptyRows.length,

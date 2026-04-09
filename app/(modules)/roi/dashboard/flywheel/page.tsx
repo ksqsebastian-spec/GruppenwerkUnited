@@ -13,12 +13,12 @@ export default function FlywheelPage() {
   const [purchasing, setPurchasing] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
 
-  // Load budget from DB
+  // Budget aus dem roi-Schema laden
   useEffect(() => {
     async function loadData() {
       const [jobsRes, configRes] = await Promise.all([
-        supabase.from("jobs").select("rohertrag"),
-        supabase.from("config").select("*").limit(1).single(),
+        supabase.schema("roi").from("jobs").select("rohertrag"),
+        supabase.schema("roi").from("config").select("*").limit(1).single(),
       ]);
       const jobs = (jobsRes.data || []) as { rohertrag: number | null }[];
       const config = configRes.data as Config | null;
@@ -82,7 +82,8 @@ export default function FlywheelPage() {
       };
     });
 
-    const { error } = await supabase.from("purchases").insert(rows);
+    // Einkäufe im roi-Schema speichern
+    const { error } = await supabase.schema("roi").from("purchases").insert(rows);
     setPurchasing(false);
     if (!error) {
       setPurchaseSuccess(true);
