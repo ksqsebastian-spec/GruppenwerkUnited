@@ -7,32 +7,16 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 14px",
-  fontSize: "14px",
-  border: "1px solid var(--border)",
-  borderRadius: "var(--radius-sm)",
-  backgroundColor: "white",
-  color: "var(--text)",
-  outline: "none",
-  transition: "border-color 0.2s ease",
-};
-
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  function Input({ label, error, id, style, ...props }, ref) {
+  function Input({ label, error, id, className = "", ...props }, ref) {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
 
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+      <div className="flex flex-col gap-1">
         {label && (
           <label
             htmlFor={inputId}
-            style={{
-              fontSize: "13px",
-              fontWeight: 500,
-              color: "var(--text-muted)",
-            }}
+            className="text-xs font-medium text-muted-foreground uppercase tracking-wide"
           >
             {label}
           </label>
@@ -40,11 +24,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           id={inputId}
-          style={{
-            ...inputStyle,
-            borderColor: error ? "var(--red)" : "var(--border)",
-            ...style,
-          }}
+          className={`w-full px-3 py-2.5 text-sm border rounded-lg bg-card text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-foreground/30 ${error ? "border-red-500" : "border-border"} ${className}`}
           aria-invalid={!!error}
           aria-describedby={error ? `${inputId}-error` : undefined}
           {...props}
@@ -53,7 +33,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <p
             id={`${inputId}-error`}
             role="alert"
-            style={{ fontSize: "12px", color: "var(--red)", margin: 0 }}
+            className="text-xs text-red-600"
           >
             {error}
           </p>

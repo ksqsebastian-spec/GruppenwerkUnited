@@ -5,10 +5,9 @@ import { Search, Copy, Check, X, CreditCard, ArrowLeft } from "lucide-react";
 import type { EmpfehlungWithStelle } from "@/types/recruiting";
 import { StatCard } from "../_components/ui/StatCard";
 import { Card } from "../_components/ui/Card";
-import { Button } from "../_components/ui/Button";
 import { formatDate, formatCurrency } from "@/lib/modules/recruiting/utils";
 
-export default function AuszahlungPage() {
+export default function AuszahlungPage(): React.JSX.Element {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithStelle[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -17,11 +16,11 @@ export default function AuszahlungPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
-  // Inline editing for praemie
+  // Inline-Bearbeitung der Prämie
   const [editingPraemieId, setEditingPraemieId] = useState<string | null>(null);
   const [editPraemie, setEditPraemie] = useState("");
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -48,7 +47,7 @@ export default function AuszahlungPage() {
     return () => clearTimeout(debounce);
   }, [fetchData]);
 
-  async function handleCopy(text: string, key: string) {
+  async function handleCopy(text: string, key: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -63,7 +62,7 @@ export default function AuszahlungPage() {
     setTimeout(() => setCopied(null), 2000);
   }
 
-  async function handleUpdatePraemie(emp: EmpfehlungWithStelle) {
+  async function handleUpdatePraemie(emp: EmpfehlungWithStelle): Promise<void> {
     const value = parseFloat(editPraemie);
     if (isNaN(value) || value < 0) return;
 
@@ -84,7 +83,7 @@ export default function AuszahlungPage() {
     }
   }
 
-  async function handleMoveBack(emp: EmpfehlungWithStelle) {
+  async function handleMoveBack(emp: EmpfehlungWithStelle): Promise<void> {
     try {
       const res = await fetch("/api/recruiting/empfehlungen", {
         method: "PATCH",
@@ -102,7 +101,7 @@ export default function AuszahlungPage() {
     }
   }
 
-  async function handleMarkAusgezahlt(emp: EmpfehlungWithStelle) {
+  async function handleMarkAusgezahlt(emp: EmpfehlungWithStelle): Promise<void> {
     if (!confirm(`"${emp.empfehler_name}" als ausgezahlt markieren und ins Archiv verschieben?`)) return;
 
     try {
@@ -124,57 +123,61 @@ export default function AuszahlungPage() {
 
   const totalPraemie = empfehlungen.reduce((sum, e) => sum + (e.praemie_betrag ?? 0), 0);
 
-  const cellStyle = { padding: "14px 16px" };
-
-  function CopyField({ label, value, copyKey }: { label: string; value: string | null; copyKey: string }) {
+  // Kopierfeld für Bankdaten
+  function CopyField({ label, value, copyKey }: { label: string; value: string | null; copyKey: string }): React.JSX.Element | null {
     if (!value) return null;
     return (
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", backgroundColor: "hsl(var(--muted))", borderRadius: "10px", border: "1px solid var(--border)" }}>
-        <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", minWidth: "80px" }}>{label}</span>
-        <span style={{ flex: 1, fontSize: "14px", fontWeight: 600, fontFamily: "monospace", color: "var(--navy)" }}>{value}</span>
+      <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg border border-border">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide min-w-[70px]">{label}</span>
+        <span className="flex-1 text-sm font-medium font-mono text-foreground">{value}</span>
         <button
           onClick={() => handleCopy(value, copyKey)}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", borderRadius: "6px", display: "flex", alignItems: "center" }}
+          className="p-1 rounded cursor-pointer hover:bg-border transition-colors"
           title="Kopieren"
         >
-          {copied === copyKey ? <Check size={14} color="#16a34a" /> : <Copy size={14} color="var(--text-muted)" />}
+          {copied === copyKey ? <Check size={13} className="text-green-600" /> : <Copy size={13} className="text-muted-foreground" />}
         </button>
       </div>
     );
   }
 
   return (
-    <div className="animate-fadeIn" style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+    <div className="animate-fadeIn flex flex-col gap-8">
+      {/* Seitenheader */}
       <div>
-        <h1 style={{ fontSize: "32px", fontWeight: 800, margin: 0, color: "var(--navy)" }}>Auszahlung</h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "15px", margin: "8px 0 0 0" }}>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">Auszahlung</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Empfehlungen nach bestandener Probezeit. Prämie anpassen und als ausgezahlt markieren.
         </p>
       </div>
 
-      <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-        <StatCard label="Zur Auszahlung" value={total} bgColor="#f0fdf4" color="#16a34a" />
-        <StatCard label="Gesamt Prämien" value={formatCurrency(totalPraemie)} bgColor="#f5f3ff" color="#7c3aed" />
+      {/* Statistik-Raster */}
+      <div className="grid grid-cols-2 gap-px bg-border rounded-xl overflow-hidden border border-border">
+        <StatCard label="Zur Auszahlung" value={total} />
+        <StatCard label="Gesamt Prämien" value={formatCurrency(totalPraemie)} />
       </div>
 
-      {/* Search */}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "14px 18px", backgroundColor: "hsl(var(--card))", border: "2px solid var(--border)", borderRadius: "14px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-        <Search size={20} color="var(--orange)" />
+      {/* Suchleiste */}
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-xl">
+        <Search size={16} className="text-muted-foreground shrink-0" />
         <input
           placeholder="Name, Ref-Code suchen..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          style={{ border: "none", outline: "none", flex: 1, fontSize: "15px", backgroundColor: "transparent", color: "var(--text)", fontWeight: 500 }}
+          className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
         />
       </div>
 
-      {/* Table */}
-      <Card style={{ padding: 0, overflow: "auto", borderRadius: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", tableLayout: "auto" }}>
+      {/* Tabelle */}
+      <Card className="p-0 overflow-auto">
+        <table className="w-full border-collapse text-sm">
           <thead>
-            <tr style={{ textAlign: "left", background: "linear-gradient(135deg, #050234 0%, #0a0654 100%)" }}>
+            <tr className="border-b border-border bg-muted/50">
               {["Empfehler", "Stelle", "Ref", "Prämie", "Datum", "Aktionen"].map((h) => (
-                <th key={h} style={{ padding: "16px 16px", fontWeight: 700, color: "rgba(255,255,255,0.8)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.8px", whiteSpace: "nowrap" }}>
+                <th
+                  key={h}
+                  className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap"
+                >
                   {h}
                 </th>
               ))}
@@ -182,59 +185,82 @@ export default function AuszahlungPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: "15px" }}>Laden...</td></tr>
+              <tr>
+                <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                  Wird geladen...
+                </td>
+              </tr>
             ) : empfehlungen.length === 0 ? (
-              <tr><td colSpan={6} style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: "15px" }}>Keine Einträge zur Auszahlung</td></tr>
+              <tr>
+                <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                  Keine Einträge zur Auszahlung
+                </td>
+              </tr>
             ) : (
-              empfehlungen.map((emp, i) => (
+              empfehlungen.map((emp) => (
                 <>
                   <tr
                     key={emp.id}
-                    style={{
-                      borderBottom: expandedId === emp.id ? "none" : "1px solid var(--border)",
-                      backgroundColor: expandedId === emp.id ? "rgba(37,99,235,0.04)" : i % 2 === 0 ? "hsl(var(--card))" : "hsl(var(--muted))",
-                      cursor: "pointer",
-                      transition: "background-color 0.15s ease",
-                    }}
+                    className={`border-b border-border hover:bg-muted/50 transition-colors cursor-pointer ${expandedId === emp.id ? "bg-muted/30 border-b-0" : ""}`}
                     onClick={() => setExpandedId(expandedId === emp.id ? null : emp.id)}
                   >
-                    <td style={{ ...cellStyle, fontWeight: 600 }}>
-                      {emp.empfehler_name}
-                      <div style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 400 }}>{emp.empfehler_email}</div>
+                    {/* Empfehler */}
+                    <td className="px-4 py-3">
+                      <span className="text-sm font-medium text-foreground">{emp.empfehler_name}</span>
+                      <div className="text-xs text-muted-foreground">{emp.empfehler_email}</div>
                     </td>
-                    <td style={cellStyle}>
+
+                    {/* Stelle */}
+                    <td className="px-4 py-3 text-sm text-foreground">
                       {emp.stelle?.title ?? "–"}
                     </td>
-                    <td style={{ ...cellStyle, fontFamily: "monospace", fontSize: "12px", color: "var(--blue)", fontWeight: 700 }}>{emp.ref_code}</td>
 
-                    {/* Prämie (editable) */}
-                    <td style={cellStyle} onClick={(e) => e.stopPropagation()}>
+                    {/* Ref-Code */}
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground font-semibold">
+                      {emp.ref_code}
+                    </td>
+
+                    {/* Prämie (inline bearbeitbar) */}
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       {editingPraemieId === emp.id ? (
-                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                        <div className="flex gap-1.5 items-center">
                           <input
-                            type="number" step="0.01" min="0" value={editPraemie}
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={editPraemie}
                             onChange={(e) => setEditPraemie(e.target.value)}
-                            style={{ width: "90px", padding: "8px 10px", border: "2px solid var(--green)", borderRadius: "10px", fontSize: "14px", fontWeight: 700 }}
-                            onKeyDown={(e) => { if (e.key === "Enter") handleUpdatePraemie(emp); if (e.key === "Escape") setEditingPraemieId(null); }}
+                            className="w-24 px-2 py-1.5 border border-border rounded-lg text-sm font-semibold bg-card text-foreground outline-none focus:border-foreground/30"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleUpdatePraemie(emp);
+                              if (e.key === "Escape") setEditingPraemieId(null);
+                            }}
                             autoFocus
                           />
-                          <button onClick={() => handleUpdatePraemie(emp)} style={{ background: "#16a34a", border: "none", borderRadius: "8px", padding: "6px", cursor: "pointer", display: "flex", alignItems: "center" }}>
-                            <Check size={14} color="white" />
+                          <button
+                            onClick={() => handleUpdatePraemie(emp)}
+                            className="p-1.5 bg-green-600 rounded-md flex items-center cursor-pointer border-none"
+                          >
+                            <Check size={12} color="white" />
                           </button>
-                          <button onClick={() => setEditingPraemieId(null)} style={{ background: "var(--border)", border: "none", borderRadius: "8px", padding: "6px", cursor: "pointer", display: "flex", alignItems: "center" }}>
-                            <X size={14} color="var(--text-muted)" />
+                          <button
+                            onClick={() => setEditingPraemieId(null)}
+                            className="p-1.5 bg-muted border border-border rounded-md flex items-center cursor-pointer"
+                          >
+                            <X size={12} className="text-muted-foreground" />
                           </button>
                         </div>
                       ) : (
                         <button
-                          onClick={() => { setEditingPraemieId(emp.id); setEditPraemie(emp.praemie_betrag ? String(emp.praemie_betrag) : ""); }}
-                          style={{
-                            background: emp.praemie_betrag ? "#16a34a" : "var(--border)",
-                            border: "none", cursor: "pointer", fontWeight: 700,
-                            color: emp.praemie_betrag ? "white" : "var(--text-muted)",
-                            padding: "6px 16px", borderRadius: "16px", fontSize: "13px",
-                            boxShadow: emp.praemie_betrag ? "0 2px 8px rgba(22,163,74,0.3)" : "none",
+                          onClick={() => {
+                            setEditingPraemieId(emp.id);
+                            setEditPraemie(emp.praemie_betrag ? String(emp.praemie_betrag) : "");
                           }}
+                          className={`text-xs px-2 py-1 rounded-md border transition-colors cursor-pointer ${
+                            emp.praemie_betrag
+                              ? "border-green-600 text-green-700 hover:bg-green-50"
+                              : "border-border text-muted-foreground hover:bg-muted"
+                          }`}
                           title="Klicke um Prämie anzupassen"
                         >
                           {emp.praemie_betrag ? formatCurrency(emp.praemie_betrag) : "–"}
@@ -242,43 +268,37 @@ export default function AuszahlungPage() {
                       )}
                     </td>
 
-                    <td style={{ ...cellStyle, whiteSpace: "nowrap", color: "var(--text-muted)" }}>{formatDate(emp.created_at)}</td>
+                    {/* Datum */}
+                    <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
+                      {formatDate(emp.created_at)}
+                    </td>
 
-                    <td style={cellStyle} onClick={(e) => e.stopPropagation()}>
-                      <div style={{ display: "flex", gap: "6px" }}>
+                    {/* Aktionen */}
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex gap-2">
                         <button
                           onClick={() => handleMoveBack(emp)}
-                          style={{
-                            background: "linear-gradient(135deg, #ea580c, #c2410c)",
-                            border: "none", borderRadius: "10px", padding: "8px 12px", cursor: "pointer",
-                            color: "white", fontWeight: 700, fontSize: "12px", display: "flex", alignItems: "center", gap: "4px",
-                            boxShadow: "0 2px 8px rgba(234,88,12,0.3)",
-                          }}
+                          className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:bg-muted transition-colors flex items-center gap-1 cursor-pointer"
                           title="Zurück zu Eingestellt"
                         >
-                          <ArrowLeft size={14} /> Zurück
+                          <ArrowLeft size={12} /> Zurück
                         </button>
                         <button
                           onClick={() => handleMarkAusgezahlt(emp)}
-                          style={{
-                            background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
-                            border: "none", borderRadius: "10px", padding: "8px 16px", cursor: "pointer",
-                            color: "white", fontWeight: 700, fontSize: "12px", display: "flex", alignItems: "center", gap: "6px",
-                            boxShadow: "0 2px 8px rgba(124,58,237,0.3)",
-                          }}
+                          className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:bg-muted transition-colors flex items-center gap-1.5 cursor-pointer"
                         >
-                          <CreditCard size={14} /> Ausgezahlt
+                          <CreditCard size={12} /> Ausgezahlt
                         </button>
                       </div>
                     </td>
                   </tr>
 
-                  {/* Expanded payment details */}
+                  {/* Ausgeklappt: Zahlungsdaten */}
                   {expandedId === emp.id && (
-                    <tr key={`${emp.id}-detail`} style={{ borderBottom: "1px solid var(--border)", backgroundColor: "rgba(37,99,235,0.04)" }}>
-                      <td colSpan={6} style={{ padding: "0 16px 16px 16px" }}>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", maxWidth: "700px" }}>
-                          <div style={{ gridColumn: "1 / -1", fontSize: "12px", fontWeight: 700, color: "var(--blue)", textTransform: "uppercase", letterSpacing: "1px", padding: "4px 0" }}>
+                    <tr key={`${emp.id}-detail`} className="border-b border-border bg-muted/20">
+                      <td colSpan={6} className="px-4 pb-4 pt-0">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-2xl">
+                          <div className="col-span-full text-[10px] font-semibold text-muted-foreground uppercase tracking-widest py-2">
                             Zahlungsdaten
                           </div>
                           <CopyField label="E-Mail" value={emp.empfehler_email} copyKey={`${emp.id}-email`} />
@@ -288,7 +308,7 @@ export default function AuszahlungPage() {
                           <CopyField label="Bank" value={emp.bank_name} copyKey={`${emp.id}-bank`} />
                           <CopyField label="Prämie" value={emp.praemie_betrag ? formatCurrency(emp.praemie_betrag) : null} copyKey={`${emp.id}-praemie`} />
                           {(!emp.iban && !emp.bic && !emp.kontoinhaber && !emp.bank_name) && (
-                            <div style={{ gridColumn: "1 / -1", color: "var(--text-muted)", fontSize: "13px", fontStyle: "italic" }}>
+                            <div className="col-span-full text-xs text-muted-foreground italic">
                               Keine Bankdaten hinterlegt. E-Mail wird oben angezeigt.
                             </div>
                           )}
@@ -303,33 +323,23 @@ export default function AuszahlungPage() {
         </table>
       </Card>
 
-      {/* Pagination */}
+      {/* Seitenwechsel */}
       {total > 25 && (
-        <div style={{ display: "flex", justifyContent: "center", gap: "10px", alignItems: "center" }}>
+        <div className="flex justify-center gap-3 items-center">
           <button
             disabled={page === 1}
             onClick={() => setPage((p) => p - 1)}
-            style={{
-              padding: "12px 24px", border: "none", borderRadius: "24px",
-              background: page === 1 ? "var(--border)" : "linear-gradient(135deg, #050234 0%, #0a0654 100%)",
-              color: page === 1 ? "var(--text-muted)" : "white",
-              cursor: page === 1 ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "14px",
-            }}
+            className="px-5 py-2 rounded-lg text-sm font-medium border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Zurück
           </button>
-          <span style={{ padding: "8px 20px", fontSize: "15px", fontWeight: 700, color: "var(--navy)" }}>
+          <span className="px-4 py-2 text-sm font-medium text-muted-foreground">
             Seite {page} von {Math.ceil(total / 25)}
           </span>
           <button
             disabled={page * 25 >= total}
             onClick={() => setPage((p) => p + 1)}
-            style={{
-              padding: "12px 24px", border: "none", borderRadius: "24px",
-              background: page * 25 >= total ? "var(--border)" : "linear-gradient(135deg, #f28900 0%, #ff6b00 100%)",
-              color: page * 25 >= total ? "var(--text-muted)" : "white",
-              cursor: page * 25 >= total ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "14px",
-            }}
+            className="px-5 py-2 rounded-lg text-sm font-medium border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Weiter
           </button>

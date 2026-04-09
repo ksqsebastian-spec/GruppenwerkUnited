@@ -6,6 +6,7 @@ import { Card } from "../_components/ui/Card";
 import { Button } from "../_components/ui/Button";
 import { Input } from "../_components/ui/Input";
 
+// Status-Punkt-Farben bleiben als kleine Indikatoren erhalten
 const STATUS_COLORS: Record<EmpfehlungStatus, string> = {
   offen: "#ea580c",
   eingestellt: "#16a34a",
@@ -13,7 +14,7 @@ const STATUS_COLORS: Record<EmpfehlungStatus, string> = {
   ausgezahlt: "#7C3AED",
 };
 
-export default function StellenPage() {
+export default function StellenPage(): React.JSX.Element {
   const [stellen, setStellen] = useState<Stelle[]>([]);
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithStelle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,13 +23,13 @@ export default function StellenPage() {
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
 
-  // Praemie settings
+  // Prämie-Einstellungen
   const [praemie, setPraemie] = useState<number | null>(null);
   const [editingPraemie, setEditingPraemie] = useState(false);
   const [praemieInput, setPraemieInput] = useState("");
   const [praemieLoading, setPraemieLoading] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (): Promise<void> => {
     try {
       const [stellenRes, empRes] = await Promise.all([
         fetch("/api/recruiting/stellen"),
@@ -49,7 +50,7 @@ export default function StellenPage() {
     }
   }, []);
 
-  const fetchSettings = useCallback(async () => {
+  const fetchSettings = useCallback(async (): Promise<void> => {
     try {
       const res = await fetch("/api/recruiting/settings");
       if (res.ok) {
@@ -57,7 +58,7 @@ export default function StellenPage() {
         setPraemie(data.praemie_betrag_default);
       }
     } catch {
-      // silent fail
+      // Stille Fehlerbehandlung
     }
   }, []);
 
@@ -66,7 +67,7 @@ export default function StellenPage() {
     fetchSettings();
   }, [fetchData, fetchSettings]);
 
-  // Map stelle_id -> empfehlungen grouped by status
+  // Empfehlungen nach Stelle gruppieren
   const empfehlungenByStelle = new Map<string, EmpfehlungWithStelle[]>();
   for (const emp of empfehlungen) {
     const list = empfehlungenByStelle.get(emp.stelle_id) || [];
@@ -74,7 +75,7 @@ export default function StellenPage() {
     empfehlungenByStelle.set(emp.stelle_id, list);
   }
 
-  async function handleCreate(e: React.FormEvent) {
+  async function handleCreate(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setFormLoading(true);
     setFormError("");
@@ -106,7 +107,7 @@ export default function StellenPage() {
     }
   }
 
-  async function handleToggleStatus(stelle: Stelle) {
+  async function handleToggleStatus(stelle: Stelle): Promise<void> {
     try {
       await fetch("/api/recruiting/stellen", {
         method: "PATCH",
@@ -115,18 +116,18 @@ export default function StellenPage() {
       });
       fetchData();
     } catch {
-      // silent fail
+      // Stille Fehlerbehandlung
     }
   }
 
-  async function handleDelete(stelle: Stelle) {
-    if (!confirm(`Stelle "${stelle.title}" wirklich loschen? Das kann nicht ruckgangig gemacht werden.`)) return;
+  async function handleDelete(stelle: Stelle): Promise<void> {
+    if (!confirm(`Stelle "${stelle.title}" wirklich löschen? Das kann nicht rückgängig gemacht werden.`)) return;
 
     try {
       const res = await fetch(`/api/recruiting/stellen?id=${stelle.id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Fehler beim Loschen");
+        alert(data.error || "Fehler beim Löschen");
         return;
       }
       fetchData();
@@ -135,7 +136,7 @@ export default function StellenPage() {
     }
   }
 
-  async function handleSavePraemie() {
+  async function handleSavePraemie(): Promise<void> {
     const value = parseFloat(praemieInput);
     if (isNaN(value) || value < 0) return;
 
@@ -152,7 +153,7 @@ export default function StellenPage() {
         setEditingPraemie(false);
       }
     } catch {
-      // silent fail
+      // Stille Fehlerbehandlung
     } finally {
       setPraemieLoading(false);
     }
@@ -166,20 +167,21 @@ export default function StellenPage() {
   }
 
   return (
-    <div className="animate-fadeIn" style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ fontSize: "32px", fontWeight: 800, margin: 0, color: "var(--navy)" }}>Stellen verwalten</h1>
-        <Button onClick={() => setShowForm(!showForm)} size="lg">
+    <div className="animate-fadeIn flex flex-col gap-8">
+      {/* Seitenheader */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">Stellen verwalten</h1>
+        <Button onClick={() => setShowForm(!showForm)}>
           {showForm ? "Abbrechen" : "+ Neue Stelle"}
         </Button>
       </div>
 
-      {/* Global Praemie Settings */}
-      <Card style={{ borderLeft: "5px solid var(--navy)", borderRadius: "20px", boxShadow: "0 4px 20px rgba(5,2,52,0.08)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <h2 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: "var(--navy)" }}>Standard-Pramie:</h2>
+      {/* Standard-Prämie Einstellung */}
+      <Card className="p-5">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium text-foreground">Standard-Prämie:</span>
           {editingPraemie ? (
-            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+            <div className="flex gap-2 items-center">
               <input
                 type="number"
                 step="0.01"
@@ -187,14 +189,7 @@ export default function StellenPage() {
                 value={praemieInput}
                 onChange={(e) => setPraemieInput(e.target.value)}
                 disabled={praemieLoading}
-                style={{
-                  width: "120px",
-                  padding: "8px 10px",
-                  border: "2px solid var(--orange)",
-                  borderRadius: "10px",
-                  fontSize: "14px",
-                  fontWeight: 700,
-                }}
+                className="w-28 px-3 py-1.5 border border-border rounded-lg text-sm font-semibold bg-card text-foreground outline-none focus:border-foreground/30"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSavePraemie();
@@ -205,7 +200,7 @@ export default function StellenPage() {
                 OK
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setEditingPraemie(false)}>
-                X
+                Abbrechen
               </Button>
             </div>
           ) : (
@@ -214,17 +209,7 @@ export default function StellenPage() {
                 setPraemieInput(String(praemie ?? 0));
                 setEditingPraemie(true);
               }}
-              style={{
-                background: "linear-gradient(135deg, #f28900, #ff6b00)",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: 700,
-                color: "white",
-                padding: "6px 16px",
-                borderRadius: "16px",
-                fontSize: "14px",
-                boxShadow: "0 2px 8px rgba(242,137,0,0.3)",
-              }}
+              className="text-sm font-semibold text-foreground px-3 py-1.5 rounded-lg border border-border hover:bg-muted transition-colors cursor-pointer"
               title="Klicke zum Bearbeiten"
             >
               {praemie !== null ? formatCurrency(praemie) : "..."}
@@ -233,17 +218,17 @@ export default function StellenPage() {
         </div>
       </Card>
 
-      {/* Create Form */}
+      {/* Formular: Neue Stelle anlegen */}
       {showForm && (
-        <Card style={{ borderLeft: "5px solid var(--orange)", borderRadius: "20px", boxShadow: "0 4px 20px rgba(242,137,0,0.1)" }}>
-          <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-            <h2 style={{ fontSize: "20px", fontWeight: 700, margin: 0, color: "var(--navy)" }}>Neue Stelle anlegen</h2>
+        <Card className="p-6">
+          <form onSubmit={handleCreate} className="flex flex-col gap-5">
+            <h2 className="text-base font-semibold text-foreground">Neue Stelle anlegen</h2>
             {formError && (
-              <div role="alert" style={{ color: "var(--red)", fontSize: "14px", fontWeight: 600, backgroundColor: "var(--red-bg)", padding: "12px 16px", borderRadius: "12px" }}>
+              <div role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-lg">
                 {formError}
               </div>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Titel"
                 value={formData.title}
@@ -251,10 +236,10 @@ export default function StellenPage() {
                 required
               />
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <div className="flex flex-col gap-1">
               <label
                 htmlFor="description"
-                style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-muted)" }}
+                className="text-xs font-medium text-muted-foreground uppercase tracking-wide"
               >
                 Beschreibung
               </label>
@@ -263,34 +248,25 @@ export default function StellenPage() {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={4}
-                style={{
-                  width: "100%",
-                  padding: "10px 14px",
-                  fontSize: "14px",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-sm)",
-                  backgroundColor: "hsl(var(--card))",
-                  color: "var(--text)",
-                  outline: "none",
-                  resize: "vertical",
-                  fontFamily: "inherit",
-                  transition: "border-color 0.2s ease",
-                }}
+                className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-card text-foreground placeholder:text-muted-foreground outline-none focus:border-foreground/30 resize-y font-inherit"
                 placeholder="Optionale Beschreibung der Stelle..."
               />
             </div>
-            <Button type="submit" loading={formLoading} size="lg">Stelle anlegen</Button>
+            <Button type="submit" loading={formLoading}>Stelle anlegen</Button>
           </form>
         </Card>
       )}
 
-      {/* Table */}
-      <Card style={{ padding: 0, overflow: "auto", borderRadius: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+      {/* Tabelle */}
+      <Card className="p-0 overflow-auto">
+        <table className="w-full border-collapse text-sm">
           <thead>
-            <tr style={{ textAlign: "left", background: "linear-gradient(135deg, #050234 0%, #0a0654 100%)" }}>
+            <tr className="border-b border-border bg-muted/50">
               {["Titel", "Beschreibung", "Empfehlungen", "Status", "Erstellt", "Aktionen"].map((h) => (
-                <th key={h} style={{ padding: "16px 18px", fontWeight: 700, color: "rgba(255,255,255,0.8)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.8px" }}>
+                <th
+                  key={h}
+                  className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap"
+                >
                   {h}
                 </th>
               ))}
@@ -299,63 +275,57 @@ export default function StellenPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: "15px" }}>
-                  Laden...
+                <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                  Wird geladen...
                 </td>
               </tr>
             ) : stellen.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: "15px" }}>
+                <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">
                   Noch keine Stellen angelegt
                 </td>
               </tr>
             ) : (
-              stellen.map((stelle, i) => {
+              stellen.map((stelle) => {
                 const linkedEmp = empfehlungenByStelle.get(stelle.id) || [];
-                // Group by status
+                // Nach Status gruppieren
                 const statusCounts: Partial<Record<EmpfehlungStatus, number>> = {};
                 for (const emp of linkedEmp) {
                   statusCounts[emp.status] = (statusCounts[emp.status] || 0) + 1;
                 }
 
-                const statusDisplay = stelle.active
-                  ? { label: "AKTIV", color: "#16a34a", shadow: "rgba(22,163,74,0.3)" }
-                  : { label: "INAKTIV", color: "#dc2626", shadow: "rgba(220,38,38,0.3)" };
-
                 return (
-                  <tr key={stelle.id} style={{ borderBottom: "1px solid var(--border)", backgroundColor: i % 2 === 0 ? "hsl(var(--card))" : "hsl(var(--muted))" }}>
-                    <td style={{ padding: "16px 18px", fontWeight: 600 }}>{stelle.title}</td>
-                    <td style={{ padding: "16px 18px", maxWidth: "250px", color: stelle.description ? "var(--text)" : "var(--text-muted)" }}>
+                  <tr key={stelle.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="px-4 py-3 font-medium text-foreground">{stelle.title}</td>
+                    <td className="px-4 py-3 max-w-[250px]">
                       {stelle.description ? (
-                        <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-sm text-foreground">
                           {stelle.description}
                         </span>
                       ) : (
-                        "–"
+                        <span className="text-muted-foreground">–</span>
                       )}
                     </td>
-                    <td style={{ padding: "16px 18px" }}>
+                    <td className="px-4 py-3">
                       {linkedEmp.length === 0 ? (
-                        <span style={{ color: "var(--text-muted)" }}>0</span>
+                        <span className="text-muted-foreground">0</span>
                       ) : (
-                        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
-                          <span style={{ fontWeight: 700, fontSize: "15px" }}>{linkedEmp.length}</span>
+                        <div className="flex gap-2 items-center flex-wrap">
+                          <span className="font-semibold text-sm text-foreground">{linkedEmp.length}</span>
                           {(Object.entries(statusCounts) as [EmpfehlungStatus, number][]).map(([status, count]) => (
                             <div
                               key={status}
-                              style={{ display: "flex", alignItems: "center", gap: "4px" }}
+                              className="flex items-center gap-1"
                               title={`${status}: ${count}`}
                             >
                               <span
-                                style={{
-                                  width: "8px",
-                                  height: "8px",
-                                  borderRadius: "50%",
-                                  backgroundColor: STATUS_COLORS[status],
-                                  display: "inline-block",
-                                }}
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: STATUS_COLORS[status] }}
                               />
-                              <span style={{ fontSize: "12px", fontWeight: 600, color: STATUS_COLORS[status] }}>
+                              <span
+                                className="text-xs font-semibold"
+                                style={{ color: STATUS_COLORS[status] }}
+                              >
                                 {count}
                               </span>
                             </div>
@@ -363,31 +333,25 @@ export default function StellenPage() {
                         </div>
                       )}
                     </td>
-                    <td style={{ padding: "16px 18px" }}>
+                    <td className="px-4 py-3">
                       <button
                         onClick={() => handleToggleStatus(stelle)}
-                        style={{
-                          fontSize: "12px",
-                          fontWeight: 700,
-                          color: "white",
-                          backgroundColor: statusDisplay.color,
-                          padding: "6px 14px",
-                          borderRadius: "16px",
-                          border: "none",
-                          cursor: "pointer",
-                          boxShadow: `0 2px 8px ${statusDisplay.shadow}`,
-                        }}
+                        className={`text-xs font-semibold px-3 py-1 rounded-md border cursor-pointer transition-colors ${
+                          stelle.active
+                            ? "border-green-600 text-green-700 hover:bg-green-50"
+                            : "border-red-500 text-red-600 hover:bg-red-50"
+                        }`}
                         title={stelle.active ? "Klicke um zu deaktivieren" : "Klicke um zu aktivieren"}
                       >
-                        {statusDisplay.label}
+                        {stelle.active ? "Aktiv" : "Inaktiv"}
                       </button>
                     </td>
-                    <td style={{ padding: "16px 18px", whiteSpace: "nowrap", color: "var(--text-muted)" }}>
+                    <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
                       {new Date(stelle.created_at).toLocaleDateString("de-DE")}
                     </td>
-                    <td style={{ padding: "16px 18px" }}>
+                    <td className="px-4 py-3">
                       <Button size="sm" variant="danger" onClick={() => handleDelete(stelle)}>
-                        Loschen
+                        Löschen
                       </Button>
                     </td>
                   </tr>

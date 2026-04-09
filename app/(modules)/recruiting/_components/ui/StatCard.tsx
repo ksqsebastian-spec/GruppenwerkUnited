@@ -1,51 +1,21 @@
 "use client";
 
-import { Card } from "./Card";
-
 interface StatCardProps {
   label: string;
   value: string | number;
+  // Veraltete Props werden ignoriert, bleiben für Abwärtskompatibilität
   color?: string;
   bgColor?: string;
 }
 
-export function StatCard({ label, value, color, bgColor }: StatCardProps) {
+// Einfache Stat-Karte im VOB-Designsystem (bg-card, semantische Tailwind-Klassen)
+export function StatCard({ label, value }: StatCardProps): React.JSX.Element {
   return (
-    <Card
-      style={{
-        textAlign: "center",
-        padding: "28px 24px",
-        flex: 1,
-        minWidth: "150px",
-        background: bgColor || "white",
-        borderRadius: "20px",
-        borderLeft: `4px solid ${color || "var(--navy)"}`,
-        boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
-      }}
-    >
-      <div
-        style={{
-          fontSize: "36px",
-          fontWeight: 800,
-          color: color || "var(--navy)",
-          lineHeight: 1.1,
-          letterSpacing: "-0.5px",
-        }}
-      >
+    <div className="bg-card p-5 flex-1 min-w-[150px]">
+      <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wide">{label}</p>
+      <p className="text-[28px] font-semibold text-foreground leading-none tracking-tight tabular-nums">
         {value}
-      </div>
-      <div
-        style={{
-          fontSize: "13px",
-          color: color || "var(--text-muted)",
-          marginTop: "10px",
-          fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "0.5px",
-        }}
-      >
-        {label}
-      </div>
-    </Card>
+      </p>
+    </div>
   );
 }

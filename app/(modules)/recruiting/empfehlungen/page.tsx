@@ -9,7 +9,14 @@ import { Button } from "../_components/ui/Button";
 import { Input } from "../_components/ui/Input";
 import { formatDate, formatCurrency } from "@/lib/modules/recruiting/utils";
 
-export default function EmpfehlungenPage() {
+// Status-Punkt-Farben bleiben als kleine Indikatoren erhalten
+const STATUS_DOT: Record<string, string> = {
+  offen: "#ea580c",
+  eingestellt: "#2563eb",
+  probezeit_bestanden: "#16a34a",
+};
+
+export default function EmpfehlungenPage(): React.JSX.Element {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithStelle[]>([]);
   const [stellen, setStellen] = useState<Stelle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +52,7 @@ export default function EmpfehlungenPage() {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -68,7 +75,7 @@ export default function EmpfehlungenPage() {
     }
   }, [page, search]);
 
-  const fetchStellen = useCallback(async () => {
+  const fetchStellen = useCallback(async (): Promise<void> => {
     try {
       const res = await fetch("/api/recruiting/stellen");
       if (!res.ok) throw new Error();
@@ -88,7 +95,7 @@ export default function EmpfehlungenPage() {
     return () => clearTimeout(debounce);
   }, [fetchData]);
 
-  async function handleCreate(e: React.FormEvent) {
+  async function handleCreate(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setFormLoading(true);
     setFormError("");
@@ -120,7 +127,7 @@ export default function EmpfehlungenPage() {
         return;
       }
 
-      // If bankdaten were provided, update them
+      // Falls Bankdaten angegeben wurden, separat speichern
       if (showBankdaten && (bankFormData.iban || bankFormData.bic || bankFormData.kontoinhaber || bankFormData.bank_name)) {
         const created = await res.json().catch(() => null);
         if (created?.id) {
@@ -150,7 +157,7 @@ export default function EmpfehlungenPage() {
     }
   }
 
-  async function handleStatusChange(emp: EmpfehlungWithStelle, newStatus: string) {
+  async function handleStatusChange(emp: EmpfehlungWithStelle, newStatus: string): Promise<void> {
     try {
       const res = await fetch("/api/recruiting/empfehlungen", {
         method: "PATCH",
@@ -168,7 +175,7 @@ export default function EmpfehlungenPage() {
     }
   }
 
-  async function handleDelete(emp: EmpfehlungWithStelle) {
+  async function handleDelete(emp: EmpfehlungWithStelle): Promise<void> {
     if (!confirm(`"${emp.empfehler_name}" wirklich löschen?`)) return;
 
     try {
@@ -184,7 +191,7 @@ export default function EmpfehlungenPage() {
     }
   }
 
-  function startEditing(emp: EmpfehlungWithStelle) {
+  function startEditing(emp: EmpfehlungWithStelle): void {
     setEditingEmp(emp);
     setEditFormData({
       stelle_id: emp.stelle?.id ?? "",
@@ -197,7 +204,7 @@ export default function EmpfehlungenPage() {
     setShowForm(false);
   }
 
-  async function handleSaveEdit(e: React.FormEvent) {
+  async function handleSaveEdit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     if (!editingEmp) return;
     setEditLoading(true);
@@ -241,8 +248,7 @@ export default function EmpfehlungenPage() {
       .reduce((sum, e) => sum + (e.praemie_betrag ?? 0), 0),
   };
 
-  const cellStyle = { padding: "14px 16px" };
-
+  // Formular-Render-Funktion für Erstellen und Bearbeiten
   function renderForm(
     mode: "create" | "edit",
     data: typeof formData,
@@ -253,28 +259,28 @@ export default function EmpfehlungenPage() {
     bankdaten: boolean,
     setBankdaten: (v: boolean) => void,
     onCancel: () => void,
-  ) {
+  ): React.JSX.Element {
     return (
-      <Card style={{ borderLeft: "5px solid var(--orange)", borderRadius: "20px", boxShadow: "0 4px 20px rgba(242,137,0,0.1)" }}>
-        <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-          <h2 style={{ fontSize: "20px", fontWeight: 700, margin: 0, color: "var(--navy)" }}>
+      <Card className="p-6">
+        <form onSubmit={onSubmit} className="flex flex-col gap-5">
+          <h2 className="text-base font-semibold text-foreground">
             {mode === "create" ? "Neue Empfehlung erstellen" : "Empfehlung bearbeiten"}
           </h2>
           {error && (
-            <div role="alert" style={{ color: "var(--red)", fontSize: "14px", fontWeight: 600, backgroundColor: "var(--red-bg)", padding: "12px 16px", borderRadius: "12px" }}>
+            <div role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: 700, color: "var(--navy)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Stelle
               </label>
               <select
                 value={data.stelle_id}
                 onChange={(e) => setData({ ...data, stelle_id: e.target.value })}
                 required
-                style={{ width: "100%", padding: "14px 18px", border: "2px solid var(--border)", borderRadius: "14px", fontSize: "15px", fontWeight: 500, backgroundColor: "hsl(var(--card))", color: "var(--text)", cursor: "pointer" }}
+                className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-card text-foreground outline-none focus:border-foreground/30 cursor-pointer"
               >
                 <option value="">Stelle auswählen...</option>
                 {stellen.map((st) => (
@@ -288,13 +294,18 @@ export default function EmpfehlungenPage() {
             <Input label="Position (optional)" value={data.position} onChange={(e) => setData({ ...data, position: e.target.value })} placeholder="z.B. Elektriker, Projektleiter" />
           </div>
 
-          <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontSize: "14px", fontWeight: 600, color: "var(--navy)" }}>
-            <input type="checkbox" checked={bankdaten} onChange={(e) => setBankdaten(e.target.checked)} style={{ width: "20px", height: "20px", accentColor: "var(--orange)", cursor: "pointer" }} />
+          <label className="flex items-center gap-2.5 cursor-pointer text-sm font-medium text-foreground">
+            <input
+              type="checkbox"
+              checked={bankdaten}
+              onChange={(e) => setBankdaten(e.target.checked)}
+              className="w-4 h-4 cursor-pointer"
+            />
             Bankdaten hinzufügen
           </label>
 
           {bankdaten && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px", padding: "18px", backgroundColor: "hsl(var(--muted))", borderRadius: "14px", border: "2px solid var(--border)" }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-muted rounded-lg border border-border">
               <Input label="IBAN" placeholder="DE89 3704 0044 0532 0130 00" value={bankFormData.iban} onChange={(e) => setBankFormData({ ...bankFormData, iban: e.target.value })} />
               <Input label="BIC" placeholder="COBADEFFXXX" value={bankFormData.bic} onChange={(e) => setBankFormData({ ...bankFormData, bic: e.target.value })} />
               <Input label="Kontoinhaber" placeholder="Name des Kontoinhabers" value={bankFormData.kontoinhaber} onChange={(e) => setBankFormData({ ...bankFormData, kontoinhaber: e.target.value })} />
@@ -302,11 +313,11 @@ export default function EmpfehlungenPage() {
             </div>
           )}
 
-          <div style={{ display: "flex", gap: "12px" }}>
-            <Button type="submit" loading={isLoading} size="lg" style={{ flex: 1 }}>
+          <div className="flex gap-3">
+            <Button type="submit" loading={isLoading} className="flex-1">
               {mode === "create" ? "Empfehlung erstellen" : "Änderungen speichern"}
             </Button>
-            <Button type="button" variant="ghost" size="lg" onClick={onCancel}>Abbrechen</Button>
+            <Button type="button" variant="ghost" onClick={onCancel}>Abbrechen</Button>
           </div>
         </form>
       </Card>
@@ -314,21 +325,24 @@ export default function EmpfehlungenPage() {
   }
 
   return (
-    <div className="animate-fadeIn" style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ fontSize: "32px", fontWeight: 800, margin: 0, color: "var(--navy)" }}>Empfehlungen</h1>
+    <div className="animate-fadeIn flex flex-col gap-8">
+      {/* Seitenheader */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">Empfehlungen</h1>
         {!editingEmp && (
-          <Button onClick={() => { setShowForm(!showForm); setEditingEmp(null); }} size="lg">
+          <Button onClick={() => { setShowForm(!showForm); setEditingEmp(null); }}>
             {showForm ? "Abbrechen" : "+ Neue Empfehlung"}
           </Button>
         )}
       </div>
 
-      <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-        <StatCard label="Offen" value={stats.total} bgColor="#fff7ed" color="#ea580c" />
-        <StatCard label="Prämien (offen)" value={formatCurrency(stats.praemie)} bgColor="#f5f3ff" color="#7c3aed" />
+      {/* Statistik-Raster */}
+      <div className="grid grid-cols-2 gap-px bg-border rounded-xl overflow-hidden border border-border">
+        <StatCard label="Offen" value={stats.total} />
+        <StatCard label="Prämien (offen)" value={formatCurrency(stats.praemie)} />
       </div>
 
+      {/* Formulare */}
       {showForm && !editingEmp &&
         renderForm("create", formData, setFormData, handleCreate, formLoading, formError, showBankdaten, setShowBankdaten, () => setShowForm(false))
       }
@@ -336,26 +350,27 @@ export default function EmpfehlungenPage() {
         renderForm("edit", editFormData, setEditFormData, handleSaveEdit, editLoading, editError, showBankdaten, setShowBankdaten, () => setEditingEmp(null))
       }
 
-      {/* Search */}
-      <div style={{ display: "flex", gap: "16px", alignItems: "center", flexWrap: "wrap" }}>
-        <div style={{ flex: 1, minWidth: "220px", display: "flex", alignItems: "center", gap: "10px", padding: "14px 18px", backgroundColor: "hsl(var(--card))", border: "2px solid var(--border)", borderRadius: "14px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-          <Search size={20} color="var(--orange)" />
-          <input
-            placeholder="Name, Ref-Code suchen..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            style={{ border: "none", outline: "none", flex: 1, fontSize: "15px", backgroundColor: "transparent", color: "var(--text)", fontWeight: 500 }}
-          />
-        </div>
+      {/* Suchleiste */}
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-xl">
+        <Search size={16} className="text-muted-foreground shrink-0" />
+        <input
+          placeholder="Name, Ref-Code suchen..."
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+        />
       </div>
 
-      {/* Table */}
-      <Card style={{ padding: 0, overflow: "auto", borderRadius: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", tableLayout: "auto" }}>
+      {/* Tabelle */}
+      <Card className="p-0 overflow-auto">
+        <table className="w-full border-collapse text-sm">
           <thead>
-            <tr style={{ textAlign: "left", background: "linear-gradient(135deg, #050234 0%, #0a0654 100%)" }}>
+            <tr className="border-b border-border bg-muted/50">
               {["Empfehler", "Stelle", "Ref", "Prämie", "Status", "Datum", "Aktionen"].map((h) => (
-                <th key={h} style={{ padding: "16px 16px", fontWeight: 700, color: "rgba(255,255,255,0.8)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.8px", whiteSpace: "nowrap" }}>
+                <th
+                  key={h}
+                  className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap"
+                >
                   {h}
                 </th>
               ))}
@@ -363,88 +378,85 @@ export default function EmpfehlungenPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: "15px" }}>Laden...</td></tr>
+              <tr>
+                <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                  Wird geladen...
+                </td>
+              </tr>
             ) : empfehlungen.length === 0 ? (
-              <tr><td colSpan={7} style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)", fontSize: "15px" }}>Keine offenen Einträge</td></tr>
+              <tr>
+                <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                  Keine offenen Einträge
+                </td>
+              </tr>
             ) : (
-              empfehlungen.map((emp, i) => (
+              empfehlungen.map((emp) => (
                 <tr
                   key={emp.id}
-                  style={{
-                    borderBottom: "1px solid var(--border)",
-                    backgroundColor: editingEmp?.id === emp.id ? "rgba(242,137,0,0.06)" : i % 2 === 0 ? "hsl(var(--card))" : "hsl(var(--muted))",
-                    transition: "background-color 0.15s ease",
-                  }}
+                  className={`border-b border-border hover:bg-muted/50 transition-colors ${editingEmp?.id === emp.id ? "bg-muted/30" : ""}`}
                 >
-                  <td style={{ ...cellStyle, fontWeight: 600 }}>
-                    {emp.empfehler_name}
-                    <div style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 400 }}>{emp.empfehler_email}</div>
+                  {/* Empfehler Name + E-Mail */}
+                  <td className="px-4 py-3">
+                    <span className="text-sm font-medium text-foreground">{emp.empfehler_name}</span>
+                    <div className="text-xs text-muted-foreground">{emp.empfehler_email}</div>
                   </td>
-                  <td style={cellStyle}>{emp.stelle?.title ?? "–"}</td>
-                  <td style={{ ...cellStyle, fontFamily: "monospace", fontSize: "12px", color: "var(--blue)", fontWeight: 700 }}>{emp.ref_code}</td>
-                  <td style={{ ...cellStyle, fontWeight: 700, color: "var(--green)" }}>
+
+                  {/* Stelle */}
+                  <td className="px-4 py-3 text-sm text-foreground">
+                    {emp.stelle?.title ?? "–"}
+                  </td>
+
+                  {/* Ref-Code */}
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground font-semibold">
+                    {emp.ref_code}
+                  </td>
+
+                  {/* Prämie */}
+                  <td className="px-4 py-3 text-sm font-semibold text-foreground">
                     {emp.praemie_betrag ? formatCurrency(emp.praemie_betrag) : "–"}
                   </td>
-                  <td style={cellStyle}>
-                    <span style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      padding: "4px 12px",
-                      borderRadius: "12px",
-                      fontSize: "13px",
-                      fontWeight: 700,
-                      backgroundColor: emp.status === "offen" ? "#fff7ed" : emp.status === "eingestellt" ? "#eff6ff" : "#f0fdf4",
-                      color: emp.status === "offen" ? "#ea580c" : emp.status === "eingestellt" ? "#2563eb" : "#16a34a",
-                    }}>
-                      <span style={{
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        backgroundColor: emp.status === "offen" ? "#ea580c" : emp.status === "eingestellt" ? "#2563eb" : "#16a34a",
-                      }} />
-                      {emp.status}
+
+                  {/* Status mit Punkt-Indikator */}
+                  <td className="px-4 py-3">
+                    <span className="flex items-center gap-1.5">
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: STATUS_DOT[emp.status] ?? "#6b7280" }}
+                      />
+                      <span className="text-xs text-muted-foreground capitalize">
+                        {emp.status === "probezeit_bestanden" ? "Probezeit bestanden" : emp.status}
+                      </span>
                     </span>
                   </td>
-                  <td style={{ ...cellStyle, whiteSpace: "nowrap", color: "var(--text-muted)" }}>{formatDate(emp.created_at)}</td>
+
+                  {/* Datum */}
+                  <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
+                    {formatDate(emp.created_at)}
+                  </td>
 
                   {/* Aktionen */}
-                  <td style={cellStyle}>
-                    <div style={{ display: "flex", gap: "6px" }}>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2 flex-wrap">
                       <button
                         onClick={() => startEditing(emp)}
-                        style={{
-                          background: editingEmp?.id === emp.id ? "var(--orange)" : "linear-gradient(135deg, #050234, #0a0654)",
-                          border: "none", borderRadius: "10px", padding: "8px 14px", cursor: "pointer",
-                          color: "white", fontWeight: 700, fontSize: "12px", display: "flex", alignItems: "center", gap: "4px",
-                        }}
+                        className="text-xs px-2.5 py-1.5 rounded-md border border-border text-foreground hover:bg-muted transition-colors flex items-center gap-1 cursor-pointer"
                       >
-                        <Pencil size={14} /> Bearbeiten
+                        <Pencil size={12} /> Bearbeiten
                       </button>
                       {emp.status === "offen" && (
                         <button
                           onClick={() => handleStatusChange(emp, "eingestellt")}
-                          style={{
-                            background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-                            border: "none", borderRadius: "10px", padding: "8px 14px", cursor: "pointer",
-                            color: "white", fontWeight: 700, fontSize: "12px", display: "flex", alignItems: "center", gap: "4px",
-                            boxShadow: "0 2px 8px rgba(37,99,235,0.3)",
-                          }}
+                          className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:bg-muted transition-colors flex items-center gap-1 cursor-pointer"
                         >
-                          <ArrowRight size={14} /> Eingestellt
+                          <ArrowRight size={12} /> Eingestellt
                         </button>
                       )}
                       {emp.status === "eingestellt" && (
                         <button
                           onClick={() => handleStatusChange(emp, "probezeit_bestanden")}
-                          style={{
-                            background: "linear-gradient(135deg, #16a34a, #15803d)",
-                            border: "none", borderRadius: "10px", padding: "8px 14px", cursor: "pointer",
-                            color: "white", fontWeight: 700, fontSize: "12px", display: "flex", alignItems: "center", gap: "4px",
-                            boxShadow: "0 2px 8px rgba(22,163,74,0.3)",
-                          }}
+                          className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:bg-muted transition-colors flex items-center gap-1 cursor-pointer"
                         >
-                          <ArrowRight size={14} /> Probezeit bestanden
+                          <ArrowRight size={12} /> Probezeit bestanden
                         </button>
                       )}
                       <Button size="sm" variant="danger" onClick={() => handleDelete(emp)}>Löschen</Button>
@@ -457,33 +469,23 @@ export default function EmpfehlungenPage() {
         </table>
       </Card>
 
-      {/* Pagination */}
+      {/* Seitenwechsel */}
       {total > 25 && (
-        <div style={{ display: "flex", justifyContent: "center", gap: "10px", alignItems: "center" }}>
+        <div className="flex justify-center gap-3 items-center">
           <button
             disabled={page === 1}
             onClick={() => setPage((p) => p - 1)}
-            style={{
-              padding: "12px 24px", border: "none", borderRadius: "24px",
-              background: page === 1 ? "var(--border)" : "linear-gradient(135deg, #050234 0%, #0a0654 100%)",
-              color: page === 1 ? "var(--text-muted)" : "white",
-              cursor: page === 1 ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "14px",
-            }}
+            className="px-5 py-2 rounded-lg text-sm font-medium border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Zurück
           </button>
-          <span style={{ padding: "8px 20px", fontSize: "15px", fontWeight: 700, color: "var(--navy)" }}>
+          <span className="px-4 py-2 text-sm font-medium text-muted-foreground">
             Seite {page} von {Math.ceil(total / 25)}
           </span>
           <button
             disabled={page * 25 >= total}
             onClick={() => setPage((p) => p + 1)}
-            style={{
-              padding: "12px 24px", border: "none", borderRadius: "24px",
-              background: page * 25 >= total ? "var(--border)" : "linear-gradient(135deg, #f28900 0%, #ff6b00 100%)",
-              color: page * 25 >= total ? "var(--text-muted)" : "white",
-              cursor: page * 25 >= total ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "14px",
-            }}
+            className="px-5 py-2 rounded-lg text-sm font-medium border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Weiter
           </button>
