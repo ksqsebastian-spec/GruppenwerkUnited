@@ -6,6 +6,14 @@
 
 ---
 
+## 0. GIT & DEPLOYMENT
+
+- Nach jedem Commit **automatisch pushen** – kein Warten auf Bestätigung.
+- Immer auf `main` pushen (Vercel deployed von `main`): `git push origin HEAD:main`
+- Feature-Branch ebenfalls synchron halten.
+
+---
+
 ## ⚠️ KRITISCHE ANWEISUNGEN
 
 Diese Regeln sind **ABSOLUT VERBINDLICH**. Bei jeder Code-Änderung, jedem neuen Feature und jeder Fehlerbehebung MÜSSEN diese Regeln befolgt werden. Es gibt **KEINE AUSNAHMEN**.
