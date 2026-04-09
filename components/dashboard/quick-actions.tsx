@@ -2,8 +2,6 @@
 
 import Link from 'next/link';
 import { Plus, Car, Users, Calendar, AlertTriangle, Receipt } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 
 interface QuickAction {
   label: string;
@@ -50,36 +48,33 @@ const quickActions: QuickAction[] = [
  */
 export function QuickActions(): React.JSX.Element {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Plus className="h-5 w-5" />
+    <div className="bg-card rounded-xl border border-border">
+      <div className="p-4 border-b border-border">
+        <p className="text-sm font-medium text-foreground flex items-center gap-2">
+          <Plus className="h-4 w-4 text-muted-foreground" />
           Schnellaktionen
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+        </p>
+      </div>
+      <div className="p-4">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (
-              <Button
+              <Link
                 key={action.href}
-                variant="outline"
-                className="h-auto flex-col py-4 px-3"
-                asChild
+                href={action.href}
+                className="bg-card border border-border rounded-xl p-4 hover:border-foreground/20 transition-colors flex flex-col items-center text-center"
               >
-                <Link href={action.href}>
-                  <Icon className="h-6 w-6 mb-2" />
-                  <span className="text-sm font-medium">{action.label}</span>
-                  <span className="text-xs text-muted-foreground mt-1 hidden md:block">
-                    {action.description}
-                  </span>
-                </Link>
-              </Button>
+                <Icon className="h-5 w-5 text-muted-foreground mb-2" />
+                <span className="text-sm font-medium text-foreground">{action.label}</span>
+                <span className="text-xs text-muted-foreground mt-1 hidden md:block">
+                  {action.description}
+                </span>
+              </Link>
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

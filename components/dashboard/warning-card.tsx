@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { format, isPast, differenceInDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { AlertTriangle, Clock, ChevronRight } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,16 +26,16 @@ export function WarningCard({
 }: WarningCardProps): React.JSX.Element {
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-yellow-600" />
+      <div className="bg-card rounded-xl border border-border">
+        <div className="p-4 border-b border-border">
+          <p className="text-sm font-medium text-foreground flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             Warnungen
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+          </p>
+        </div>
+        <div className="p-4 space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center justify-between p-3 border rounded-lg">
+            <div key={i} className="flex items-center justify-between p-3 border border-border rounded-xl">
               <div className="space-y-1">
                 <Skeleton className="h-4 w-32" />
                 <Skeleton className="h-3 w-24" />
@@ -44,8 +43,8 @@ export function WarningCard({
               <Skeleton className="h-5 w-16" />
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
@@ -62,42 +61,47 @@ export function WarningCard({
 
   if (appointments.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-green-600" />
+      <div className="bg-card rounded-xl border border-border">
+        <div className="p-4 border-b border-border">
+          <p className="text-sm font-medium text-foreground flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
             Keine Warnungen
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div className="p-4">
           <p className="text-sm text-muted-foreground">
             Alle Termine sind im grünen Bereich. Keine überfälligen oder dringenden Termine vorhanden.
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-yellow-600" />
+    <div className="bg-card rounded-xl border border-border">
+      <div className="p-4 border-b border-border flex items-center justify-between">
+        <p className="text-sm font-medium text-foreground flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           Warnungen
           {overdueCount > 0 && (
             <Badge variant="destructive" className="ml-2">
               {overdueCount} überfällig
             </Badge>
           )}
-        </CardTitle>
-        <Button variant="ghost" size="sm" asChild>
+        </p>
+        <Button
+          variant="ghost"
+          size="sm"
+          asChild
+          className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground text-xs"
+        >
           <Link href="/fuhrpark/appointments">
             Alle anzeigen
             <ChevronRight className="ml-1 h-4 w-4" />
           </Link>
         </Button>
-      </CardHeader>
-      <CardContent className="space-y-3">
+      </div>
+      <div className="p-4 space-y-3">
         {sortedAppointments.slice(0, 5).map((appointment) => {
           const dueDate = new Date(appointment.due_date);
           const isOverdue = isPast(dueDate);
@@ -108,12 +112,12 @@ export function WarningCard({
               key={appointment.id}
               href={`/fuhrpark/appointments?highlight=${appointment.id}`}
               className={cn(
-                'flex items-center justify-between p-3 border rounded-lg transition-colors hover:bg-muted/50',
-                isOverdue && 'border-red-200 bg-red-50 hover:bg-red-100'
+                'flex items-center justify-between p-3 border border-border rounded-xl transition-colors hover:border-foreground/20',
+                isOverdue && 'border-red-200'
               )}
             >
               <div className="space-y-1">
-                <p className="text-sm font-medium">
+                <p className="text-sm text-foreground">
                   {appointment.type} - {appointment.vehicle?.license_plate}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -135,7 +139,7 @@ export function WarningCard({
             </Link>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
