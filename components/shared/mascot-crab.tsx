@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { ANIM_FRAMES, ANIM_FPS, ANIM_LOOP, type PixelFrame, type AnimName } from '@/lib/mascot-frames';
+import { CrabLair } from '@/components/shared/crab-lair';
 
 const PX   = 5;  // SVG-Einheiten pro Logik-Pixel
 const COLS = 14;
@@ -15,10 +16,9 @@ export function MascotCrab(): React.JSX.Element {
   const [scuttling, setScuttling] = useState(false);
   const [facingRight, setFacingRight] = useState(false);
 
-  // Pause-Modus: per Klick umschalten — Animation hält komplett an
-  const [paused, setPaused]     = useState(false);
-  const pausedRef = useRef(paused);
-  pausedRef.current = paused;
+  // Easter Egg: Krabben-Höhle nach 5 Klicks öffnen
+  const [lairOpen, setLairOpen]   = useState(false);
+  const clickCountRef             = useRef(0);
 
   // Peek-Zustand: 'none' | 'entering' (sofort unter Kante) | 'showing' (sichtbar) | 'leaving'
   const [peekPhase, setPeekPhase] = useState<'none'|'entering'|'showing'|'leaving'>('none');
@@ -26,11 +26,8 @@ export function MascotCrab(): React.JSX.Element {
   const animRef = useRef(anim);
   animRef.current = anim;
 
-  // ─── Frame-Ticker (pausiert wenn paused === true) ──────────────────────────
+  // ─── Frame-Ticker ─────────────────────────────────────────────────────────
   useEffect(() => {
-    // Beim Pausieren: Ticker anhalten — aktueller Frame bleibt eingefroren
-    if (paused) return;
-
     const frames = ANIM_FRAMES[anim];
     const loop   = ANIM_LOOP[anim];
     setFrameIdx(0);
@@ -39,7 +36,7 @@ export function MascotCrab(): React.JSX.Element {
         const next = prev + 1;
         if (next >= frames.length) {
           if (!loop) {
-            if (!pausedRef.current) setAnim('idle');
+            setAnim('idle');
             return 0;
           }
           return 0;
@@ -48,12 +45,10 @@ export function MascotCrab(): React.JSX.Element {
       });
     }, 1000 / ANIM_FPS[anim]);
     return () => clearInterval(id);
-  }, [anim, paused]);
+  }, [anim]);
 
-  // ─── Aktions-Auswahl (pausiert während Pause-Modus) ──────────────────────
+  // ─── Aktions-Auswahl ─────────────────────────────────────────────────────
   const pickNext = useCallback((): void => {
-    // Im Pause-Modus keine spontanen Aktionen
-    if (pausedRef.current) return;
     if (animRef.current !== 'idle') return;
     const roll = Math.random();
 
@@ -82,7 +77,7 @@ export function MascotCrab(): React.JSX.Element {
       setTimeout(() => { if (animRef.current === 'type') setAnim('idle'); }, 4000);
     } else if (roll < 0.81) {
       setAnim('sleep');
-      setTimeout(() => { if (animRef.current === 'sleep' && !pausedRef.current) setAnim('idle'); }, 5500);
+      setTimeout(() => { if (animRef.current === 'sleep') setAnim('idle'); }, 5500);
     } else if (roll < 0.92) {
       // Peek: zuerst unter Bildschirmkante, dann hochschieben, dann wieder weg
       setAnim('peek');
@@ -99,15 +94,23 @@ export function MascotCrab(): React.JSX.Element {
     return () => clearInterval(id);
   }, [pickNext]);
 
-  // ─── Klick-Handler: Animation pausieren / fortsetzen ──────────────────────
+  // ─── Klick-Handler: 5 Klicks öffnen die Krabben-Höhle ────────────────────
   const handleClick = useCallback((): void => {
-    if (pausedRef.current) {
-      // Pause beenden: Animation läuft wieder
-      setPaused(false);
+    clickCountRef.current += 1;
+
+    // Jeder Klick: kurze Celebrate-Animation als Feedback
+    setAnim('celebrate');
+    setPeekPhase('none');
+
+    if (clickCountRef.current >= 5) {
+      // 5. Klick: Höhle öffnen, Zähler zurücksetzen
+      clickCountRef.current = 0;
+      setTimeout(() => setLairOpen(true), 500);
     } else {
-      // Pause aktivieren: Peek beenden, aktuelle Frame einfrieren
-      setPeekPhase('none');
-      setPaused(true);
+      // 1.–4. Klick: Animation wieder auf Idle zurücksetzen
+      setTimeout(() => {
+        if (animRef.current === 'celebrate') setAnim('idle');
+      }, 700);
     }
   }, []);
 
@@ -132,22 +135,24 @@ export function MascotCrab(): React.JSX.Element {
 
   const frame = ANIM_FRAMES[anim][Math.min(frameIdx, ANIM_FRAMES[anim].length - 1)];
 
-  // Tooltip-Text: je nach Pause-Zustand
-  const tooltipText = paused ? 'Animation fortsetzen' : 'Animation pausieren';
-
   return (
-    <div
-      className="fixed z-50 select-none cursor-pointer"
-      style={{
-        bottom: `${bottomPx}px`,
-        left:   `${16 + pos.x}px`,
-        transition,
-      }}
-      onClick={handleClick}
-      title={tooltipText}
-    >
-      <PixelSprite frame={frame} flip={facingRight && anim === 'walk'} />
-    </div>
+    <>
+      <div
+        className="fixed z-50 select-none cursor-pointer"
+        style={{
+          bottom: `${bottomPx}px`,
+          left:   `${16 + pos.x}px`,
+          transition,
+        }}
+        onClick={handleClick}
+        title="🦀"
+      >
+        <PixelSprite frame={frame} flip={facingRight && anim === 'walk'} />
+      </div>
+
+      {/* Easter Egg: Krabben-Höhle */}
+      <CrabLair isOpen={lairOpen} onClose={() => setLairOpen(false)} />
+    </>
   );
 }
 
