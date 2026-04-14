@@ -296,25 +296,43 @@ INSERT INTO roi.config (
   pflegekosten_monat, operative_marge_pct, avg_auftraege_monat
 ) VALUES (3500, 1200, 800, 300, 0.35, 8);
 
--- VOB: Beispiel-Unternehmen
+-- VOB: Partnerunternehmen
 INSERT INTO vob.companies (name, slug, trades, keywords, color, active) VALUES
   (
-    'Gruppenwerk Dach', 'dach',
-    ARRAY['Dachdeckerarbeiten', 'Dachabdichtung', 'Klempnerarbeiten'],
-    ARRAY['Dach', 'Dachdeckung', 'Abdichtung', 'Klempner', 'Ziegel', 'Bitumen'],
+    'Tischlerei Brink', 'brink',
+    ARRAY['Tischlerarbeiten', 'Schreinerarbeiten', 'Holzbau'],
+    ARRAY['Tischler', 'Schreiner', 'Holz', 'Fenster', 'Türen', 'Treppen', 'Möbel'],
     '#1E40AF', TRUE
   ),
   (
-    'Gruppenwerk Maler', 'maler',
-    ARRAY['Malerarbeiten', 'Tapezierarbeiten', 'Bodenbelagsarbeiten'],
-    ARRAY['Maler', 'Anstrich', 'Putz', 'Tapete', 'Bodenbelag', 'Estrich'],
+    'Malerei Hantke', 'hantke',
+    ARRAY['Malerarbeiten', 'Tapezierarbeiten', 'Lackierarbeiten'],
+    ARRAY['Maler', 'Anstrich', 'Lackierung', 'Tapete', 'Putz', 'Fassade'],
     '#15803D', TRUE
   ),
   (
-    'Gruppenwerk Fliesen', 'fliesen',
-    ARRAY['Fliesenarbeiten', 'Natursteinarbeiten', 'Parkettarbeiten'],
-    ARRAY['Fliesen', 'Keramik', 'Naturstein', 'Parkett', 'Boden', 'Wand'],
+    'Seehafer Elemente', 'seehafer',
+    ARRAY['Fenster und Türen', 'Sonnenschutz', 'Rollläden'],
+    ARRAY['Fenster', 'Türen', 'Rollläden', 'Sonnenschutz', 'Verglasung', 'Elemente'],
+    '#B45309', TRUE
+  ),
+  (
+    'Werner Bau', 'werner-bau',
+    ARRAY['Rohbauarbeiten', 'Maurerarbeiten', 'Betonarbeiten'],
+    ARRAY['Rohbau', 'Maurer', 'Beton', 'Fundament', 'Mauerwerk', 'Hochbau'],
     '#7C3AED', TRUE
+  ),
+  (
+    'Werner Gerüstbau', 'werner-geruestbau',
+    ARRAY['Gerüstbauarbeiten', 'Gerüstvermietung'],
+    ARRAY['Gerüst', 'Gerüstbau', 'Fassadengerüst', 'Arbeitsgerüst'],
+    '#DC2626', TRUE
+  ),
+  (
+    'Tischlerei Mehlig', 'mehlig',
+    ARRAY['Tischlerarbeiten', 'Innenausbau', 'Küchenmontage'],
+    ARRAY['Tischler', 'Innenausbau', 'Küche', 'Einbauschränke', 'Holzböden'],
+    '#0891B2', TRUE
   )
 ON CONFLICT (slug) DO NOTHING;
 
