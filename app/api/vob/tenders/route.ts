@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
- * GET /api/vob/tenders?page=1&pageSize=50&company=slug&search=text&status=active
- * Gibt paginierte Ausschreibungen zurück (ohne Doppelungen durch Mehrfach-Matches).
+ * GET /api/vob/tenders?page=1&pageSize=50&company=slug&status=active
+ * Gibt paginierte Ausschreibungen zurück.
  * Verwendet den Admin-Client um das vob-Schema sicher abzufragen.
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
