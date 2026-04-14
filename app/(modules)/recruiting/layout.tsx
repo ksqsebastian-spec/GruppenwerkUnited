@@ -12,9 +12,9 @@ import { ModuleSubnav, type ModuleNavItem } from '@/components/layout/module-sub
 
 const NAV_ITEMS: ModuleNavItem[] = [
   { href: '/recruiting', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { href: '/recruiting/stellen', label: 'Stellen', icon: Briefcase },
-  { href: '/recruiting/empfehlungen', label: 'Empfehlungen', icon: UserPlus },
-  { href: '/recruiting/auszahlung', label: 'Auszahlung', icon: Wallet },
+  { href: '/recruiting/stellen', label: 'Offene Stellen', icon: Briefcase },
+  { href: '/recruiting/empfehlungen', label: 'Kandidaten', icon: UserPlus },
+  { href: '/recruiting/auszahlung', label: 'Recruiting-Prämien', icon: Wallet },
   { href: '/recruiting/archiv', label: 'Archiv', icon: Archive },
   { href: '/recruiting/emails', label: 'E-Mails', icon: Mail },
 ];

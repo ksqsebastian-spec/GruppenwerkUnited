@@ -121,7 +121,7 @@ export default function StellenPage(): React.JSX.Element {
   }
 
   async function handleDelete(stelle: Stelle): Promise<void> {
-    if (!confirm(`Stelle "${stelle.title}" wirklich löschen? Das kann nicht rückgängig gemacht werden.`)) return;
+    if (!confirm(`Stellenangebot "${stelle.title}" wirklich löschen? Das kann nicht rückgängig gemacht werden.`)) return;
 
     try {
       const res = await fetch(`/api/recruiting/stellen?id=${stelle.id}`, { method: "DELETE" });
@@ -170,9 +170,9 @@ export default function StellenPage(): React.JSX.Element {
     <div className="animate-fadeIn flex flex-col gap-8">
       {/* Seitenheader */}
       <div className="flex justify-between items-center">
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">Stellen verwalten</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">Stellenangebote verwalten</h1>
         <Button onClick={() => setShowForm(!showForm)}>
-          {showForm ? "Abbrechen" : "+ Neue Stelle"}
+          {showForm ? "Abbrechen" : "+ Neues Stellenangebot"}
         </Button>
       </div>
 
@@ -222,7 +222,7 @@ export default function StellenPage(): React.JSX.Element {
       {showForm && (
         <Card className="p-6">
           <form onSubmit={handleCreate} className="flex flex-col gap-5">
-            <h2 className="text-base font-semibold text-foreground">Neue Stelle anlegen</h2>
+            <h2 className="text-base font-semibold text-foreground">Neues Stellenangebot anlegen</h2>
             {formError && (
               <div role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-lg">
                 {formError}
@@ -252,7 +252,7 @@ export default function StellenPage(): React.JSX.Element {
                 placeholder="Optionale Beschreibung der Stelle..."
               />
             </div>
-            <Button type="submit" loading={formLoading}>Stelle anlegen</Button>
+            <Button type="submit" loading={formLoading}>Stellenangebot anlegen</Button>
           </form>
         </Card>
       )}
@@ -282,7 +282,7 @@ export default function StellenPage(): React.JSX.Element {
             ) : stellen.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">
-                  Noch keine Stellen angelegt
+                  Noch keine Stellenangebote angelegt
                 </td>
               </tr>
             ) : (
