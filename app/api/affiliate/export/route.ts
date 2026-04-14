@@ -14,8 +14,9 @@ export async function GET(request: NextRequest) {
   let query = adminClient
     .from("empfehlungen")
     .select("*, handwerker:handwerker_id(name)")
-    // Nur Affiliate-Empfehlungen (handwerker_id IS NOT NULL)
+    // Nur Affiliate-Empfehlungen (handwerker_id IS NOT NULL, stelle_id IS NULL)
     .not("handwerker_id", "is", null)
+    .is("stelle_id", null)
     .order("created_at", { ascending: false });
 
   // Nicht-Admins exportieren nur Daten ihrer Firma
