@@ -12,13 +12,14 @@ export default function AusgabenPage() {
   const [filter, setFilter] = useState<"all" | "recurring" | "onetime">("all");
 
   const fetchPurchases = useCallback(async () => {
-    // Einkäufe aus dem roi-Schema laden
-    const { data } = await supabase
-      .schema("roi")
-      .from("purchases")
-      .select("*")
-      .order("purchased_at", { ascending: false });
-    setPurchases((data as Purchase[]) || []);
+    // Einkäufe über API-Route laden (service role, umgeht PostgREST-Schema-Beschränkungen)
+    const res = await fetch('/api/roi/purchases');
+    if (res.ok) {
+      const data = await res.json();
+      setPurchases((data as Purchase[]) || []);
+    } else {
+      console.error('Fehler beim Laden der Einkäufe:', await res.text());
+    }
     setLoading(false);
   }, []);
 
@@ -27,8 +28,13 @@ export default function AusgabenPage() {
   }, [fetchPurchases]);
 
   const handleDelete = async (id: string) => {
-    // Einkauf aus dem roi-Schema löschen
-    await supabase.schema("roi").from("purchases").delete().eq("id", id);
+    // Einkauf über API-Route löschen (service role, umgeht PostgREST-Schema-Beschränkungen)
+    const res = await fetch(`/api/roi/purchases?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      console.error('Fehler beim Löschen des Einkaufs:', await res.text());
+    }
     fetchPurchases();
   };
 

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceRoleClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 /**
  * GET /api/roi/uploads
  * Letzte Import-Protokolle aus dem roi-Schema laden
  */
 export async function GET(): Promise<NextResponse> {
-  const supabase = await createServiceRoleClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .schema('roi')
@@ -32,7 +32,7 @@ export async function GET(): Promise<NextResponse> {
  * Body: { jobs: Job[], filename, rows_imported, rows_skipped, column_mapping }
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const supabase = await createServiceRoleClient();
+  const supabase = createAdminClient();
 
   let body: {
     jobs: Record<string, string | number | null>[];

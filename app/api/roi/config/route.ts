@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceRoleClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 /**
  * GET /api/roi/config
  * ROI-Konfiguration aus dem roi-Schema laden
  */
 export async function GET(): Promise<NextResponse> {
-  const supabase = await createServiceRoleClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .schema('roi')
@@ -32,7 +32,7 @@ export async function GET(): Promise<NextResponse> {
  * Body: { id, key, value }
  */
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
-  const supabase = await createServiceRoleClient();
+  const supabase = createAdminClient();
 
   let body: { id: string; key: string; value: number };
   try {

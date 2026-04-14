@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceRoleClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 /**
  * GET /api/roi/jobs
  * Alle Aufträge aus dem roi-Schema laden
  */
 export async function GET(): Promise<NextResponse> {
-  const supabase = await createServiceRoleClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .schema('roi')
@@ -32,7 +32,7 @@ export async function GET(): Promise<NextResponse> {
  * Body: { jahr, monat, datum }
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const supabase = await createServiceRoleClient();
+  const supabase = createAdminClient();
 
   let body: { jahr: number; monat: string; datum: string };
   try {
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
  * Body: { id, key, value }
  */
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
-  const supabase = await createServiceRoleClient();
+  const supabase = createAdminClient();
 
   let body: { id: string; key: string; value: string | number | null };
   try {
@@ -102,7 +102,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
  * Auftrag aus dem roi-Schema löschen
  */
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
-  const supabase = await createServiceRoleClient();
+  const supabase = createAdminClient();
 
   const id = request.nextUrl.searchParams.get('id');
   if (!id) {

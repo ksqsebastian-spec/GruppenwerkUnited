@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase/client";
-import { Config } from "@/lib/modules/roi/types";
+import { Config, Job } from "@/lib/modules/roi/types";
 import { CHANNELS, TIER_LABELS, TIER_COLORS, formatEuro, Channel, CartItem } from "@/lib/modules/roi/flywheel-data";
 import Receipt from "../../_components/Receipt";
 
@@ -13,15 +12,15 @@ export default function FlywheelPage() {
   const [purchasing, setPurchasing] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
 
-  // Budget aus dem roi-Schema laden
+  // Budget aus API-Routen laden (service role, umgeht PostgREST-Schema-Beschränkungen)
   useEffect(() => {
     async function loadData() {
       const [jobsRes, configRes] = await Promise.all([
-        supabase.schema("roi").from("jobs").select("rohertrag"),
-        supabase.schema("roi").from("config").select("*").limit(1).single(),
+        fetch('/api/roi/jobs'),
+        fetch('/api/roi/config'),
       ]);
-      const jobs = (jobsRes.data || []) as { rohertrag: number | null }[];
-      const config = configRes.data as Config | null;
+      const jobs = jobsRes.ok ? ((await jobsRes.json()) as Job[]) : [];
+      const config = configRes.ok ? ((await configRes.json()) as Config | null) : null;
       if (config && jobs.length > 0) {
         const totalRohertrag = jobs.reduce((s, j) => s + (j.rohertrag || 0), 0);
         const monthlyMarge = totalRohertrag * config.operative_marge_pct;
@@ -82,13 +81,19 @@ export default function FlywheelPage() {
       };
     });
 
-    // Einkäufe im roi-Schema speichern
-    const { error } = await supabase.schema("roi").from("purchases").insert(rows);
+    // Einkäufe über API-Route speichern (service role, umgeht PostgREST-Schema-Beschränkungen)
+    const res = await fetch('/api/roi/purchases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(rows),
+    });
     setPurchasing(false);
-    if (!error) {
+    if (res.ok) {
       setPurchaseSuccess(true);
       setCart([]);
       setTimeout(() => setPurchaseSuccess(false), 4000);
+    } else {
+      console.error('Fehler beim Speichern der Einkäufe:', await res.text());
     }
   };
 
