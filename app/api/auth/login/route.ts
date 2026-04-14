@@ -16,7 +16,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Passwort erforderlich' }, { status: 400 });
   }
 
-  const company = matchCompanyByPassword(password);
+  const company = await matchCompanyByPassword(password);
 
   if (!company) {
     return NextResponse.json({ error: 'Falsches Passwort' }, { status: 401 });
