@@ -98,14 +98,3 @@
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
-/* === Krebs-Schlaf-Animation === */
-/* Sanftes Auf- und Abbewegen wenn der Krebs schläft */
-.crab-sleeping {
-  animation: crabFloat 3s ease-in-out infinite;
-}
-@keyframes crabFloat {
-  0%   { transform: translateY(0px); }
-  50%  { transform: translateY(-6px); }
-  100% { transform: translateY(0px); }
-}
