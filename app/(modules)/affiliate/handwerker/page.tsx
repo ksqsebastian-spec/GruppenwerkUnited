@@ -145,7 +145,7 @@ export default function KundePage(): React.JSX.Element {
   }
 
   async function handleDelete(hw: Handwerker): Promise<void> {
-    if (!confirm(`Kunde "${hw.name}" wirklich löschen? Das kann nicht rückgängig gemacht werden.`)) return;
+    if (!confirm(`Affiliate-Partner "${hw.name}" wirklich löschen? Das kann nicht rückgängig gemacht werden.`)) return;
 
     try {
       const res = await fetch(`/api/affiliate/handwerker?id=${hw.id}`, { method: "DELETE" });
@@ -164,9 +164,9 @@ export default function KundePage(): React.JSX.Element {
     <div className="animate-fadeIn flex flex-col gap-8">
       {/* Seitenkopf */}
       <div className="flex justify-between items-center">
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">Kunde verwalten</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">Affiliate-Partner verwalten</h1>
         <Button onClick={() => setShowForm(!showForm)} size="lg">
-          {showForm ? "Abbrechen" : "+ Neuer Kunde"}
+          {showForm ? "Abbrechen" : "+ Neuer Affiliate-Partner"}
         </Button>
       </div>
 
@@ -174,7 +174,7 @@ export default function KundePage(): React.JSX.Element {
       {showForm && (
         <Card className="p-5">
           <form onSubmit={handleCreate} className="flex flex-col gap-5">
-            <h2 className="text-base font-semibold text-foreground">Neuen Kunde anlegen</h2>
+            <h2 className="text-base font-semibold text-foreground">Neuen Affiliate-Partner anlegen</h2>
             {formError && (
               <div role="alert" className="text-sm font-medium text-destructive bg-destructive/10 px-4 py-3 rounded-lg">
                 {formError}
@@ -186,7 +186,7 @@ export default function KundePage(): React.JSX.Element {
               <Input label="Telefon" type="tel" value={formData.telefon} onChange={(e) => setFormData({ ...formData, telefon: e.target.value })} placeholder="z.B. +49 123 456789" />
               <Input label="Provision (%)" type="number" step="0.01" min="0" max="50" value={formData.provision_prozent} onChange={(e) => setFormData({ ...formData, provision_prozent: e.target.value })} required />
             </div>
-            <Button type="submit" loading={formLoading} size="lg">Kunde anlegen</Button>
+            <Button type="submit" loading={formLoading} size="lg">Affiliate-Partner anlegen</Button>
           </form>
         </Card>
       )}
@@ -216,7 +216,7 @@ export default function KundePage(): React.JSX.Element {
             ) : handwerker.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-4 py-12 text-center text-sm text-muted-foreground">
-                  Noch keine Kunden angelegt
+                  Noch keine Affiliate-Partner angelegt
                 </td>
               </tr>
             ) : (

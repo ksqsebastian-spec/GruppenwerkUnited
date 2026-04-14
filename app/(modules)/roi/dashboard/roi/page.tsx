@@ -82,14 +82,14 @@ export default function ROIPage() {
     );
   }
 
-  // Konfiguration fehlt (Datenbank nicht eingerichtet)
+  // Konfiguration fehlt oder wird noch geladen
   if (!config) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
           <p className="text-text-dim font-mono text-sm mb-2">Keine Konfiguration gefunden</p>
           <p className="text-text-dim font-mono text-xs">
-            Bitte die Datenbank einrichten — Migration 009_roi_schema.sql ausführen.
+            ROI-Konfiguration nicht geladen. Bitte Seite neu laden.
           </p>
         </div>
       </div>

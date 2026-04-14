@@ -1,17 +1,24 @@
-'use client'
-
 import type { DashboardRow } from './types'
 import { getUrgencyLabel } from './utils'
 
-export async function generateCompanyPdf(companyName: string, tenders: DashboardRow[]) {
-  const { jsPDF } = await import('jspdf')
-  const autoTableModule = await import('jspdf-autotable')
+// Dynamische Imports für PDF-Bibliotheken (nur client-seitig nutzbar)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type JsPDFInstance = any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AutoTableFn = (doc: JsPDFInstance, options: Record<string, unknown>) => void
+
+/**
+ * Erstellt ein PDF mit allen Ausschreibungen eines Unternehmens.
+ */
+export async function generateCompanyPdf(companyName: string, tenders: DashboardRow[]): Promise<JsPDFInstance> {
+  const { jsPDF } = await import('jspdf') as { jsPDF: new () => JsPDFInstance }
+  const autoTableModule = await import('jspdf-autotable') as { default: AutoTableFn }
   const autoTable = autoTableModule.default
 
-  const doc = new jsPDF()
+  const doc: JsPDFInstance = new jsPDF()
   const today = new Date().toLocaleDateString('de-DE')
 
-  // Header
+  // Kopfzeile
   doc.setFontSize(18)
   doc.setTextColor(31, 78, 121)
   doc.text('VOB Ausschreibungen', 14, 20)
@@ -80,7 +87,7 @@ export async function generateCompanyPdf(companyName: string, tenders: Dashboard
       y += 8
     }
 
-    // Summary table
+    // Zusammenfassungstabelle
     if (y > 230) {
       doc.addPage()
       y = 20
@@ -111,7 +118,7 @@ export async function generateCompanyPdf(companyName: string, tenders: Dashboard
     })
   }
 
-  // Footer
+  // Fußzeile auf jeder Seite
   const pageCount = doc.getNumberOfPages()
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i)
@@ -127,10 +134,13 @@ export async function generateCompanyPdf(companyName: string, tenders: Dashboard
   return doc
 }
 
-export async function generateSingleTenderPdf(tender: DashboardRow, allMatches: DashboardRow[]) {
-  const { jsPDF } = await import('jspdf')
+/**
+ * Erstellt ein PDF für eine einzelne Ausschreibung mit allen Unternehmens-Matches.
+ */
+export async function generateSingleTenderPdf(tender: DashboardRow, allMatches: DashboardRow[]): Promise<JsPDFInstance> {
+  const { jsPDF } = await import('jspdf') as { jsPDF: new () => JsPDFInstance }
 
-  const doc = new jsPDF()
+  const doc: JsPDFInstance = new jsPDF()
   const today = new Date().toLocaleDateString('de-DE')
 
   doc.setFontSize(18)

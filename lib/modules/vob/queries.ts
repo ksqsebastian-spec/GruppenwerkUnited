@@ -1,32 +1,12 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase/client'
 import type { Company, VobScan, DashboardRow, CompanyTrend, CompanyWeeklyStat } from './types'
 
-// Null-Client der leere Ergebnisse zurückgibt, wenn Supabase nicht konfiguriert ist (z.B. beim Build)
-function createNullClient(): SupabaseClient {
-  const nullResult = { data: null, error: null, count: 0 }
-  const createChain = (): ReturnType<typeof createClient> => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const chain: any = new Proxy(() => createChain(), {
-      get(_, prop) {
-        if (prop === 'then') return (resolve: (v: unknown) => unknown) => resolve(nullResult)
-        return () => createChain()
-      },
-    })
-    return chain
-  }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return new Proxy({} as any, { get: () => () => createChain() }) as SupabaseClient
-}
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-// Direkter Supabase-Client für Server-seitige VOB-Abfragen
-const supabase: SupabaseClient = supabaseUrl && supabaseKey
-  ? createClient(supabaseUrl, supabaseKey)
-  : createNullClient()
-
-export async function getDashboardData() {
+export async function getDashboardData(): Promise<{
+  companies: Company[]
+  latestScan: VobScan | null
+  recentTenders: DashboardRow[]
+  trends: CompanyTrend[]
+}> {
   const [
     { data: companies },
     { data: latestScan },
@@ -46,7 +26,7 @@ export async function getDashboardData() {
   }
 }
 
-export async function getCompanyTenders(slug: string, status?: string) {
+export async function getCompanyTenders(slug: string, status?: string): Promise<DashboardRow[]> {
   let query = supabase
     .schema('vob').from('vob_dashboard')
     .select('*')
@@ -60,7 +40,7 @@ export async function getCompanyTenders(slug: string, status?: string) {
   return (data ?? []) as DashboardRow[]
 }
 
-export async function getCompanyStats(slug: string) {
+export async function getCompanyStats(slug: string): Promise<CompanyWeeklyStat[]> {
   const { data } = await supabase
     .schema('vob').from('company_weekly_stats')
     .select('*')
@@ -71,7 +51,7 @@ export async function getCompanyStats(slug: string) {
   return (data ?? []) as CompanyWeeklyStat[]
 }
 
-export async function getCompany(slug: string) {
+export async function getCompany(slug: string): Promise<Company | null> {
   const { data } = await supabase
     .schema('vob').from('companies')
     .select('*')
@@ -80,7 +60,7 @@ export async function getCompany(slug: string) {
   return data as Company | null
 }
 
-export async function getAllTenders(page = 1, pageSize = 50) {
+export async function getAllTenders(page = 1, pageSize = 50): Promise<{ tenders: DashboardRow[]; total: number }> {
   const from = (page - 1) * pageSize
   const to = from + pageSize - 1
 
@@ -93,7 +73,7 @@ export async function getAllTenders(page = 1, pageSize = 50) {
   return { tenders: (data ?? []) as DashboardRow[], total: count ?? 0 }
 }
 
-export async function getAllScans() {
+export async function getAllScans(): Promise<VobScan[]> {
   const { data } = await supabase
     .schema('vob').from('vob_scans')
     .select('*')
@@ -101,7 +81,7 @@ export async function getAllScans() {
   return (data ?? []) as VobScan[]
 }
 
-export async function getTenderById(id: string) {
+export async function getTenderById(id: string): Promise<DashboardRow[]> {
   const { data } = await supabase
     .schema('vob').from('vob_dashboard')
     .select('*')
@@ -109,7 +89,7 @@ export async function getTenderById(id: string) {
   return (data ?? []) as DashboardRow[]
 }
 
-export async function getCompanies() {
+export async function getCompanies(): Promise<Company[]> {
   const { data } = await supabase
     .schema('vob').from('companies')
     .select('*')
@@ -118,7 +98,7 @@ export async function getCompanies() {
   return (data ?? []) as Company[]
 }
 
-export async function getMatchCountsByCompany() {
+export async function getMatchCountsByCompany(): Promise<Record<string, number>> {
   const { data } = await supabase
     .schema('vob').from('vob_matches')
     .select('company_slug')
@@ -132,7 +112,7 @@ export async function getMatchCountsByCompany() {
   return counts
 }
 
-export async function getTotalTenderCount() {
+export async function getTotalTenderCount(): Promise<number> {
   const { count } = await supabase
     .schema('vob').from('vob_tenders')
     .select('*', { count: 'exact', head: true })

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { TenderDrawer } from '../../_components/tenders/TenderDrawer'
 import { SearchBar } from '../../_components/filters/SearchBar'
@@ -41,7 +41,7 @@ export function CompanyTenderList({ tenders }: CompanyTenderListProps) {
   const [requestedOverrides, setRequestedOverrides] = useState<Record<string, boolean>>({})
 
   const tendersWithOverrides = useMemo(() =>
-    tenders.map(t => ({
+    tenders.map((t: DashboardRow) => ({
       ...t,
       requested: requestedOverrides[t.tender_id] ?? t.requested ?? false,
     })),
@@ -50,12 +50,12 @@ export function CompanyTenderList({ tenders }: CompanyTenderListProps) {
 
   const filtered = useMemo(() => {
     let result = tendersWithOverrides
-    if (status === 'active') result = result.filter(t => t.status === 'active')
-    if (status === 'expired') result = result.filter(t => t.status === 'expired')
+    if (status === 'active') result = result.filter((t: DashboardRow) => t.status === 'active')
+    if (status === 'expired') result = result.filter((t: DashboardRow) => t.status === 'expired')
     if (search) {
       const q = search.toLowerCase()
       result = result.filter(
-        t =>
+        (t: DashboardRow) =>
           t.title.toLowerCase().includes(q) ||
           t.authority?.toLowerCase().includes(q) ||
           t.category?.toLowerCase().includes(q)
@@ -65,23 +65,23 @@ export function CompanyTenderList({ tenders }: CompanyTenderListProps) {
   }, [tendersWithOverrides, status, search, sortField, sortDir])
 
   const allMatches = selectedTender
-    ? tendersWithOverrides.filter(t => t.tender_id === selectedTender.tender_id)
+    ? tendersWithOverrides.filter((t: DashboardRow) => t.tender_id === selectedTender.tender_id)
     : []
 
-  const allFilteredIds = new Set(filtered.map(t => t.tender_id))
-  const allSelected = filtered.length > 0 && filtered.every(t => selected.has(t.tender_id))
+  const allFilteredIds = new Set(filtered.map((t: DashboardRow) => t.tender_id))
+  const allSelected = filtered.length > 0 && filtered.every((t: DashboardRow) => selected.has(t.tender_id))
 
-  function toggleSort(field: SortField) {
+  function toggleSort(field: SortField): void {
     if (sortField === field) {
-      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+      setSortDir((d: SortDir) => d === 'asc' ? 'desc' : 'asc')
     } else {
       setSortField(field)
       setSortDir('asc')
     }
   }
 
-  function toggleSelect(id: string) {
-    setSelected(prev => {
+  function toggleSelect(id: string): void {
+    setSelected((prev: Set<string>) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
       else next.add(id)
@@ -89,15 +89,15 @@ export function CompanyTenderList({ tenders }: CompanyTenderListProps) {
     })
   }
 
-  function toggleAll() {
+  function toggleAll(): void {
     if (allSelected) {
-      setSelected(prev => {
+      setSelected((prev: Set<string>) => {
         const next = new Set(prev)
         for (const id of allFilteredIds) next.delete(id)
         return next
       })
     } else {
-      setSelected(prev => {
+      setSelected((prev: Set<string>) => {
         const next = new Set(prev)
         for (const id of allFilteredIds) next.add(id)
         return next
@@ -105,9 +105,9 @@ export function CompanyTenderList({ tenders }: CompanyTenderListProps) {
     }
   }
 
-  async function toggleRequested(tenderId: string, current: boolean) {
+  async function toggleRequested(tenderId: string, current: boolean): Promise<void> {
     const next = !current
-    setRequestedOverrides(prev => ({ ...prev, [tenderId]: next }))
+    setRequestedOverrides((prev: Record<string, boolean>) => ({ ...prev, [tenderId]: next }))
     await fetch('/api/tenders/requested', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -172,7 +172,7 @@ export function CompanyTenderList({ tenders }: CompanyTenderListProps) {
             variant="outline"
             size="sm"
             className={`text-[11px] border-neutral-200 ${viewOnly ? 'bg-neutral-100 text-neutral-900' : 'text-neutral-400'}`}
-            onClick={() => { setViewOnly(v => !v); setSelected(new Set()) }}
+            onClick={() => { setViewOnly((v: boolean) => !v); setSelected(new Set()) }}
           >
             {viewOnly ? <Eye size={12} className="mr-1" /> : <EyeOff size={12} className="mr-1" />}
             {viewOnly ? 'Ansicht' : 'Bearbeiten'}
@@ -235,7 +235,7 @@ export function CompanyTenderList({ tenders }: CompanyTenderListProps) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((tender, i) => {
+              {filtered.map((tender: DashboardRow, i: number) => {
                 const urgency = tender.urgency || computeUrgency(tender.deadline_date)
                 return (
                   <tr
@@ -243,7 +243,7 @@ export function CompanyTenderList({ tenders }: CompanyTenderListProps) {
                     className="border-b border-neutral-100 hover:bg-neutral-50/50 transition-colors"
                   >
                     {!viewOnly && (
-                      <td className="px-3 py-2" onClick={e => e.stopPropagation()}>
+                      <td className="px-3 py-2" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selected.has(tender.tender_id)}
@@ -282,7 +282,7 @@ export function CompanyTenderList({ tenders }: CompanyTenderListProps) {
                     >
                       <UrgencyBadge urgency={urgency} />
                     </td>
-                    <td className="px-3 py-2 text-center" onClick={e => e.stopPropagation()}>
+                    <td className="px-3 py-2 text-center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                       <button
                         onClick={() => toggleRequested(tender.tender_id, tender.requested)}
                         className={`inline-flex items-center justify-center w-5 h-5 rounded border transition-colors ${

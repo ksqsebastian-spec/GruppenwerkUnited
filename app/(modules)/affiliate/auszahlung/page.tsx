@@ -186,9 +186,9 @@ export default function AuszahlungPage(): React.JSX.Element {
     <div className="animate-fadeIn flex flex-col gap-8">
       {/* Seitenkopf */}
       <div>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">Auszahlung</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">Provisionsauszahlungen</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Erledigte Affiliates zur Auszahlung. Daten einsehen, Provision anpassen, als ausgezahlt markieren.
+          Erledigte Kundenempfehlungen zur Provisionsauszahlung. Daten einsehen, Provision anpassen, als ausgezahlt markieren.
         </p>
       </div>
 
@@ -214,7 +214,7 @@ export default function AuszahlungPage(): React.JSX.Element {
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="bg-muted">
-              {["Affiliate", "Kunde", "Ref", "Betrag", "Provision", "Datum", "Aktionen"].map((h) => (
+              {["Affiliate", "Affiliate-Partner", "Ref", "Betrag", "Provision", "Datum", "Aktionen"].map((h) => (
                 <th
                   key={h}
                   className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap"
@@ -251,7 +251,7 @@ export default function AuszahlungPage(): React.JSX.Element {
                       <div className="text-xs text-muted-foreground font-normal">{emp.empfehler_email}</div>
                     </td>
 
-                    {/* Kunde */}
+                    {/* Affiliate-Partner */}
                     <td className="px-4 py-3 text-sm text-foreground">
                       {emp.handwerker?.name ?? "–"}
                       {emp.handwerker?.telefon && (

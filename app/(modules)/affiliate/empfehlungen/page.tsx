@@ -95,7 +95,7 @@ export default function EmpfehlungenPage(): React.JSX.Element {
 
     const selectedPartner = handwerker.find((h) => h.id === formData.handwerker_id);
     if (!selectedPartner) {
-      setFormError("Bitte Kunde auswählen");
+      setFormError("Bitte Affiliate-Partner auswählen");
       setFormLoading(false);
       return;
     }
@@ -275,7 +275,7 @@ export default function EmpfehlungenPage(): React.JSX.Element {
       <Card className="p-5">
         <form onSubmit={onSubmit} className="flex flex-col gap-5">
           <h2 className="text-base font-semibold text-foreground">
-            {mode === "create" ? "Neuen Affiliate erstellen" : "Affiliate bearbeiten"}
+            {mode === "create" ? "Neue Kundenempfehlung erstellen" : "Kundenempfehlung bearbeiten"}
           </h2>
           {error && (
             <div role="alert" className="text-sm font-medium text-destructive bg-destructive/10 px-4 py-3 rounded-lg">
@@ -284,14 +284,14 @@ export default function EmpfehlungenPage(): React.JSX.Element {
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Kunde</label>
+              <label className="text-xs font-medium text-muted-foreground">Affiliate-Partner</label>
               <select
                 value={data.handwerker_id}
                 onChange={(e) => setData({ ...data, handwerker_id: e.target.value })}
                 required
                 className="w-full px-3 py-2 text-sm bg-card text-foreground border border-border rounded-lg outline-none transition-colors focus:border-foreground/40 cursor-pointer"
               >
-                <option value="">Kunde auswählen...</option>
+                <option value="">Affiliate-Partner auswählen...</option>
                 {handwerker.map((hw) => (
                   <option key={hw.id} value={hw.id}>{hw.name} ({hw.provision_prozent}%)</option>
                 ))}
@@ -323,7 +323,7 @@ export default function EmpfehlungenPage(): React.JSX.Element {
 
           <div className="flex gap-3">
             <Button type="submit" loading={isLoading} size="lg" className="flex-1">
-              {mode === "create" ? "Affiliate erstellen" : "Änderungen speichern"}
+              {mode === "create" ? "Kundenempfehlung erstellen" : "Änderungen speichern"}
             </Button>
             <Button type="button" variant="ghost" size="lg" onClick={onCancel}>Abbrechen</Button>
           </div>
@@ -336,10 +336,10 @@ export default function EmpfehlungenPage(): React.JSX.Element {
     <div className="animate-fadeIn flex flex-col gap-8">
       {/* Seitenkopf */}
       <div className="flex justify-between items-center">
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">Affiliate</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">Kundenempfehlungen</h1>
         {!editingEmp && (
           <Button onClick={() => { setShowForm(!showForm); setEditingEmp(null); }} size="lg">
-            {showForm ? "Abbrechen" : "+ Neuer Affiliate"}
+            {showForm ? "Abbrechen" : "+ Neue Kundenempfehlung"}
           </Button>
         )}
       </div>
@@ -374,7 +374,7 @@ export default function EmpfehlungenPage(): React.JSX.Element {
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="bg-muted">
-              {["Affiliate", "Kunde", "Provision %", "Ref", "Betrag", "Provision", "Datum", "Aktionen"].map((h) => (
+              {["Affiliate", "Affiliate-Partner", "Provision %", "Ref", "Betrag", "Provision", "Datum", "Aktionen"].map((h) => (
                 <th
                   key={h}
                   className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap"

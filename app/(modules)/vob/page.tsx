@@ -4,6 +4,7 @@ import { CompanyCard } from './_components/dashboard/CompanyCard';
 import { TrendChart } from './_components/dashboard/TrendChart';
 import { DownloadReport } from './_components/export/DownloadReport';
 import { RecentFeed } from './RecentFeed';
+import type { DashboardRow, CompanyTrend, Company } from '@/lib/modules/vob/types';
 
 export const revalidate = 300;
 

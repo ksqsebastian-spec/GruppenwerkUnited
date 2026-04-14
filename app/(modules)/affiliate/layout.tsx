@@ -12,9 +12,9 @@ import { ModuleSubnav, type ModuleNavItem } from '@/components/layout/module-sub
 
 const NAV_ITEMS: ModuleNavItem[] = [
   { href: '/affiliate', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { href: '/affiliate/handwerker', label: 'Handwerker', icon: Hammer },
-  { href: '/affiliate/empfehlungen', label: 'Empfehlungen', icon: UserPlus },
-  { href: '/affiliate/auszahlung', label: 'Auszahlung', icon: Wallet },
+  { href: '/affiliate/handwerker', label: 'Affiliate-Partner', icon: Hammer },
+  { href: '/affiliate/empfehlungen', label: 'Kundenempfehlungen', icon: UserPlus },
+  { href: '/affiliate/auszahlung', label: 'Provisionen', icon: Wallet },
   { href: '/affiliate/archiv', label: 'Archiv', icon: Archive },
   { href: '/affiliate/emails', label: 'E-Mails', icon: Mail },
 ];
