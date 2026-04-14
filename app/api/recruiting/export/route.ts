@@ -16,8 +16,9 @@ export async function GET(request: NextRequest) {
   let query = adminClient
     .from("empfehlungen")
     .select("*, stelle:stelle_id(title)")
-    // Nur Recruiting-Empfehlungen (stelle_id IS NOT NULL)
+    // Nur Recruiting-Empfehlungen (stelle_id IS NOT NULL, handwerker_id IS NULL)
     .not("stelle_id", "is", null)
+    .is("handwerker_id", null)
     .order("created_at", { ascending: false });
 
   // Nicht-Admins exportieren nur Daten ihrer Firma

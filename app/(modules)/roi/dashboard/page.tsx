@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import * as XLSX from "xlsx";
-import { supabase } from "@/lib/supabase/client";
 import { Job, Upload } from "@/lib/modules/roi/types";
 import SummaryBar from "../_components/SummaryBar";
 import JobGrid from "../_components/JobGrid";
@@ -17,26 +16,26 @@ export default function DashboardPage() {
   const [uploads, setUploads] = useState<Upload[]>([]);
 
   const fetchJobs = useCallback(async () => {
-    // Aufträge aus dem roi-Schema laden
-    const { data } = await supabase
-      .schema("roi")
-      .from("jobs")
-      .select("*")
-      .order("datum", { ascending: false })
-      .order("created_at", { ascending: false });
-    setJobs((data as Job[]) || []);
+    // Aufträge über API-Route laden (service role, umgeht PostgREST-Schema-Beschränkungen)
+    const res = await fetch('/api/roi/jobs');
+    if (res.ok) {
+      const data = await res.json();
+      setJobs((data as Job[]) || []);
+    } else {
+      console.error('Fehler beim Laden der Aufträge:', await res.text());
+    }
     setLoading(false);
   }, []);
 
   const fetchUploads = useCallback(async () => {
-    // Upload-Protokoll aus dem roi-Schema laden
-    const { data } = await supabase
-      .schema("roi")
-      .from("uploads")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(5);
-    setUploads((data as Upload[]) || []);
+    // Upload-Protokoll über API-Route laden (service role, umgeht PostgREST-Schema-Beschränkungen)
+    const res = await fetch('/api/roi/uploads');
+    if (res.ok) {
+      const data = await res.json();
+      setUploads((data as Upload[]) || []);
+    } else {
+      console.error('Fehler beim Laden der Upload-Protokolle:', await res.text());
+    }
   }, []);
 
   useEffect(() => {

@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
       })
       // Nur Recruiting-Empfehlungen (stelle_id IS NOT NULL, handwerker_id IS NULL)
       .not("stelle_id", "is", null)
+      .is("handwerker_id", null)
       .order("created_at", { ascending: false })
       .range(offset, offset + pageSize - 1);
 

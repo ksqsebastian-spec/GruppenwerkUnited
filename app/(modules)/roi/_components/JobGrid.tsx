@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Job, MONATE, HERKUNFT_OPTIONS } from "@/lib/modules/roi/types";
-import { supabase } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/modules/roi/calculations";
 
 interface JobGridProps {
@@ -134,12 +133,19 @@ export default function JobGrid({ jobs, onUpdate }: JobGridProps) {
       } else if (key === "jahr") {
         value = parseInt(rawValue) || new Date().getFullYear();
       } else {
-        // Truncate text fields to 500 chars max
+        // Textfelder auf 500 Zeichen begrenzen
         value = rawValue.slice(0, 500);
       }
 
-      // Auftrag im roi-Schema aktualisieren
-      await supabase.schema("roi").from("jobs").update({ [key]: value }).eq("id", jobId);
+      // Auftrag über API-Route aktualisieren (service role, umgeht PostgREST-Schema-Beschränkungen)
+      const res = await fetch('/api/roi/jobs', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: jobId, key, value }),
+      });
+      if (!res.ok) {
+        console.error('Fehler beim Aktualisieren des Auftrags:', await res.text());
+      }
       setSaving(null);
       onUpdate();
     },
@@ -148,18 +154,30 @@ export default function JobGrid({ jobs, onUpdate }: JobGridProps) {
 
   const handleAddRow = async () => {
     const now = new Date();
-    // Neuen Auftrag im roi-Schema anlegen
-    await supabase.schema("roi").from("jobs").insert({
-      jahr: now.getFullYear(),
-      monat: MONATE[now.getMonth()],
-      datum: now.toISOString().split("T")[0],
+    // Neuen Auftrag über API-Route anlegen (service role, umgeht PostgREST-Schema-Beschränkungen)
+    const res = await fetch('/api/roi/jobs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jahr: now.getFullYear(),
+        monat: MONATE[now.getMonth()],
+        datum: now.toISOString().split("T")[0],
+      }),
     });
+    if (!res.ok) {
+      console.error('Fehler beim Anlegen des Auftrags:', await res.text());
+    }
     onUpdate();
   };
 
   const handleDelete = async (jobId: string) => {
-    // Auftrag aus dem roi-Schema löschen
-    await supabase.schema("roi").from("jobs").delete().eq("id", jobId);
+    // Auftrag über API-Route löschen (service role, umgeht PostgREST-Schema-Beschränkungen)
+    const res = await fetch(`/api/roi/jobs?id=${encodeURIComponent(jobId)}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      console.error('Fehler beim Löschen des Auftrags:', await res.text());
+    }
     onUpdate();
   };
 

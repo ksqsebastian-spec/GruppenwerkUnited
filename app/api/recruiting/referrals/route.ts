@@ -28,8 +28,9 @@ export async function GET(request: NextRequest) {
   let query = adminClient
     .from("empfehlungen")
     .select("*", { count: "exact" })
-    // Nur Recruiting-Empfehlungen (stelle_id IS NOT NULL)
+    // Nur Recruiting-Empfehlungen (stelle_id IS NOT NULL, handwerker_id IS NULL)
     .not("stelle_id", "is", null)
+    .is("handwerker_id", null)
     .order("created_at", { ascending: false })
     .range(offset, offset + pageSize - 1);
 

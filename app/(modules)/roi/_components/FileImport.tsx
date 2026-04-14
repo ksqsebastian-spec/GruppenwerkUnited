@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useRef } from "react";
 import * as XLSX from "xlsx";
-import { supabase } from "@/lib/supabase/client";
 import { IMPORTABLE_FIELDS, XLSX_COLUMN_MAP, MONATE } from "@/lib/modules/roi/types";
 import { formatCurrency } from "@/lib/modules/roi/calculations";
 
@@ -213,25 +212,25 @@ export default function FileImport({ onImportComplete }: FileImportProps) {
       return job;
     });
 
-    // Stapel-Import in das roi-Schema
-    const { error: insertError } = await supabase
-      .schema("roi")
-      .from("jobs")
-      .insert(jobsToInsert);
+    // Stapel-Import über API-Route (service role, umgeht PostgREST-Schema-Beschränkungen)
+    const res = await fetch('/api/roi/uploads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jobs: jobsToInsert,
+        filename: parsed.filename,
+        rows_imported: jobsToInsert.length,
+        rows_skipped: parsed.rows.length - nonEmptyRows.length,
+        column_mapping: mapping,
+      }),
+    });
 
-    if (insertError) {
-      setError(`Import-Fehler: ${insertError.message}`);
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({ error: 'Unbekannter Fehler' }));
+      setError(errData.error || 'Import fehlgeschlagen');
       setImporting(false);
       return;
     }
-
-    // Upload-Protokoll im roi-Schema speichern
-    await supabase.schema("roi").from("uploads").insert({
-      filename: parsed.filename,
-      rows_imported: jobsToInsert.length,
-      rows_skipped: parsed.rows.length - nonEmptyRows.length,
-      column_mapping: mapping,
-    });
 
     setResult({
       imported: jobsToInsert.length,

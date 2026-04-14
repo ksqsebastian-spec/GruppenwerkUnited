@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import * as XLSX from "xlsx";
-import { supabase } from "@/lib/supabase/client";
 import { Job, Config } from "@/lib/modules/roi/types";
 import {
   calculateMonthlyROI,
@@ -51,13 +50,26 @@ export default function ROIPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    // Daten aus dem dedizierten roi-Schema laden
+    // Daten über API-Routen laden (service role, umgeht PostgREST-Schema-Beschränkungen)
     const [jobsRes, configRes] = await Promise.all([
-      supabase.schema("roi").from("jobs").select("*").order("datum"),
-      supabase.schema("roi").from("config").select("*").limit(1).single(),
+      fetch('/api/roi/jobs'),
+      fetch('/api/roi/config'),
     ]);
-    setJobs((jobsRes.data as Job[]) || []);
-    setConfig((configRes.data as Config) ?? null);
+
+    if (jobsRes.ok) {
+      const jobsData = await jobsRes.json();
+      setJobs((jobsData as Job[]) || []);
+    } else {
+      console.error('Fehler beim Laden der Aufträge:', await jobsRes.text());
+    }
+
+    if (configRes.ok) {
+      const configData = await configRes.json();
+      setConfig((configData as Config) ?? null);
+    } else {
+      console.error('Fehler beim Laden der Konfiguration:', await configRes.text());
+    }
+
     setLoading(false);
   }, []);
 
@@ -69,8 +81,15 @@ export default function ROIPage() {
     if (!config) return;
     const updated = { ...config, [key]: value };
     setConfig(updated);
-    // Konfiguration im roi-Schema aktualisieren
-    await supabase.schema("roi").from("config").update({ [key]: value }).eq("id", config.id);
+    // Konfiguration über API-Route aktualisieren (service role, umgeht PostgREST-Schema-Beschränkungen)
+    const res = await fetch('/api/roi/config', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: config.id, key, value }),
+    });
+    if (!res.ok) {
+      console.error('Fehler beim Aktualisieren der Konfiguration:', await res.text());
+    }
   };
 
   // Ladevorgang abwarten

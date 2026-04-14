@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import * as XLSX from "xlsx";
-import { supabase } from "@/lib/supabase/client";
 import { Purchase } from "@/lib/modules/roi/types";
 import { formatEuro } from "@/lib/modules/roi/flywheel-data";
 import ExportButton from "../../_components/ExportButton";
