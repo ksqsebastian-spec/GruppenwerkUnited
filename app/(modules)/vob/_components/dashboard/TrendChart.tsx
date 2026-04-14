@@ -47,7 +47,7 @@ export function TrendChart({ trends }: TrendChartProps): React.JSX.Element {
     month: 4,
     '6months': 26,
   }
-  const chartData = allChartData.slice(-weekLimits[timeFrame])
+  const chartData = allChartData.slice(-(weekLimits[timeFrame as TimeFrame] ?? 4))
 
   const companies = Array.from(companyMap.entries())
 

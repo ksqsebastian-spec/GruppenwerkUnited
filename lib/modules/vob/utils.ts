@@ -1,12 +1,9 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
 import { differenceInDays, parseISO, format } from 'date-fns'
 import { de } from 'date-fns/locale'
+import { cn } from '@/lib/utils'
 import type { Urgency } from './types'
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+export { cn }
 
 export function computeUrgency(deadlineDate: string | null): Urgency {
   if (!deadlineDate) return 'unknown'

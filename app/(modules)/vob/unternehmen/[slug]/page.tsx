@@ -3,6 +3,7 @@ import { ExportButton } from '../../_components/export/ExportButton';
 import { Badge } from '@/components/ui/badge';
 import { notFound } from 'next/navigation';
 import { CompanyTenderList } from './CompanyTenderList';
+import type { Company } from '@/lib/modules/vob/types';
 
 export const revalidate = 300;
 
@@ -22,6 +23,8 @@ export default async function CompanyPage({ params }: PageProps): Promise<React.
 
   if (!company) notFound();
 
+  // Nach notFound()-Aufruf ist company garantiert nicht null
+  const safeCompany = company as Company;
   const activeTenders = tenders.filter((t) => t.status === 'active');
 
   return (
@@ -32,13 +35,13 @@ export default async function CompanyPage({ params }: PageProps): Promise<React.
             <div className="flex items-center gap-3 mb-2">
               <span
                 className="w-2.5 h-2.5 rounded-full"
-                style={{ backgroundColor: company.color }}
+                style={{ backgroundColor: safeCompany.color }}
               />
-              <h1 className="text-[18px] font-semibold text-neutral-900">{company.name}</h1>
+              <h1 className="text-[18px] font-semibold text-neutral-900">{safeCompany.name}</h1>
             </div>
-            {company.trades.length > 0 && (
+            {safeCompany.trades.length > 0 && (
               <div className="flex gap-1.5 flex-wrap ml-5">
-                {company.trades.map((trade) => (
+                {safeCompany.trades.map((trade) => (
                   <Badge
                     key={trade}
                     variant="outline"
