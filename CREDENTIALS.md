@@ -9,10 +9,12 @@
 | Firma | Env-Variable | Passwort |
 |-------|-------------|----------|
 | Admin (alles) | `ADMIN_PASSWORD` | `Wbk-Admin-2024!` |
-| Tischlerei Seehafer | `SEEHAFER_PASSWORD` | `See-Haf-2024!` |
+| Seehafer Elemente | `SEEHAFER_PASSWORD` | `See-Haf-2024!` |
 | Tischlerei Brink | `BRINK_PASSWORD` | `Brk-Tschl-2024!` |
 | Malerei Hantke | `HANTKE_PASSWORD` | `Han-Mal-2024!` |
 | Gruppenwerk | `GRUPPENWERK_PASSWORD` | `GW-Fhrpk-2024!` |
+| Werner | `WERNER_PASSWORD` | *(in DB gesetzt)* |
+| Tischlerei Mehlig | `MEHLIG_PASSWORD` | *(in DB gesetzt)* |
 
 ---
 
@@ -64,10 +66,12 @@ Fügt `company`-Spalten zu den Tabellen hinzu, die für Datentrennung benötigt 
 | Firma | Module |
 |-------|--------|
 | Admin | Alles (Fuhrpark, Recruiting, Affiliate, ROI, VOB) |
-| Tischlerei Seehafer | Recruiting, Affiliate, ROI |
+| Seehafer Elemente | Recruiting, Affiliate, ROI |
 | Tischlerei Brink | Affiliate, Recruiting, ROI |
 | Malerei Hantke | Recruiting, Affiliate, ROI |
 | Gruppenwerk | Fuhrpark |
+| Werner | VOB |
+| Tischlerei Mehlig | Affiliate, Recruiting, ROI, VOB, Fuhrpark |
 
 ---
 
