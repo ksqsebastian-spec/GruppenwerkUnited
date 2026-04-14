@@ -112,11 +112,13 @@ export async function PATCH(request: NextRequest) {
 
   const adminClient = createAdminClient();
 
-  // Get current empfehlung for audit + provision calc (non-blocking)
+  // Get current empfehlung for audit + provision calc (non-blocking, nur Affiliate)
   const { data: before } = await adminClient
     .from("empfehlungen")
     .select("status, rechnungsbetrag, handwerker:handwerker_id(provision_prozent)")
     .eq("id", id)
+    // Nur Affiliate-Empfehlungen (handwerker_id IS NOT NULL)
+    .not("handwerker_id", "is", null)
     .single();
 
   const updateData: Record<string, unknown> = {};
@@ -252,6 +254,8 @@ export async function DELETE(request: NextRequest) {
     .from("empfehlungen")
     .select("kunde_name, ref_code")
     .eq("id", id)
+    // Nur Affiliate-Empfehlungen (handwerker_id IS NOT NULL)
+    .not("handwerker_id", "is", null)
     .single();
 
   let deleteQuery = adminClient

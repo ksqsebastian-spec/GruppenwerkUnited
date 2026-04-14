@@ -35,12 +35,14 @@ export async function POST(
 
   const adminClient = createAdminClient();
 
-  // Empfehlung laden (muss 'offen' sein, Nicht-Admins nur ihre Firma)
+  // Empfehlung laden (muss 'offen' sein, Nicht-Admins nur ihre Firma, nur Affiliate)
   let fetchQuery = adminClient
     .from("empfehlungen")
     .select("*, handwerker:handwerker_id(provision_prozent)")
     .eq("id", id)
-    .eq("status", "offen");
+    .eq("status", "offen")
+    // Nur Affiliate-Empfehlungen (handwerker_id IS NOT NULL)
+    .not("handwerker_id", "is", null);
 
   if (!authResult.isAdmin) {
     fetchQuery = fetchQuery.eq("company", authResult.companyId);

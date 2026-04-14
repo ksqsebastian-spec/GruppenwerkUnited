@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
   let query = adminClient
     .from("empfehlungen")
     .select("*", { count: "exact" })
+    // Nur Affiliate-Empfehlungen (handwerker_id IS NOT NULL)
+    .not("handwerker_id", "is", null)
     .order("created_at", { ascending: false })
     .range(offset, offset + pageSize - 1);
 

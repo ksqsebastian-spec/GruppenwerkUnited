@@ -16,7 +16,9 @@ export async function GET(
   let query = adminClient
     .from("empfehlungen")
     .select("*")
-    .eq("id", id);
+    .eq("id", id)
+    // Nur Affiliate-Empfehlungen (handwerker_id IS NOT NULL)
+    .not("handwerker_id", "is", null);
 
   // SICHERHEIT: Nicht-Admins dürfen nur Empfehlungen ihrer Firma abrufen
   if (!authResult.isAdmin) {

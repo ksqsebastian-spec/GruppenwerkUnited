@@ -120,11 +120,13 @@ export async function PATCH(request: NextRequest) {
 
   const adminClient = createAdminClient();
 
-  // Get current empfehlung for audit
+  // Get current empfehlung for audit (nur Recruiting-Empfehlungen)
   const { data: before } = await adminClient
     .from("empfehlungen")
     .select("status")
     .eq("id", id)
+    // Nur Recruiting-Empfehlungen (stelle_id IS NOT NULL)
+    .not("stelle_id", "is", null)
     .single();
 
   const updateData: Record<string, unknown> = {};
@@ -245,6 +247,8 @@ export async function DELETE(request: NextRequest) {
     .from("empfehlungen")
     .select("kandidat_name, ref_code")
     .eq("id", id)
+    // Nur Recruiting-Empfehlungen (stelle_id IS NOT NULL)
+    .not("stelle_id", "is", null)
     .single();
 
   let deleteQuery = adminClient

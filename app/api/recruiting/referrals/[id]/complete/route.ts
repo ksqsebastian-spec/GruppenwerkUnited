@@ -15,12 +15,14 @@ export async function POST(
 
   const adminClient = createAdminClient();
 
-  // Empfehlung laden (muss 'offen' sein, Nicht-Admins nur ihre Firma)
+  // Empfehlung laden (muss 'offen' sein, Nicht-Admins nur ihre Firma, nur Recruiting)
   let fetchQuery = adminClient
     .from("empfehlungen")
     .select("*")
     .eq("id", id)
-    .eq("status", "offen");
+    .eq("status", "offen")
+    // Nur Recruiting-Empfehlungen (stelle_id IS NOT NULL)
+    .not("stelle_id", "is", null);
 
   if (!authResult.isAdmin) {
     fetchQuery = fetchQuery.eq("company", authResult.companyId);
