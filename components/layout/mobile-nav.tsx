@@ -48,7 +48,6 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps): React.JSX.Ele
   const { company } = useAuth();
   const { data: licenseWarningCount } = useLicenseWarningCount();
   const { data: uvvWarningCount } = useUvvWarningCount();
-  const { company } = useAuth();
   const currentModule = getModuleByRoute(pathname);
   const isInsideModule = currentModule !== undefined;
 

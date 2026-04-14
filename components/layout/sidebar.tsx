@@ -106,15 +106,13 @@ function SidebarNavItem({
 function WerkbankModuleNav({ pathname }: { pathname: string }): React.JSX.Element {
   const { company } = useAuth();
 
-  // Nur erlaubte Module anzeigen
+  // Nur erlaubte Module anzeigen — alle Kategorien (tool + company)
   const allowedModules = company?.allowedModules;
   const visibleModules = MODULES.filter((m) => {
     if (allowedModules === '*') return true;
     if (Array.isArray(allowedModules)) return allowedModules.includes(m.id);
     return false;
   });
-
-  const companyModules = visibleModules.filter((m) => m.category === 'company');
 
   const renderModuleItem = (mod: ModuleConfig): React.JSX.Element => {
     const Icon = MODULE_ICONS[mod.icon] ?? Wrench;
@@ -134,14 +132,14 @@ function WerkbankModuleNav({ pathname }: { pathname: string }): React.JSX.Elemen
   return (
     <nav className="flex flex-1 flex-col">
       <ul role="list" className="flex flex-1 flex-col gap-y-7">
-        {/* Firmen-Module — unter dem Namen der eingeloggten Firma */}
-        {companyModules.length > 0 && (
+        {/* Alle erlaubten Module der eingeloggten Firma */}
+        {visibleModules.length > 0 && (
           <li>
             <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
               {company?.companyName ?? 'Module'}
             </div>
             <ul role="list" className="-mx-2 space-y-1">
-              {companyModules.map(renderModuleItem)}
+              {visibleModules.map(renderModuleItem)}
             </ul>
           </li>
         )}
