@@ -1,4 +1,14 @@
 -- Datenkodierung: Pseudonymisierung von Kundendaten für sichere KI-Nutzung
+
+-- Trigger-Funktion erstellen falls noch nicht vorhanden
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TABLE IF NOT EXISTS datenkodierungen (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   code TEXT NOT NULL UNIQUE,
