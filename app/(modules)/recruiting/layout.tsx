@@ -7,7 +7,6 @@ import {
   Wallet,
   Archive,
   Mail,
-  Settings,
 } from 'lucide-react';
 import { ModuleSubnav, type ModuleNavItem } from '@/components/layout/module-subnav';
 
@@ -18,7 +17,6 @@ const NAV_ITEMS: ModuleNavItem[] = [
   { href: '/recruiting/auszahlung', label: 'Recruiting-Prämien', icon: Wallet },
   { href: '/recruiting/archiv', label: 'Archiv', icon: Archive },
   { href: '/recruiting/emails', label: 'E-Mails', icon: Mail },
-  { href: '/recruiting/einstellungen', label: 'Einstellungen', icon: Settings },
 ];
 
 export default function RecruitingLayout({

@@ -20,12 +20,14 @@ export const empfehlungStatusUpdateSchema = z.object({
 export const stelleCreateSchema = z.object({
   title: z.string().min(1, "Titel ist erforderlich").max(200),
   description: z.string().max(2000).optional(),
+  praemie_betrag: z.number().min(0).max(99999).optional(),
 });
 
 export const stelleUpdateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(2000).optional().nullable(),
   active: z.boolean().optional(),
+  praemie_betrag: z.number().min(0).max(99999).optional().nullable(),
 });
 
 export const paginationSchema = z.object({

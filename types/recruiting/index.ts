@@ -4,6 +4,7 @@ export interface Stelle {
   id: string;
   title: string;
   description: string | null;
+  praemie_betrag: number | null;
   active: boolean;
   created_at: string;
   updated_at: string;

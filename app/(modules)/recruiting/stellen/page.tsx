@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import type { Stelle, EmpfehlungWithStelle, EmpfehlungStatus, AppSettings } from "@/types/recruiting";
+import { Check, X } from "lucide-react";
+import type { Stelle, EmpfehlungWithStelle, EmpfehlungStatus } from "@/types/recruiting";
 import { Card } from "../_components/ui/Card";
 import { Button } from "../_components/ui/Button";
 import { Input } from "../_components/ui/Input";
 
-// Status-Punkt-Farben bleiben als kleine Indikatoren erhalten
 const STATUS_COLORS: Record<EmpfehlungStatus, string> = {
   offen: "#ea580c",
   eingestellt: "#16a34a",
@@ -14,20 +14,22 @@ const STATUS_COLORS: Record<EmpfehlungStatus, string> = {
   ausgezahlt: "#7C3AED",
 };
 
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(amount);
+}
+
 export default function StellenPage(): React.JSX.Element {
   const [stellen, setStellen] = useState<Stelle[]>([]);
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithStelle[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ title: "", description: "" });
+  const [formData, setFormData] = useState({ title: "", description: "", praemie_betrag: "" });
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
 
-  // Prämie-Einstellungen
-  const [praemie, setPraemie] = useState<number | null>(null);
-  const [editingPraemie, setEditingPraemie] = useState(false);
+  // Inline Prämie-Bearbeitung pro Stelle
+  const [editingPraemieId, setEditingPraemieId] = useState<string | null>(null);
   const [praemieInput, setPraemieInput] = useState("");
-  const [praemieLoading, setPraemieLoading] = useState(false);
 
   const fetchData = useCallback(async (): Promise<void> => {
     try {
@@ -50,24 +52,10 @@ export default function StellenPage(): React.JSX.Element {
     }
   }, []);
 
-  const fetchSettings = useCallback(async (): Promise<void> => {
-    try {
-      const res = await fetch("/api/recruiting/settings");
-      if (res.ok) {
-        const data: AppSettings = await res.json();
-        setPraemie(data.praemie_betrag_default);
-      }
-    } catch {
-      // Stille Fehlerbehandlung
-    }
-  }, []);
-
   useEffect(() => {
     fetchData();
-    fetchSettings();
-  }, [fetchData, fetchSettings]);
+  }, [fetchData]);
 
-  // Empfehlungen nach Stelle gruppieren
   const empfehlungenByStelle = new Map<string, EmpfehlungWithStelle[]>();
   for (const emp of empfehlungen) {
     const list = empfehlungenByStelle.get(emp.stelle_id) || [];
@@ -80,6 +68,13 @@ export default function StellenPage(): React.JSX.Element {
     setFormLoading(true);
     setFormError("");
 
+    const praemie = formData.praemie_betrag ? parseFloat(formData.praemie_betrag) : undefined;
+    if (formData.praemie_betrag && (isNaN(praemie!) || praemie! < 0)) {
+      setFormError("Ungültiger Prämienbetrag");
+      setFormLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/recruiting/stellen", {
         method: "POST",
@@ -87,23 +82,44 @@ export default function StellenPage(): React.JSX.Element {
         body: JSON.stringify({
           title: formData.title,
           description: formData.description || undefined,
+          praemie_betrag: praemie,
         }),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        const msg = data.detail ? `${data.error}: ${data.detail}` : data.error || "Fehler beim Anlegen";
-        setFormError(msg);
+        setFormError(data.detail ? `${data.error}: ${data.detail}` : data.error || "Fehler beim Anlegen");
         return;
       }
 
       setShowForm(false);
-      setFormData({ title: "", description: "" });
+      setFormData({ title: "", description: "", praemie_betrag: "" });
       fetchData();
     } catch {
       setFormError("Netzwerkfehler");
     } finally {
       setFormLoading(false);
+    }
+  }
+
+  async function handleSavePraemie(stelle: Stelle): Promise<void> {
+    const value = praemieInput === "" ? null : parseFloat(praemieInput);
+    if (value !== null && (isNaN(value) || value < 0)) return;
+
+    try {
+      const res = await fetch("/api/recruiting/stellen", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: stelle.id, praemie_betrag: value }),
+      });
+      if (!res.ok) {
+        alert("Fehler beim Speichern der Prämie");
+        return;
+      }
+      setEditingPraemieId(null);
+      fetchData();
+    } catch {
+      alert("Netzwerkfehler");
     }
   }
 
@@ -121,8 +137,7 @@ export default function StellenPage(): React.JSX.Element {
   }
 
   async function handleDelete(stelle: Stelle): Promise<void> {
-    if (!confirm(`Stellenangebot "${stelle.title}" wirklich löschen? Das kann nicht rückgängig gemacht werden.`)) return;
-
+    if (!confirm(`Stellenangebot "${stelle.title}" wirklich löschen?`)) return;
     try {
       const res = await fetch(`/api/recruiting/stellen?id=${stelle.id}`, { method: "DELETE" });
       if (!res.ok) {
@@ -136,39 +151,8 @@ export default function StellenPage(): React.JSX.Element {
     }
   }
 
-  async function handleSavePraemie(): Promise<void> {
-    const value = parseFloat(praemieInput);
-    if (isNaN(value) || value < 0) return;
-
-    setPraemieLoading(true);
-    try {
-      const res = await fetch("/api/recruiting/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ praemie_betrag_default: value }),
-      });
-      if (res.ok) {
-        const data: AppSettings = await res.json();
-        setPraemie(data.praemie_betrag_default);
-        setEditingPraemie(false);
-      }
-    } catch {
-      // Stille Fehlerbehandlung
-    } finally {
-      setPraemieLoading(false);
-    }
-  }
-
-  function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat("de-DE", {
-      style: "currency",
-      currency: "EUR",
-    }).format(amount);
-  }
-
   return (
     <div className="animate-fadeIn flex flex-col gap-8">
-      {/* Seitenheader */}
       <div className="flex justify-between items-center">
         <h1 className="text-lg font-semibold tracking-tight text-foreground">Stellenangebote verwalten</h1>
         <Button onClick={() => setShowForm(!showForm)}>
@@ -176,49 +160,7 @@ export default function StellenPage(): React.JSX.Element {
         </Button>
       </div>
 
-      {/* Standard-Prämie Einstellung */}
-      <Card className="p-5">
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-foreground">Standard-Prämie:</span>
-          {editingPraemie ? (
-            <div className="flex gap-2 items-center">
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={praemieInput}
-                onChange={(e) => setPraemieInput(e.target.value)}
-                disabled={praemieLoading}
-                className="w-28 px-3 py-1.5 border border-border rounded-lg text-sm font-semibold bg-card text-foreground outline-none focus:border-foreground/30"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSavePraemie();
-                  if (e.key === "Escape") setEditingPraemie(false);
-                }}
-              />
-              <Button size="sm" onClick={handleSavePraemie} loading={praemieLoading}>
-                OK
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setEditingPraemie(false)}>
-                Abbrechen
-              </Button>
-            </div>
-          ) : (
-            <button
-              onClick={() => {
-                setPraemieInput(String(praemie ?? 0));
-                setEditingPraemie(true);
-              }}
-              className="text-sm font-semibold text-foreground px-3 py-1.5 rounded-lg border border-border hover:bg-muted transition-colors cursor-pointer"
-              title="Klicke zum Bearbeiten"
-            >
-              {praemie !== null ? formatCurrency(praemie) : "..."}
-            </button>
-          )}
-        </div>
-      </Card>
-
-      {/* Formular: Neue Stelle anlegen */}
+      {/* Formular */}
       {showForm && (
         <Card className="p-6">
           <form onSubmit={handleCreate} className="flex flex-col gap-5">
@@ -235,21 +177,32 @@ export default function StellenPage(): React.JSX.Element {
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
               />
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Prämie (€)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="50"
+                  value={formData.praemie_betrag}
+                  onChange={(e) => setFormData({ ...formData, praemie_betrag: e.target.value })}
+                  placeholder="z.B. 1500"
+                  className="px-3 py-2 text-sm border border-border rounded-lg bg-card text-foreground outline-none focus:border-foreground/30"
+                />
+              </div>
             </div>
             <div className="flex flex-col gap-1">
-              <label
-                htmlFor="description"
-                className="text-xs font-medium text-muted-foreground uppercase tracking-wide"
-              >
+              <label htmlFor="description" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Beschreibung
               </label>
               <textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={4}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-card text-foreground placeholder:text-muted-foreground outline-none focus:border-foreground/30 resize-y font-inherit"
-                placeholder="Optionale Beschreibung der Stelle..."
+                rows={3}
+                className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-card text-foreground placeholder:text-muted-foreground outline-none focus:border-foreground/30 resize-y"
+                placeholder="Optionale Beschreibung..."
               />
             </div>
             <Button type="submit" loading={formLoading}>Stellenangebot anlegen</Button>
@@ -262,11 +215,8 @@ export default function StellenPage(): React.JSX.Element {
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/50">
-              {["Titel", "Beschreibung", "Empfehlungen", "Status", "Erstellt", "Aktionen"].map((h) => (
-                <th
-                  key={h}
-                  className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap"
-                >
+              {["Titel", "Prämie", "Empfehlungen", "Status", "Erstellt", "Aktionen"].map((h) => (
+                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">
                   {h}
                 </th>
               ))}
@@ -275,20 +225,15 @@ export default function StellenPage(): React.JSX.Element {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">
-                  Wird geladen...
-                </td>
+                <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">Wird geladen...</td>
               </tr>
             ) : stellen.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">
-                  Noch keine Stellenangebote angelegt
-                </td>
+                <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">Noch keine Stellenangebote angelegt</td>
               </tr>
             ) : (
               stellen.map((stelle) => {
                 const linkedEmp = empfehlungenByStelle.get(stelle.id) || [];
-                // Nach Status gruppieren
                 const statusCounts: Partial<Record<EmpfehlungStatus, number>> = {};
                 for (const emp of linkedEmp) {
                   statusCounts[emp.status] = (statusCounts[emp.status] || 0) + 1;
@@ -297,15 +242,51 @@ export default function StellenPage(): React.JSX.Element {
                 return (
                   <tr key={stelle.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3 font-medium text-foreground">{stelle.title}</td>
-                    <td className="px-4 py-3 max-w-[250px]">
-                      {stelle.description ? (
-                        <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-sm text-foreground">
-                          {stelle.description}
-                        </span>
+
+                    {/* Prämie – inline bearbeitbar */}
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      {editingPraemieId === stelle.id ? (
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            min="0"
+                            step="50"
+                            value={praemieInput}
+                            onChange={(e) => setPraemieInput(e.target.value)}
+                            className="w-24 px-2 py-1.5 border border-border rounded-lg text-sm font-semibold bg-card text-foreground outline-none focus:border-foreground/30"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSavePraemie(stelle);
+                              if (e.key === "Escape") setEditingPraemieId(null);
+                            }}
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleSavePraemie(stelle)}
+                            className="p-1.5 bg-green-600 rounded-md cursor-pointer border-none"
+                          >
+                            <Check size={12} color="white" />
+                          </button>
+                          <button
+                            onClick={() => setEditingPraemieId(null)}
+                            className="p-1.5 bg-muted border border-border rounded-md cursor-pointer"
+                          >
+                            <X size={12} className="text-muted-foreground" />
+                          </button>
+                        </div>
                       ) : (
-                        <span className="text-muted-foreground">–</span>
+                        <button
+                          onClick={() => {
+                            setEditingPraemieId(stelle.id);
+                            setPraemieInput(stelle.praemie_betrag != null ? String(stelle.praemie_betrag) : "");
+                          }}
+                          className="text-xs px-2.5 py-1 rounded-lg border border-border hover:bg-muted transition-colors cursor-pointer font-semibold text-foreground"
+                          title="Klicke um Prämie anzupassen"
+                        >
+                          {stelle.praemie_betrag != null ? formatCurrency(stelle.praemie_betrag) : "–"}
+                        </button>
                       )}
                     </td>
+
                     <td className="px-4 py-3">
                       {linkedEmp.length === 0 ? (
                         <span className="text-muted-foreground">0</span>
@@ -313,26 +294,15 @@ export default function StellenPage(): React.JSX.Element {
                         <div className="flex gap-2 items-center flex-wrap">
                           <span className="font-semibold text-sm text-foreground">{linkedEmp.length}</span>
                           {(Object.entries(statusCounts) as [EmpfehlungStatus, number][]).map(([status, count]) => (
-                            <div
-                              key={status}
-                              className="flex items-center gap-1"
-                              title={`${status}: ${count}`}
-                            >
-                              <span
-                                className="w-2 h-2 rounded-full"
-                                style={{ backgroundColor: STATUS_COLORS[status] }}
-                              />
-                              <span
-                                className="text-xs font-semibold"
-                                style={{ color: STATUS_COLORS[status] }}
-                              >
-                                {count}
-                              </span>
+                            <div key={status} className="flex items-center gap-1" title={`${status}: ${count}`}>
+                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS[status] }} />
+                              <span className="text-xs font-semibold" style={{ color: STATUS_COLORS[status] }}>{count}</span>
                             </div>
                           ))}
                         </div>
                       )}
                     </td>
+
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleToggleStatus(stelle)}
@@ -341,14 +311,15 @@ export default function StellenPage(): React.JSX.Element {
                             ? "border-green-600 text-green-700 hover:bg-green-50"
                             : "border-red-500 text-red-600 hover:bg-red-50"
                         }`}
-                        title={stelle.active ? "Klicke um zu deaktivieren" : "Klicke um zu aktivieren"}
                       >
                         {stelle.active ? "Aktiv" : "Inaktiv"}
                       </button>
                     </td>
+
                     <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
                       {new Date(stelle.created_at).toLocaleDateString("de-DE")}
                     </td>
+
                     <td className="px-4 py-3">
                       <Button size="sm" variant="danger" onClick={() => handleDelete(stelle)}>
                         Löschen

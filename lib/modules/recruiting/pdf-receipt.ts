@@ -208,6 +208,6 @@ export async function generateReceipt({ empfehlung, emailSubject, emailBody }: R
   );
 
   // Save
-  const filename = `Beleg_${empfehlung.ref_code.replace("#", "")}_${empfehlung.empfehler_name.replace(/\s+/g, "_")}.pdf`;
+  const filename = `Beleg_${(empfehlung.ref_code ?? 'unbekannt').replace("#", "")}_${empfehlung.empfehler_name.replace(/\s+/g, "_")}.pdf`;
   doc.save(filename);
 }

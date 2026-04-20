@@ -6,10 +6,7 @@ import type { EmpfehlungWithStelle } from "@/types/recruiting";
 import { Card } from "../_components/ui/Card";
 import { Button } from "../_components/ui/Button";
 import { formatCurrency } from "@/lib/modules/recruiting/utils";
-import {
-  generateAusgezahltEmail,
-  generateOutlookLink,
-} from "@/lib/modules/recruiting/email-templates";
+import { generateAusgezahltEmail } from "@/lib/modules/recruiting/email-templates";
 import { generateReceipt } from "@/lib/modules/recruiting/pdf-receipt";
 
 export default function EmailConfiguratorPage(): React.JSX.Element {
@@ -63,10 +60,6 @@ export default function EmailConfiguratorPage(): React.JSX.Element {
     }
   }
 
-  const outlookLink =
-    selected && generatedEmail
-      ? generateOutlookLink(selected.empfehler_email, generatedEmail.subject, generatedEmail.body)
-      : "";
 
   return (
     <div className="animate-fadeIn flex flex-col gap-8">
@@ -197,11 +190,6 @@ export default function EmailConfiguratorPage(): React.JSX.Element {
                 <><Copy size={18} /> Alles kopieren</>
               )}
             </Button>
-            <a href={outlookLink} target="_blank" rel="noopener noreferrer">
-              <Button variant="secondary" size="lg">
-                <Mail size={18} /> In Outlook öffnen
-              </Button>
-            </a>
             <Button
               variant="secondary"
               size="lg"
