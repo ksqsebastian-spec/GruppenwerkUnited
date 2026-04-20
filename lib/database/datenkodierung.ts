@@ -3,6 +3,18 @@ import { generateCode } from '@/lib/datenkodierung/code-generator';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 import type { Datenkodierung, DatenkodierungInsert } from '@/types';
 
+export async function fetchAllTags(companyId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('datenkodierungen')
+    .select('tags')
+    .eq('company', companyId);
+
+  if (error) return [];
+
+  const all = (data ?? []).flatMap((row) => row.tags ?? []);
+  return [...new Set(all)].sort();
+}
+
 export async function fetchDatenkodierungen(companyId: string, search?: string, tag?: string): Promise<Datenkodierung[]> {
   let query = supabase
     .from('datenkodierungen')

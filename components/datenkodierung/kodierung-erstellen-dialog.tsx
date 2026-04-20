@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 
-import { useCreateDatenkodierung } from '@/hooks/use-datenkodierung';
+import { useCreateDatenkodierung, useAllTags } from '@/hooks/use-datenkodierung';
 import { datenkodierungSchema, type DatenkodierungFormData } from '@/lib/validations/datenkodierung';
 import type { Datenkodierung } from '@/types';
 
@@ -50,6 +50,7 @@ export function KodierungErstellenDialog({
   const tagInputRef = useRef<HTMLInputElement>(null);
 
   const { mutateAsync, isPending } = useCreateDatenkodierung();
+  const { data: existingTags = [] } = useAllTags();
 
   const form = useForm<DatenkodierungFormData>({
     resolver: zodResolver(datenkodierungSchema),
@@ -230,6 +231,33 @@ export function KodierungErstellenDialog({
                 {/* Tag-Eingabe */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Tags</label>
+
+                  {/* Vorhandene Tags zum Anklicken */}
+                  {existingTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {existingTags.map((tag) => {
+                        const selected = currentTags.includes(tag);
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() =>
+                              selected ? removeTag(tag) : form.setValue('tags', [...currentTags, tag])
+                            }
+                            className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-opacity hover:opacity-80"
+                            style={{
+                              backgroundColor: selected ? tagColor(tag) : 'transparent',
+                              color: selected ? 'white' : tagColor(tag),
+                              border: `1.5px solid ${tagColor(tag)}`,
+                            }}
+                          >
+                            {tag}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <Tag className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />

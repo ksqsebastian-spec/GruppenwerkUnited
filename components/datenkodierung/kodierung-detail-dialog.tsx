@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
-import { useUpdateDatenkodierungTags } from '@/hooks/use-datenkodierung';
+import { useUpdateDatenkodierungTags, useAllTags } from '@/hooks/use-datenkodierung';
 import type { Datenkodierung } from '@/types';
 
 interface KodierungDetailDialogProps {
@@ -42,6 +42,7 @@ export function KodierungDetailDialog({
   const tagInputRef = useRef<HTMLInputElement>(null);
 
   const { mutate: saveTags, isPending: savingTags } = useUpdateDatenkodierungTags();
+  const { data: existingTags = [] } = useAllTags();
 
   const handleCopyCode = async (): Promise<void> => {
     if (!datensatz) return;
@@ -191,6 +192,30 @@ export function KodierungDetailDialog({
                     </button>
                   </span>
                 ))}
+              </div>
+            )}
+
+            {/* Vorhandene Tags zum Anklicken */}
+            {existingTags.filter((t) => !displayTags.includes(t)).length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {existingTags
+                  .filter((t) => !displayTags.includes(t))
+                  .map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => {
+                        const updated = [...displayTags, tag];
+                        setLocalTags(updated);
+                        if (datensatz) saveTags({ id: datensatz.id, tags: updated });
+                      }}
+                      disabled={savingTags || displayTags.length >= 10}
+                      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-opacity hover:opacity-80 disabled:opacity-40"
+                      style={{ color: tagColor(tag), border: `1.5px solid ${tagColor(tag)}` }}
+                    >
+                      + {tag}
+                    </button>
+                  ))}
               </div>
             )}
 
