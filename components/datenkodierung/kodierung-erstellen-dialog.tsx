@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Copy, Check, Loader2, ShieldCheck } from 'lucide-react';
+import { Copy, Check, Loader2, ShieldCheck, X, Tag } from 'lucide-react';
 
 import {
   Dialog,
@@ -33,12 +33,21 @@ interface KodierungErstellenDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+function tagColor(tag: string): string {
+  const colors = ['#c96442', '#2563eb', '#16a34a', '#7C3AED', '#d97706', '#0891b2'];
+  let hash = 0;
+  for (const c of tag) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff;
+  return colors[hash % colors.length];
+}
+
 export function KodierungErstellenDialog({
   open,
   onOpenChange,
 }: KodierungErstellenDialogProps): React.JSX.Element {
   const [erstellterDatensatz, setErstellterDatensatz] = useState<Datenkodierung | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [tagInput, setTagInput] = useState('');
+  const tagInputRef = useRef<HTMLInputElement>(null);
 
   const { mutateAsync, isPending } = useCreateDatenkodierung();
 
@@ -48,14 +57,30 @@ export function KodierungErstellenDialog({
       name: '',
       adresse: '',
       notizen: '',
+      tags: [],
     },
   });
+
+  const currentTags = form.watch('tags') ?? [];
+
+  function addTag(): void {
+    const trimmed = tagInput.trim();
+    if (!trimmed || currentTags.includes(trimmed) || currentTags.length >= 10) return;
+    form.setValue('tags', [...currentTags, trimmed]);
+    setTagInput('');
+    tagInputRef.current?.focus();
+  }
+
+  function removeTag(tag: string): void {
+    form.setValue('tags', currentTags.filter((t) => t !== tag));
+  }
 
   const handleSubmit = async (data: DatenkodierungFormData): Promise<void> => {
     const result = await mutateAsync({
       name: data.name,
       adresse: data.adresse || null,
       notizen: data.notizen || null,
+      tags: data.tags ?? [],
     });
     setErstellterDatensatz(result);
   };
@@ -72,6 +97,7 @@ export function KodierungErstellenDialog({
     setTimeout(() => {
       setErstellterDatensatz(null);
       setCodeCopied(false);
+      setTagInput('');
       form.reset();
     }, 200);
   };
@@ -100,6 +126,20 @@ export function KodierungErstellenDialog({
                   {erstellterDatensatz.code}
                 </p>
               </div>
+
+              {erstellterDatensatz.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {erstellterDatensatz.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                      style={{ backgroundColor: tagColor(tag) }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               <Button
                 onClick={handleCopyCode}
@@ -186,6 +226,50 @@ export function KodierungErstellenDialog({
                     </FormItem>
                   )}
                 />
+
+                {/* Tag-Eingabe */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Tags</label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Tag className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        ref={tagInputRef}
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') { e.preventDefault(); addTag(); }
+                        }}
+                        placeholder="Tag eingeben + Enter"
+                        maxLength={30}
+                        className="w-full rounded-md border border-input bg-background py-2 pl-8 pr-3 text-sm outline-none focus:border-foreground/30 focus:ring-1 focus:ring-foreground/20"
+                      />
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={addTag}>
+                      Hinzufügen
+                    </Button>
+                  </div>
+                  {currentTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {currentTags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                          style={{ backgroundColor: tagColor(tag) }}
+                        >
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => removeTag(tag)}
+                            className="ml-0.5 rounded-full hover:opacity-70"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="ghost" onClick={handleClose} disabled={isPending}>

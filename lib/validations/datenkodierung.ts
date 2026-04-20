@@ -4,6 +4,7 @@ export const datenkodierungSchema = z.object({
   name: z.string().trim().min(2, 'Name muss mindestens 2 Zeichen haben'),
   adresse: z.string().trim().optional(),
   notizen: z.string().trim().optional(),
+  tags: z.array(z.string().trim().min(1).max(30)).max(10).optional().default([]),
 });
 
 export type DatenkodierungFormData = z.infer<typeof datenkodierungSchema>;

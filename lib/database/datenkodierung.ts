@@ -3,7 +3,7 @@ import { generateCode } from '@/lib/datenkodierung/code-generator';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 import type { Datenkodierung, DatenkodierungInsert } from '@/types';
 
-export async function fetchDatenkodierungen(companyId: string, search?: string): Promise<Datenkodierung[]> {
+export async function fetchDatenkodierungen(companyId: string, search?: string, tag?: string): Promise<Datenkodierung[]> {
   let query = supabase
     .from('datenkodierungen')
     .select('*')
@@ -13,6 +13,10 @@ export async function fetchDatenkodierungen(companyId: string, search?: string):
   if (search && search.trim().length > 0) {
     const term = `%${search.trim()}%`;
     query = query.or(`code.ilike.${term},name.ilike.${term},adresse.ilike.${term}`);
+  }
+
+  if (tag && tag.trim().length > 0) {
+    query = query.contains('tags', [tag.trim()]);
   }
 
   const { data, error } = await query;
@@ -31,7 +35,7 @@ export async function createDatenkodierung(companyId: string, input: Datenkodier
 
     const { data, error } = await supabase
       .from('datenkodierungen')
-      .insert({ ...input, code, company: companyId })
+      .insert({ ...input, code, company: companyId, tags: input.tags ?? [] })
       .select()
       .single();
 
@@ -46,6 +50,23 @@ export async function createDatenkodierung(companyId: string, input: Datenkodier
   }
 
   throw new Error(ERROR_MESSAGES.KODIERUNG_CREATE_FAILED);
+}
+
+export async function updateDatenkodierungTags(companyId: string, id: string, tags: string[]): Promise<Datenkodierung> {
+  const { data, error } = await supabase
+    .from('datenkodierungen')
+    .update({ tags })
+    .eq('id', id)
+    .eq('company', companyId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Fehler beim Aktualisieren der Tags:', error);
+    throw new Error('Tags konnten nicht gespeichert werden');
+  }
+
+  return data;
 }
 
 export async function deleteDatenkodierung(companyId: string, id: string): Promise<void> {

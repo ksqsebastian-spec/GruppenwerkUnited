@@ -647,6 +647,7 @@ export interface Datenkodierung {
   name: string;
   adresse: string | null;
   notizen: string | null;
+  tags: string[];
   created_at: string;
   updated_at: string;
 }

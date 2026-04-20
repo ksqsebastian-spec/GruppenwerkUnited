@@ -25,10 +25,19 @@ import type { Datenkodierung } from '@/types';
 interface KodierungTableProps {
   daten: Datenkodierung[];
   onNeuErstellen: () => void;
+  activeTag?: string;
+  onTagFilter: (tag: string) => void;
 }
 
 interface CopyButtonProps {
   code: string;
+}
+
+function tagColor(tag: string): string {
+  const colors = ['#c96442', '#2563eb', '#16a34a', '#7C3AED', '#d97706', '#0891b2'];
+  let hash = 0;
+  for (const c of tag) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff;
+  return colors[hash % colors.length];
 }
 
 function CopyButton({ code }: CopyButtonProps): React.JSX.Element {
@@ -57,7 +66,7 @@ function CopyButton({ code }: CopyButtonProps): React.JSX.Element {
   );
 }
 
-export function KodierungTable({ daten, onNeuErstellen }: KodierungTableProps): React.JSX.Element {
+export function KodierungTable({ daten, onNeuErstellen, activeTag, onTagFilter }: KodierungTableProps): React.JSX.Element {
   const [detailDatensatz, setDetailDatensatz] = useState<Datenkodierung | null>(null);
   const [loeschenId, setLoeschenId] = useState<string | null>(null);
 
@@ -92,6 +101,7 @@ export function KodierungTable({ daten, onNeuErstellen }: KodierungTableProps): 
               <TableHead>Code</TableHead>
               <TableHead>Name</TableHead>
               <TableHead className="hidden md:table-cell">Adresse</TableHead>
+              <TableHead>Tags</TableHead>
               <TableHead className="hidden lg:table-cell">Notizen</TableHead>
               <TableHead className="hidden sm:table-cell">Erstellt am</TableHead>
               <TableHead className="text-right">Aktionen</TableHead>
@@ -111,6 +121,25 @@ export function KodierungTable({ daten, onNeuErstellen }: KodierungTableProps): 
                 <TableCell className="font-medium">{datensatz.name}</TableCell>
                 <TableCell className="hidden max-w-[200px] truncate text-muted-foreground md:table-cell">
                   {datensatz.adresse ?? '–'}
+                </TableCell>
+                <TableCell>
+                  {datensatz.tags && datensatz.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {datensatz.tags.map((tag) => (
+                        <button
+                          key={tag}
+                          onClick={() => onTagFilter(tag)}
+                          title={`Nach "${tag}" filtern`}
+                          className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white transition-opacity hover:opacity-80"
+                          style={{ backgroundColor: tagColor(tag) }}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">–</span>
+                  )}
                 </TableCell>
                 <TableCell className="hidden max-w-[150px] truncate text-muted-foreground lg:table-cell">
                   {datensatz.notizen ?? '–'}
@@ -149,7 +178,10 @@ export function KodierungTable({ daten, onNeuErstellen }: KodierungTableProps): 
       <KodierungDetailDialog
         datensatz={detailDatensatz}
         open={detailDatensatz !== null}
-        onOpenChange={(open) => { if (!open) setDetailDatensatz(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDetailDatensatz(null);
+        }}
+        onTagFilter={onTagFilter}
       />
 
       <ConfirmDialog
