@@ -1,4 +1,4 @@
-import { requireAdmin } from '@/lib/modules/affiliate/auth';
+import { requireAuth } from '@/lib/modules/affiliate/auth';
 import { validateOrigin } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { handwerkerCreateSchema, handwerkerUpdateSchema, paginationSchema } from "@/lib/modules/affiliate/validators";
@@ -7,7 +7,7 @@ import { logAudit } from "@/lib/modules/affiliate/audit";
 
 // GET /api/affiliate/handwerker — list handwerker or empfehlungen (admin)
 export async function GET(request: NextRequest) {
-  const authResult = await requireAdmin();
+  const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
   const view = searchParams.get("view");
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/affiliate/handwerker — create new handwerker
 export async function POST(request: NextRequest) {
-  const authResult = await requireAdmin();
+  const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   let body: unknown;
@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
 
 // PATCH /api/affiliate/handwerker — update handwerker
 export async function PATCH(request: NextRequest) {
-  const authResult = await requireAdmin();
+  const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   let body: unknown;
@@ -278,7 +278,7 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE /api/affiliate/handwerker — delete handwerker
 export async function DELETE(request: NextRequest) {
-  const authResult = await requireAdmin();
+  const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   const { searchParams } = request.nextUrl;

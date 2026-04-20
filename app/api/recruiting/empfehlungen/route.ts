@@ -1,4 +1,4 @@
-import { requireAdmin } from '@/lib/modules/recruiting/auth';
+import { requireAuth } from '@/lib/modules/recruiting/auth';
 import { validateOrigin } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCreateSchema } from "@/lib/modules/recruiting/validators";
@@ -9,7 +9,7 @@ const VALID_STATUSES = ["offen", "eingestellt", "probezeit_bestanden", "ausgezah
 
 // POST /api/recruiting/empfehlungen — create new empfehlung (admin)
 export async function POST(request: NextRequest) {
-  const authResult = await requireAdmin();
+  const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   let body: unknown;
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
 // PATCH /api/recruiting/empfehlungen — update empfehlung fields
 export async function PATCH(request: NextRequest) {
-  const authResult = await requireAdmin();
+  const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   let body: unknown;
@@ -231,7 +231,7 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE /api/recruiting/empfehlungen — delete empfehlung
 export async function DELETE(request: NextRequest) {
-  const authResult = await requireAdmin();
+  const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   const { searchParams } = request.nextUrl;

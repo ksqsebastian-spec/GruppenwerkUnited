@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireSession } from '@/lib/auth/api';
 
-/**
- * GET /api/roi/uploads
- * Letzte Import-Protokolle aus dem roi-Schema laden
- */
 export async function GET(): Promise<NextResponse> {
+  const session = await requireSession();
+  if (session instanceof NextResponse) return session;
+
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .schema('roi')
     .from('uploads')
     .select('*')
+    .eq('company_id', session.companyId)
     .order('created_at', { ascending: false })
     .limit(5);
 
@@ -26,12 +27,10 @@ export async function GET(): Promise<NextResponse> {
   return NextResponse.json(data ?? []);
 }
 
-/**
- * POST /api/roi/uploads
- * Import-Protokolleintrag und Aufträge im roi-Schema speichern
- * Body: { jobs: Job[], filename, rows_imported, rows_skipped, column_mapping }
- */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const session = await requireSession();
+  if (session instanceof NextResponse) return session;
+
   const supabase = createAdminClient();
 
   let body: {
@@ -47,11 +46,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
   }
 
-  // Aufträge im roi-Schema einfügen
+  const jobsWithCompany = body.jobs.map((job) => ({ ...job, company_id: session.companyId }));
+
   const { error: jobsError } = await supabase
     .schema('roi')
     .from('jobs')
-    .insert(body.jobs);
+    .insert(jobsWithCompany);
 
   if (jobsError) {
     console.error('Fehler beim Import der Aufträge:', jobsError);
@@ -61,7 +61,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Upload-Protokoll im roi-Schema speichern
   const { error: uploadError } = await supabase
     .schema('roi')
     .from('uploads')
@@ -70,10 +69,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       rows_imported: body.rows_imported,
       rows_skipped: body.rows_skipped,
       column_mapping: body.column_mapping,
+      company_id: session.companyId,
     });
 
   if (uploadError) {
-    // Nicht kritisch — Aufträge wurden bereits importiert
     console.error('Fehler beim Speichern des Upload-Protokolls:', uploadError);
   }
 

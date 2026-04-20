@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireSession } from '@/lib/auth/api';
 
-/**
- * GET /api/roi/jobs
- * Alle Aufträge aus dem roi-Schema laden
- */
 export async function GET(): Promise<NextResponse> {
+  const session = await requireSession();
+  if (session instanceof NextResponse) return session;
+
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .schema('roi')
     .from('jobs')
     .select('*')
+    .eq('company_id', session.companyId)
     .order('datum', { ascending: false })
     .order('created_at', { ascending: false });
 
@@ -26,12 +27,10 @@ export async function GET(): Promise<NextResponse> {
   return NextResponse.json(data ?? []);
 }
 
-/**
- * POST /api/roi/jobs
- * Neuen Auftrag im roi-Schema anlegen
- * Body: { jahr, monat, datum }
- */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const session = await requireSession();
+  if (session instanceof NextResponse) return session;
+
   const supabase = createAdminClient();
 
   let body: { jahr: number; monat: string; datum: string };
@@ -48,6 +47,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       jahr: body.jahr,
       monat: body.monat,
       datum: body.datum,
+      company_id: session.companyId,
     })
     .select()
     .single();
@@ -63,12 +63,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   return NextResponse.json(data, { status: 201 });
 }
 
-/**
- * PATCH /api/roi/jobs
- * Auftrag-Feld im roi-Schema aktualisieren
- * Body: { id, key, value }
- */
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
+  const session = await requireSession();
+  if (session instanceof NextResponse) return session;
+
   const supabase = createAdminClient();
 
   let body: { id: string; key: string; value: string | number | null };
@@ -83,6 +81,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
     .from('jobs')
     .update({ [body.key]: body.value })
     .eq('id', body.id)
+    .eq('company_id', session.companyId)
     .select()
     .single();
 
@@ -97,11 +96,10 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
   return NextResponse.json(data);
 }
 
-/**
- * DELETE /api/roi/jobs?id=...
- * Auftrag aus dem roi-Schema löschen
- */
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
+  const session = await requireSession();
+  if (session instanceof NextResponse) return session;
+
   const supabase = createAdminClient();
 
   const id = request.nextUrl.searchParams.get('id');
@@ -113,7 +111,8 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     .schema('roi')
     .from('jobs')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('company_id', session.companyId);
 
   if (error) {
     console.error('Fehler beim Löschen des Auftrags:', error);

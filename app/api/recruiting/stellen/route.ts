@@ -1,4 +1,4 @@
-import { requireAdmin } from '@/lib/modules/recruiting/auth';
+import { requireAuth } from '@/lib/modules/recruiting/auth';
 import { validateOrigin } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { stelleCreateSchema, stelleUpdateSchema, paginationSchema } from "@/lib/modules/recruiting/validators";
@@ -9,7 +9,7 @@ const VALID_STATUSES = ["offen", "eingestellt", "probezeit_bestanden", "ausgezah
 
 // GET /api/recruiting/stellen — list stellen or empfehlungen (admin)
 export async function GET(request: NextRequest) {
-  const authResult = await requireAdmin();
+  const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
   const view = searchParams.get("view");
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/recruiting/stellen — create new stelle
 export async function POST(request: NextRequest) {
-  const authResult = await requireAdmin();
+  const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   let body: unknown;
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
 
 // PATCH /api/recruiting/stellen — update stelle
 export async function PATCH(request: NextRequest) {
-  const authResult = await requireAdmin();
+  const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   let body: unknown;
@@ -228,7 +228,7 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE /api/recruiting/stellen — delete stelle
 export async function DELETE(request: NextRequest) {
-  const authResult = await requireAdmin();
+  const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
   const { searchParams } = request.nextUrl;

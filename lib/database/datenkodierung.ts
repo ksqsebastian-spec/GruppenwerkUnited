@@ -3,10 +3,11 @@ import { generateCode } from '@/lib/datenkodierung/code-generator';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 import type { Datenkodierung, DatenkodierungInsert } from '@/types';
 
-export async function fetchDatenkodierungen(search?: string): Promise<Datenkodierung[]> {
+export async function fetchDatenkodierungen(companyId: string, search?: string): Promise<Datenkodierung[]> {
   let query = supabase
     .from('datenkodierungen')
     .select('*')
+    .eq('company', companyId)
     .order('created_at', { ascending: false });
 
   if (search && search.trim().length > 0) {
@@ -24,14 +25,13 @@ export async function fetchDatenkodierungen(search?: string): Promise<Datenkodie
   return data ?? [];
 }
 
-export async function createDatenkodierung(input: DatenkodierungInsert): Promise<Datenkodierung> {
-  // Bei Kollision max. 3 Versuche
+export async function createDatenkodierung(companyId: string, input: DatenkodierungInsert): Promise<Datenkodierung> {
   for (let attempt = 0; attempt < 3; attempt++) {
     const code = generateCode();
 
     const { data, error } = await supabase
       .from('datenkodierungen')
-      .insert({ ...input, code })
+      .insert({ ...input, code, company: companyId })
       .select()
       .single();
 
@@ -48,8 +48,12 @@ export async function createDatenkodierung(input: DatenkodierungInsert): Promise
   throw new Error(ERROR_MESSAGES.KODIERUNG_CREATE_FAILED);
 }
 
-export async function deleteDatenkodierung(id: string): Promise<void> {
-  const { error } = await supabase.from('datenkodierungen').delete().eq('id', id);
+export async function deleteDatenkodierung(companyId: string, id: string): Promise<void> {
+  const { error } = await supabase
+    .from('datenkodierungen')
+    .delete()
+    .eq('id', id)
+    .eq('company', companyId);
 
   if (error) {
     console.error('Fehler beim Löschen der Datenkodierung:', error);

@@ -1,10 +1,10 @@
-import { requireAdmin } from '@/lib/modules/affiliate/auth';
+import { requireAuth } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
 
 // GET /api/affiliate/export — CSV export of all empfehlungen
 export async function GET(request: NextRequest) {
-  const authResult = await requireAdmin();
+  const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
   const status = searchParams.get("status");
