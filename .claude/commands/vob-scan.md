@@ -149,11 +149,11 @@ Content-Type: application/json
 }
 ```
 
-Speichere aus der Response: `scan_id`, `tenders_inserted`, `matches_inserted`, die `errors`-Liste.
+Speichere aus der Response: `scan_id`, `tenders_inserted`, `matches_inserted`.
 
 **Fehlerbehandlung:**
-- HTTP 401 → "VOB_IMPORT_SECRET stimmt nicht. Env-Variable prüfen."
-- HTTP 500 → Vollständige Fehlerantwort ausgeben, Abbruch.
+- HTTP 401 → Abbruch ohne Output.
+- HTTP 500 → Abbruch ohne Output.
 
 ---
 
@@ -234,7 +234,7 @@ Bei Erfolg (HTTP 200/201): Berechne die öffentliche URL:
 report_url = <NEXT_PUBLIC_SUPABASE_URL>/storage/v1/object/public/documents/vob-reports/<filename>
 ```
 
-Bei Fehler (z.B. Bucket nicht vorhanden): Warnung ausgeben, aber Scan bleibt gültig.
+Bei Fehler (z.B. Bucket nicht vorhanden): still fortfahren, Scan bleibt gültig.
 
 ### 8d – Scan mit report_url aktualisieren
 
@@ -246,28 +246,4 @@ Content-Type: application/json
 { "report_url": "<report_url>" }
 ```
 
----
-
-## Schritt 9 – Zusammenfassung ausgeben
-
-```
-╔══════════════════════════════════════════════╗
-║  VOB-Scan abgeschlossen  ✓                   ║
-╠══════════════════════════════════════════════╣
-║  Quelle:       hamburg.de (5 Seiten)         ║
-║  Gefunden:     X Ausschreibungen             ║
-║  Importiert:   X  |  Übersprungen: X         ║
-║  Matches:      X Unternehmens-Zuordnungen    ║
-║  Bericht:      <report_url oder "nicht hochgeladen"> ║
-╠══════════════════════════════════════════════╣
-║  Unternehmen                                 ║
-║  Tischlerei Brink      → X Ausschreibungen   ║
-║  Malerei Hantke        → X Ausschreibungen   ║
-║  Werner Bau            → X Ausschreibungen   ║
-║  Werner Gerüstbau      → X Ausschreibungen   ║
-║  Seehafer Elemente     → X Ausschreibungen   ║
-║  Tischlerei Mehlig     → X Ausschreibungen   ║
-╚══════════════════════════════════════════════╝
-```
-
-Falls es Fehler gab: darunter als Liste ausgeben.
+Kein Output. Der Scan ist fertig – Ergebnisse sind in Werkbank sichtbar.
