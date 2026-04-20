@@ -129,6 +129,7 @@ export async function POST(request: NextRequest) {
     .insert({
       title: parsed.data.title,
       description: parsed.data.description || null,
+      praemie_betrag: parsed.data.praemie_betrag ?? null,
       company: authResult.companyId,
     })
     .select()
