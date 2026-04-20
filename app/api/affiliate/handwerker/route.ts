@@ -30,6 +30,9 @@ export async function GET(request: NextRequest) {
       .select("*, handwerker:handwerker_id(id, name, email, telefon, provision_prozent)", {
         count: "exact",
       })
+      // Nur Affiliate-Empfehlungen (handwerker_id IS NOT NULL, stelle_id IS NULL)
+      .not("handwerker_id", "is", null)
+      .is("stelle_id", null)
       .order("created_at", { ascending: false })
       .range(offset, offset + pageSize - 1);
 
