@@ -3,7 +3,19 @@ import { generateCode } from '@/lib/datenkodierung/code-generator';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 import type { Datenkodierung, DatenkodierungInsert } from '@/types';
 
-export async function fetchDatenkodierungen(companyId: string, search?: string, tag?: string): Promise<Datenkodierung[]> {
+export async function fetchAllTags(companyId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('datenkodierungen')
+    .select('tags')
+    .eq('company', companyId);
+
+  if (error) return [];
+
+  const all = (data ?? []).flatMap((row) => row.tags ?? []);
+  return [...new Set(all)].sort();
+}
+
+export async function fetchDatenkodierungen(companyId: string, search?: string): Promise<Datenkodierung[]> {
   let query = supabase
     .from('datenkodierungen')
     .select('*')
@@ -13,10 +25,6 @@ export async function fetchDatenkodierungen(companyId: string, search?: string, 
   if (search && search.trim().length > 0) {
     const term = `%${search.trim()}%`;
     query = query.or(`code.ilike.${term},name.ilike.${term},adresse.ilike.${term}`);
-  }
-
-  if (tag && tag.trim().length > 0) {
-    query = query.contains('tags', [tag.trim()]);
   }
 
   const { data, error } = await query;

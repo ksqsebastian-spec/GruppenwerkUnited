@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import * as XLSX from "xlsx";
 import { Job, Config } from "@/lib/modules/roi/types";
 import {
@@ -44,13 +44,23 @@ function ConfigField({
   );
 }
 
+function amortisationszeit(monate: number): string {
+  if (monate === Infinity) return "—";
+  const jahre = Math.floor(monate / 12);
+  const rest = monate % 12;
+  if (jahre === 0) return `${monate} Mon.`;
+  if (rest === 0) return `${jahre} ${jahre === 1 ? "Jahr" : "Jahre"}`;
+  return `${jahre} J. ${rest} Mon.`;
+}
+
 export default function ROIPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [config, setConfig] = useState<Config | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showPaRoi, setShowPaRoi] = useState(true);
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
-    // Daten über API-Routen laden (service role, umgeht PostgREST-Schema-Beschränkungen)
     const [jobsRes, configRes] = await Promise.all([
       fetch('/api/roi/jobs'),
       fetch('/api/roi/config'),
@@ -59,17 +69,11 @@ export default function ROIPage() {
     if (jobsRes.ok) {
       const jobsData = await jobsRes.json();
       setJobs((jobsData as Job[]) || []);
-    } else {
-      console.error('Fehler beim Laden der Aufträge:', await jobsRes.text());
     }
-
     if (configRes.ok) {
       const configData = await configRes.json();
       setConfig((configData as Config) ?? null);
-    } else {
-      console.error('Fehler beim Laden der Konfiguration:', await configRes.text());
     }
-
     setLoading(false);
   }, []);
 
@@ -81,7 +85,6 @@ export default function ROIPage() {
     if (!config) return;
     const updated = { ...config, [key]: value };
     setConfig(updated);
-    // Konfiguration über API-Route aktualisieren (service role, umgeht PostgREST-Schema-Beschränkungen)
     const res = await fetch('/api/roi/config', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -92,7 +95,25 @@ export default function ROIPage() {
     }
   };
 
-  // Ladevorgang abwarten
+  // Alle verfügbaren Jahre aus den Jobs
+  const availableYears = useMemo(() => {
+    const years = [...new Set(jobs.map((j) => j.jahr))].sort();
+    return years;
+  }, [jobs]);
+
+  // Standardmäßig aktuelles Jahr vorauswählen, sobald Jahre verfügbar sind
+  useEffect(() => {
+    if (availableYears.length > 0 && selectedYear === null) {
+      const currentYear = new Date().getFullYear();
+      setSelectedYear(availableYears.includes(currentYear) ? currentYear : availableYears[availableYears.length - 1]);
+    }
+  }, [availableYears, selectedYear]);
+
+  const filteredJobs = useMemo(
+    () => selectedYear === null ? jobs : jobs.filter((j) => j.jahr === selectedYear),
+    [jobs, selectedYear],
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -101,7 +122,6 @@ export default function ROIPage() {
     );
   }
 
-  // Konfiguration fehlt oder wird noch geladen
   if (!config) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -115,8 +135,8 @@ export default function ROIPage() {
     );
   }
 
-  const monthlyData = calculateMonthlyROI(jobs, config);
-  const breakEven = calculateBreakEven(jobs, config);
+  const monthlyData = calculateMonthlyROI(filteredJobs, config);
+  const breakEven = calculateBreakEven(filteredJobs, config);
   const einmalig = config.homepage_kosten + config.ads_setup_kosten;
   const totals = monthlyData.reduce(
     (acc, m) => ({
@@ -130,12 +150,15 @@ export default function ROIPage() {
     { ads: 0, pflege: 0, kosten: 0, umsatz: 0, rohertrag: 0, marge: 0 }
   );
 
+  const lastMonth = monthlyData[monthlyData.length - 1];
+  const currentRoi = lastMonth ? (showPaRoi ? lastMonth.roi_pa_pct : lastMonth.roi_pct) : 0;
+
   return (
     <div>
-      <div className="mb-8 flex items-start justify-between">
+      <div className="mb-6 flex items-start justify-between">
         <div>
           <h2 className="text-xl font-semibold text-text">
-            <Tooltip text="Return on Investment — wie viel Gewinn die Investition in Google Ads und Homepage bisher zurückgebracht hat.">ROI</Tooltip>-Rechnung
+            <Tooltip text="Return on Investment — wie viel Gewinn die Investition in Google Ads und Homepage zurückgebracht hat.">ROI</Tooltip>-Rechnung
           </h2>
           <p className="text-sm text-text-muted mt-1">
             Google Ads & Homepage — automatisch berechnet
@@ -143,8 +166,6 @@ export default function ROIPage() {
         </div>
         <ExportButton onClick={() => {
           const wb = XLSX.utils.book_new();
-
-          // Sheet 1: Monthly ROI table
           const roiRows = monthlyData.map((m) => ({
             Monat: m.monat,
             "Google Ads Ausgaben": m.google_ads_ausgaben,
@@ -163,102 +184,133 @@ export default function ROIPage() {
           const wsROI = XLSX.utils.json_to_sheet(roiRows);
           wsROI["!cols"] = Array(13).fill({ wch: 16 });
           XLSX.utils.book_append_sheet(wb, wsROI, "ROI-Rechnung");
-
-          // Sheet 2: Config & Break-Even
-          const configRows = [
-            { Kennzahl: "Homepage Erstellung", Wert: config.homepage_kosten, Einheit: "€" },
-            { Kennzahl: "Google Ads Setup", Wert: config.ads_setup_kosten, Einheit: "€" },
-            { Kennzahl: "Summe Einmalige Investitionen", Wert: einmalig, Einheit: "€" },
-            { Kennzahl: "", Wert: "", Einheit: "" },
-            { Kennzahl: "Pflegekosten / Monat", Wert: config.pflegekosten_monat, Einheit: "€" },
-            { Kennzahl: "Operative Marge", Wert: config.operative_marge_pct * 100, Einheit: "%" },
-            { Kennzahl: "Ø Aufträge / Monat", Wert: config.avg_auftraege_monat, Einheit: "" },
-            { Kennzahl: "", Wert: "", Einheit: "" },
-            { Kennzahl: "Ø Netto-Umsatz / Auftrag", Wert: breakEven.avgUmsatzProAuftrag, Einheit: "€" },
-            { Kennzahl: "Op. Ertrag / Auftrag", Wert: breakEven.operativerErtragProAuftrag, Einheit: "€" },
-            { Kennzahl: "Laufende Kosten / Monat", Wert: breakEven.laufendeKostenProMonat, Einheit: "€" },
-            { Kennzahl: "Überdeckung / Monat", Wert: breakEven.ueberdeckungProMonat, Einheit: "€" },
-            { Kennzahl: "Offene Investition", Wert: breakEven.offeneInvestition, Einheit: "€" },
-            { Kennzahl: "Monate bis Break-Even", Wert: breakEven.monateBreakEven === Infinity ? "—" : breakEven.monateBreakEven, Einheit: "" },
-          ];
-          const wsBE = XLSX.utils.json_to_sheet(configRows);
-          wsBE["!cols"] = [{ wch: 28 }, { wch: 14 }, { wch: 6 }];
-          XLSX.utils.book_append_sheet(wb, wsBE, "Break-Even");
-
           XLSX.writeFile(wb, `GW-ROI-Rechnung_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }}>
           Export
         </ExportButton>
       </div>
 
+      {/* Jahr-Filter */}
+      {availableYears.length > 0 && (
+        <div className="flex items-center gap-2 mb-6">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-text-dim">Jahr:</span>
+          {availableYears.map((year) => (
+            <button
+              key={year}
+              onClick={() => setSelectedYear(year)}
+              className={`text-xs font-mono px-3 py-1.5 rounded-lg border transition-colors ${
+                selectedYear === year
+                  ? "bg-accent text-white border-accent"
+                  : "bg-surface text-text-muted border-border hover:border-accent hover:text-accent"
+              }`}
+            >
+              {year}
+            </button>
+          ))}
+          <button
+            onClick={() => setSelectedYear(null)}
+            className={`text-xs font-mono px-3 py-1.5 rounded-lg border transition-colors ${
+              selectedYear === null
+                ? "bg-accent text-white border-accent"
+                : "bg-surface text-text-muted border-border hover:border-accent hover:text-accent"
+            }`}
+          >
+            Alle
+          </button>
+        </div>
+      )}
+
+      {/* Amortisation + aktueller ROI — prominente Karten */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="bg-surface border border-border rounded-xl p-5 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-accent" />
+          <p className="text-[10px] font-mono uppercase tracking-wider text-text-dim mb-1">
+            <Tooltip text="Zeit bis die gesamte Anfangsinvestition durch operative Erträge zurückgewonnen wird.">Amortisationszeit</Tooltip>
+          </p>
+          <p className="text-2xl font-semibold text-accent font-mono">
+            {amortisationszeit(breakEven.monateBreakEven)}
+          </p>
+          {breakEven.monateBreakEven !== Infinity && (
+            <p className="text-xs text-text-dim mt-1">
+              ca. {breakEven.breakEvenDatum.toLocaleDateString("de-DE", { month: "long", year: "numeric" })}
+            </p>
+          )}
+        </div>
+
+        <div className="bg-surface border border-border rounded-xl p-5 relative overflow-hidden">
+          <div className={`absolute top-0 left-0 right-0 h-[3px] ${currentRoi >= 0 ? "bg-accent" : "bg-red"}`} />
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[10px] font-mono uppercase tracking-wider text-text-dim">
+              <Tooltip text={showPaRoi ? "ROI hochgerechnet auf 12 Monate — vergleichbar mit Jahreszinsen." : "Gesamter Return on Investment seit Beginn."}>
+                ROI {showPaRoi ? "p.a." : "gesamt"}
+              </Tooltip>
+            </p>
+            <button
+              onClick={() => setShowPaRoi((v) => !v)}
+              className="text-[9px] font-mono px-2 py-0.5 rounded border border-border text-text-dim hover:border-accent hover:text-accent transition-colors"
+            >
+              {showPaRoi ? "→ Gesamt" : "→ p.a."}
+            </button>
+          </div>
+          <p className={`text-2xl font-semibold font-mono ${currentRoi >= 0 ? "text-accent" : "text-red"}`}>
+            {formatPercent(currentRoi)}
+          </p>
+          <p className="text-xs text-text-dim mt-1">kumuliert bis heute</p>
+        </div>
+
+        <div className="bg-surface border border-border rounded-xl p-5 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-blue" />
+          <p className="text-[10px] font-mono uppercase tracking-wider text-text-dim mb-1">
+            <Tooltip text="Monatlicher Überschuss nach Abzug aller laufenden Kosten.">Überdeckung / Monat</Tooltip>
+          </p>
+          <p className={`text-2xl font-semibold font-mono ${breakEven.ueberdeckungProMonat >= 0 ? "text-accent" : "text-red"}`}>
+            {formatCurrency(breakEven.ueberdeckungProMonat)}
+          </p>
+          <p className="text-xs text-text-dim mt-1">op. Ertrag − lfd. Kosten</p>
+        </div>
+      </div>
+
       {/* Config Cards */}
       <div className="grid grid-cols-2 gap-4 mb-8">
         <div className="bg-surface border border-border rounded-xl p-6">
           <h3 className="text-xs font-mono uppercase tracking-wider text-text-dim mb-4">
-
             <Tooltip text="Kosten die nur einmal anfallen — Homepage-Erstellung und Google Ads Kampagnen-Setup.">Einmalige Investitionen</Tooltip>
           </h3>
           <div className="space-y-4">
-            <ConfigField
-              label="Homepage Erstellung"
-              value={config.homepage_kosten}
-              suffix="€"
-              onChange={(v) => updateConfig("homepage_kosten", v)}
-            />
-            <ConfigField
-              label="Google Ads Setup"
-              value={config.ads_setup_kosten}
-              suffix="€"
-              onChange={(v) => updateConfig("ads_setup_kosten", v)}
-            />
+            <ConfigField label="Homepage Erstellung" value={config.homepage_kosten} suffix="€" onChange={(v) => updateConfig("homepage_kosten", v)} />
+            <ConfigField label="Google Ads Setup" value={config.ads_setup_kosten} suffix="€" onChange={(v) => updateConfig("ads_setup_kosten", v)} />
             <div className="pt-3 border-t border-border">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-text-dim">
-                Summe
-              </span>
-              <p className="text-lg font-semibold text-red font-mono">
-                {formatCurrency(einmalig)}
-              </p>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-text-dim">Summe</span>
+              <p className="text-lg font-semibold text-red font-mono">{formatCurrency(einmalig)}</p>
             </div>
           </div>
         </div>
 
         <div className="bg-surface border border-border rounded-xl p-6">
           <h3 className="text-xs font-mono uppercase tracking-wider text-text-dim mb-4">
-
             <Tooltip text="Kosten die jeden Monat anfallen — Ads-Verwaltung und laufendes Werbebudget.">Laufende Kosten</Tooltip> (monatlich)
           </h3>
           <div className="space-y-4">
-            <ConfigField
-              label="Google Ads Budget / Monat"
-              value={config.google_ads_budget}
-              suffix="€"
-              onChange={(v) => updateConfig("google_ads_budget", v)}
-            />
-            <ConfigField
-              label="Pflegekosten / Monat"
-              value={config.pflegekosten_monat}
-              suffix="€"
-              onChange={(v) => updateConfig("pflegekosten_monat", v)}
-            />
-            <ConfigField
-              label="Operative Marge (%)"
-              value={config.operative_marge_pct * 100}
-              suffix="%"
-              onChange={(v) => updateConfig("operative_marge_pct", v / 100)}
-            />
-            <ConfigField
-              label="Ø Aufträge / Monat"
-              value={config.avg_auftraege_monat}
-              onChange={(v) => updateConfig("avg_auftraege_monat", v)}
-            />
+            <ConfigField label="Google Ads Budget / Monat" value={config.google_ads_budget} suffix="€" onChange={(v) => updateConfig("google_ads_budget", v)} />
+            <ConfigField label="Pflegekosten / Monat" value={config.pflegekosten_monat} suffix="€" onChange={(v) => updateConfig("pflegekosten_monat", v)} />
+            <ConfigField label="Operative Marge (%)" value={config.operative_marge_pct * 100} suffix="%" onChange={(v) => updateConfig("operative_marge_pct", v / 100)} />
+            <ConfigField label="Ø Aufträge / Monat" value={config.avg_auftraege_monat} onChange={(v) => updateConfig("avg_auftraege_monat", v)} />
           </div>
         </div>
       </div>
 
       {/* Monthly ROI Table */}
       <div className="bg-surface border border-border rounded-xl overflow-hidden mb-8">
-        <div className="px-6 py-4 border-b border-border">
-          <h3 className="text-sm font-semibold text-text">Monatliche Übersicht</h3>
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-text">
+            Monatliche Übersicht {selectedYear ? `(${selectedYear})` : "(Alle Jahre)"}
+          </h3>
+          <button
+            onClick={() => setShowPaRoi((v) => !v)}
+            className="text-[10px] font-mono px-3 py-1.5 rounded-lg border border-border text-text-dim hover:border-accent hover:text-accent transition-colors"
+          >
+            ROI anzeigen: {showPaRoi ? "p.a." : "gesamt"} →
+          </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -266,102 +318,58 @@ export default function ROIPage() {
               <tr className="border-b border-border bg-surface-2">
                 {[
                   { label: "Monat", tip: "" },
-                  { label: "Ads Ausg.", tip: "Monatliche Google Ads Werbeausgaben — das tatsächlich ausgegebene Klickbudget." },
-                  { label: "Pflege", tip: "Monatliche Verwaltungsgebühr für die Betreuung der Google Ads Kampagnen." },
-                  { label: "Kosten Ges.", tip: "Ads-Ausgaben + Pflegekosten zusammen für den Monat." },
-                  { label: "Netto-Umsatz", tip: "Summe aller Rechnungsbeträge ohne MwSt. in diesem Monat." },
-                  { label: "Rohertrag", tip: "Umsatz minus direkte Kosten (Material, Fremdleistungen)." },
-                  { label: "Op. Marge", tip: "Operative Marge — der Anteil vom Rohertrag der als Gewinn bleibt (nach Gemeinkosten)." },
-                  { label: "Ergebnis", tip: "Operative Marge minus laufende Kosten — der echte Monatsgewinn aus der Werbung." },
-                  { label: "Kum. Kosten", tip: "Kumulierte Kosten — alle bisherigen Ausgaben aufsummiert (inkl. Anfangsinvestition)." },
-                  { label: "Kum. Marge", tip: "Kumulierte operative Marge — gesamter bisheriger Gewinn aufsummiert." },
-                  { label: "Kum. Ergebnis", tip: "Kumuliertes Ergebnis — Gesamtgewinn minus Gesamtkosten. Positiv = im Plus." },
-                  { label: "ROI %", tip: "Return on Investment — Verhältnis von Gewinn zu Gesamtkosten in Prozent. 100% = doppelt zurück." },
+                  { label: "Ads Ausg.", tip: "Monatliche Google Ads Werbeausgaben." },
+                  { label: "Pflege", tip: "Monatliche Verwaltungsgebühr für Kampagnen-Betreuung." },
+                  { label: "Kosten Ges.", tip: "Ads-Ausgaben + Pflegekosten zusammen." },
+                  { label: "Netto-Umsatz", tip: "Summe aller Rechnungsbeträge ohne MwSt." },
+                  { label: "Rohertrag", tip: "Umsatz minus direkte Kosten." },
+                  { label: "Op. Marge", tip: "Operative Marge nach Gemeinkosten." },
+                  { label: "Ergebnis", tip: "Op. Marge minus laufende Kosten." },
+                  { label: "Kum. Kosten", tip: "Alle bisherigen Ausgaben aufsummiert inkl. Anfangsinvestition." },
+                  { label: "Kum. Marge", tip: "Gesamter bisheriger Gewinn aufsummiert." },
+                  { label: "Kum. Ergebnis", tip: "Gesamtgewinn minus Gesamtkosten. Positiv = im Plus." },
+                  { label: showPaRoi ? "ROI p.a. %" : "ROI %", tip: showPaRoi ? "ROI annualisiert — vergleichbar mit Jahreszinsen." : "Gesamter Return on Investment in Prozent." },
                 ].map((h) => (
-                  <th
-                    key={h.label}
-                    className="px-3 py-3 text-[10px] font-mono uppercase tracking-wider text-text-dim font-medium text-right first:text-left"
-                  >
+                  <th key={h.label} className="px-3 py-3 text-[10px] font-mono uppercase tracking-wider text-text-dim font-medium text-right first:text-left">
                     {h.tip ? <Tooltip text={h.tip}>{h.label}</Tooltip> : h.label}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {monthlyData.map((m) => (
-                <tr
-                  key={m.datum}
-                  className="border-b border-border/50 hover:bg-surface-2/50"
-                >
-                  <td className="px-3 py-2.5 text-xs font-medium">{m.monat}</td>
-                  <td className="px-3 py-2.5 text-xs font-mono text-right">
-                    {formatCurrency(m.google_ads_ausgaben)}
-                  </td>
-                  <td className="px-3 py-2.5 text-xs font-mono text-right">
-                    {formatCurrency(m.pflegekosten)}
-                  </td>
-                  <td className="px-3 py-2.5 text-xs font-mono text-right text-red">
-                    {formatCurrency(m.kosten_gesamt)}
-                  </td>
-                  <td className="px-3 py-2.5 text-xs font-mono text-right">
-                    {formatCurrency(m.netto_umsatz)}
-                  </td>
-                  <td className="px-3 py-2.5 text-xs font-mono text-right">
-                    {formatCurrency(m.rohertrag)}
-                  </td>
-                  <td className="px-3 py-2.5 text-xs font-mono text-right text-accent">
-                    {formatCurrency(m.operative_marge)}
-                  </td>
-                  <td
-                    className={`px-3 py-2.5 text-xs font-mono text-right font-medium ${
-                      m.gesamtergebnis >= 0 ? "text-accent" : "text-red"
-                    }`}
-                  >
-                    {formatCurrency(m.gesamtergebnis)}
-                  </td>
-                  <td className="px-3 py-2.5 text-xs font-mono text-right text-text-dim">
-                    {formatCurrency(m.kum_gesamtkosten)}
-                  </td>
-                  <td className="px-3 py-2.5 text-xs font-mono text-right text-text-dim">
-                    {formatCurrency(m.kum_operative_marge)}
-                  </td>
-                  <td
-                    className={`px-3 py-2.5 text-xs font-mono text-right font-medium ${
-                      m.kum_ergebnis >= 0 ? "text-accent" : "text-red"
-                    }`}
-                  >
-                    {formatCurrency(m.kum_ergebnis)}
-                  </td>
-                  <td
-                    className={`px-3 py-2.5 text-xs font-mono text-right ${
-                      m.roi_pct >= 0 ? "text-accent" : "text-red"
-                    }`}
-                  >
-                    {formatPercent(m.roi_pct)}
-                  </td>
-                </tr>
-              ))}
-              {/* Totals row */}
+              {monthlyData.map((m) => {
+                const roiValue = showPaRoi ? m.roi_pa_pct : m.roi_pct;
+                return (
+                  <tr key={m.datum} className="border-b border-border/50 hover:bg-surface-2/50">
+                    <td className="px-3 py-2.5 text-xs font-medium">{m.monat}</td>
+                    <td className="px-3 py-2.5 text-xs font-mono text-right">{formatCurrency(m.google_ads_ausgaben)}</td>
+                    <td className="px-3 py-2.5 text-xs font-mono text-right">{formatCurrency(m.pflegekosten)}</td>
+                    <td className="px-3 py-2.5 text-xs font-mono text-right text-red">{formatCurrency(m.kosten_gesamt)}</td>
+                    <td className="px-3 py-2.5 text-xs font-mono text-right">{formatCurrency(m.netto_umsatz)}</td>
+                    <td className="px-3 py-2.5 text-xs font-mono text-right">{formatCurrency(m.rohertrag)}</td>
+                    <td className="px-3 py-2.5 text-xs font-mono text-right text-accent">{formatCurrency(m.operative_marge)}</td>
+                    <td className={`px-3 py-2.5 text-xs font-mono text-right font-medium ${m.gesamtergebnis >= 0 ? "text-accent" : "text-red"}`}>
+                      {formatCurrency(m.gesamtergebnis)}
+                    </td>
+                    <td className="px-3 py-2.5 text-xs font-mono text-right text-text-dim">{formatCurrency(m.kum_gesamtkosten)}</td>
+                    <td className="px-3 py-2.5 text-xs font-mono text-right text-text-dim">{formatCurrency(m.kum_operative_marge)}</td>
+                    <td className={`px-3 py-2.5 text-xs font-mono text-right font-medium ${m.kum_ergebnis >= 0 ? "text-accent" : "text-red"}`}>
+                      {formatCurrency(m.kum_ergebnis)}
+                    </td>
+                    <td className={`px-3 py-2.5 text-xs font-mono text-right ${roiValue >= 0 ? "text-accent" : "text-red"}`}>
+                      {formatPercent(roiValue)}
+                    </td>
+                  </tr>
+                );
+              })}
               <tr className="bg-surface-2 font-semibold">
                 <td className="px-3 py-3 text-xs">GESAMT</td>
-                <td className="px-3 py-3 text-xs font-mono text-right">
-                  {formatCurrency(totals.ads)}
-                </td>
-                <td className="px-3 py-3 text-xs font-mono text-right">
-                  {formatCurrency(totals.pflege)}
-                </td>
-                <td className="px-3 py-3 text-xs font-mono text-right text-red">
-                  {formatCurrency(totals.kosten)}
-                </td>
-                <td className="px-3 py-3 text-xs font-mono text-right">
-                  {formatCurrency(totals.umsatz)}
-                </td>
-                <td className="px-3 py-3 text-xs font-mono text-right">
-                  {formatCurrency(totals.rohertrag)}
-                </td>
-                <td className="px-3 py-3 text-xs font-mono text-right text-accent">
-                  {formatCurrency(totals.marge)}
-                </td>
+                <td className="px-3 py-3 text-xs font-mono text-right">{formatCurrency(totals.ads)}</td>
+                <td className="px-3 py-3 text-xs font-mono text-right">{formatCurrency(totals.pflege)}</td>
+                <td className="px-3 py-3 text-xs font-mono text-right text-red">{formatCurrency(totals.kosten)}</td>
+                <td className="px-3 py-3 text-xs font-mono text-right">{formatCurrency(totals.umsatz)}</td>
+                <td className="px-3 py-3 text-xs font-mono text-right">{formatCurrency(totals.rohertrag)}</td>
+                <td className="px-3 py-3 text-xs font-mono text-right text-accent">{formatCurrency(totals.marge)}</td>
                 <td colSpan={5} />
               </tr>
             </tbody>
@@ -371,36 +379,30 @@ export default function ROIPage() {
 
       {/* Break-Even Analysis */}
       <div className="bg-surface border border-border rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-text mb-6"><Tooltip text="Der Punkt, ab dem die Einnahmen die gesamten Investitionskosten decken — ab hier ist das Projekt profitabel.">Break-Even</Tooltip> Analyse</h3>
+        <h3 className="text-sm font-semibold text-text mb-6">
+          <Tooltip text="Der Punkt ab dem Einnahmen die gesamten Investitionskosten decken.">Break-Even</Tooltip> Analyse
+        </h3>
         <div className="grid grid-cols-3 gap-8">
           <div>
             <h4 className="text-[10px] font-mono uppercase tracking-wider text-text-dim mb-3">
-              1. <Tooltip text="Der Gewinn pro Auftrag nach Abzug der direkten Kosten (Material, Arbeitszeit).">Operativer Ertrag</Tooltip> / Auftrag
+              1. <Tooltip text="Der Gewinn pro Auftrag nach Abzug der direkten Kosten.">Operativer Ertrag</Tooltip> / Auftrag
             </h4>
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <span className="text-text-muted"><Tooltip text="Durchschnittlicher Rechnungsbetrag pro Auftrag ohne Mehrwertsteuer.">Ø Netto-Umsatz</Tooltip> / Auftrag</span>
-                <span className="font-mono">
-                  {formatCurrency(breakEven.avgUmsatzProAuftrag)}
-                </span>
+                <span className="text-text-muted">Ø Netto-Umsatz / Auftrag</span>
+                <span className="font-mono">{formatCurrency(breakEven.avgUmsatzProAuftrag)}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-text-muted"><Tooltip text="Anteil des Rohertrags der als tatsächlicher Gewinn übrig bleibt — nach Gemeinkosten wie Miete, Versicherung, Verwaltung.">Operative Marge</Tooltip></span>
-                <span className="font-mono">
-                  {(breakEven.operativeMargePct * 100).toFixed(0)}%
-                </span>
+                <span className="text-text-muted">Operative Marge</span>
+                <span className="font-mono">{(breakEven.operativeMargePct * 100).toFixed(0)}%</span>
               </div>
               <div className="flex justify-between text-xs font-medium pt-1 border-t border-border">
                 <span>Op. Ertrag / Auftrag</span>
-                <span className="font-mono text-accent">
-                  {formatCurrency(breakEven.operativerErtragProAuftrag)}
-                </span>
+                <span className="font-mono text-accent">{formatCurrency(breakEven.operativerErtragProAuftrag)}</span>
               </div>
               <div className="flex justify-between text-xs">
                 <span className="text-text-muted">Ø Aufträge / Monat</span>
-                <span className="font-mono">
-                  {breakEven.avgAuftraegeProMonat}
-                </span>
+                <span className="font-mono">{breakEven.avgAuftraegeProMonat}</span>
               </div>
             </div>
           </div>
@@ -412,96 +414,73 @@ export default function ROIPage() {
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
                 <span className="text-text-muted">Ø Google Ads / Monat</span>
-                <span className="font-mono text-red">
-                  {formatCurrency(config.google_ads_budget)}
-                </span>
+                <span className="font-mono text-red">{formatCurrency(config.google_ads_budget)}</span>
               </div>
               <div className="flex justify-between text-xs">
                 <span className="text-text-muted">Pflegekosten / Monat</span>
-                <span className="font-mono text-red">
-                  {formatCurrency(config.pflegekosten_monat)}
-                </span>
+                <span className="font-mono text-red">{formatCurrency(config.pflegekosten_monat)}</span>
               </div>
               <div className="flex justify-between text-xs font-medium pt-1 border-t border-border">
                 <span>Laufende Kosten / Monat</span>
-                <span className="font-mono text-red">
-                  {formatCurrency(breakEven.laufendeKostenProMonat)}
-                </span>
+                <span className="font-mono text-red">{formatCurrency(breakEven.laufendeKostenProMonat)}</span>
               </div>
             </div>
           </div>
 
           <div>
             <h4 className="text-[10px] font-mono uppercase tracking-wider text-text-dim mb-3">
-              3. <Tooltip text="Monatlicher Überschuss nach Abzug aller laufenden Kosten — wird zum Abbau der Anfangsinvestition genutzt.">Überdeckung</Tooltip> & Break-Even
+              3. <Tooltip text="Monatlicher Überschuss — wird zum Abbau der Anfangsinvestition genutzt.">Überdeckung</Tooltip> & Amortisation
             </h4>
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
                 <span className="text-text-muted">Ø Op. Ertrag / Monat</span>
-                <span className="font-mono">
-                  {formatCurrency(breakEven.operativerErtragProMonat)}
-                </span>
+                <span className="font-mono">{formatCurrency(breakEven.operativerErtragProMonat)}</span>
               </div>
               <div className="flex justify-between text-xs">
                 <span className="text-text-muted">− Laufende Kosten</span>
-                <span className="font-mono text-red">
-                  {formatCurrency(breakEven.laufendeKostenProMonat)}
-                </span>
+                <span className="font-mono text-red">{formatCurrency(breakEven.laufendeKostenProMonat)}</span>
               </div>
               <div className="flex justify-between text-xs font-medium pt-1 border-t border-border">
                 <span>Überdeckung / Monat</span>
-                <span className="font-mono text-accent">
-                  {formatCurrency(breakEven.ueberdeckungProMonat)}
-                </span>
+                <span className="font-mono text-accent">{formatCurrency(breakEven.ueberdeckungProMonat)}</span>
               </div>
               <div className="mt-4 p-4 bg-accent-light rounded-lg">
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-text-muted">Offene Investition</span>
-                  <span className="font-mono font-medium">
-                    {formatCurrency(breakEven.offeneInvestition)}
-                  </span>
+                  <span className="font-mono font-medium">{formatCurrency(breakEven.offeneInvestition)}</span>
                 </div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-text-muted">Monate bis Break-Even</span>
+                  <span className="text-text-muted">Amortisationszeit</span>
                   <span className="font-mono font-semibold text-accent">
-                    {breakEven.monateBreakEven === Infinity
-                      ? "—"
-                      : breakEven.monateBreakEven}
+                    {amortisationszeit(breakEven.monateBreakEven)}
                   </span>
                 </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-text-muted">Voraussichtlich</span>
-                  <span className="font-mono font-semibold text-accent">
-                    {breakEven.monateBreakEven === Infinity
-                      ? "—"
-                      : breakEven.breakEvenDatum.toLocaleDateString("de-DE", {
-                          month: "long",
-                          year: "numeric",
-                        })}
-                  </span>
-                </div>
+                {breakEven.monateBreakEven !== Infinity && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-text-muted">Voraussichtlich</span>
+                    <span className="font-mono font-semibold text-accent">
+                      {breakEven.breakEvenDatum.toLocaleDateString("de-DE", { month: "long", year: "numeric" })}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Break-Even Progress Bar */}
         {breakEven.monateBreakEven !== Infinity && (
           <div className="mt-6 pt-6 border-t border-border">
             <div className="flex justify-between text-[10px] font-mono uppercase tracking-wider text-text-dim mb-2">
               <span>Investition</span>
-              <span>Break-Even</span>
+              <span>Amortisiert</span>
             </div>
             <div className="h-3 bg-surface-3 rounded-full overflow-hidden">
               <div
                 className="h-full bg-accent rounded-full transition-all duration-500"
                 style={{
-                  width: `${Math.min(
-                    100,
-                    ((einmalig - breakEven.offeneInvestition + (totals.marge - totals.kosten)) /
-                      einmalig) *
-                      100
-                  )}%`,
+                  width: `${Math.min(100, Math.max(0,
+                    ((einmalig - breakEven.offeneInvestition + (totals.marge - totals.kosten)) / einmalig) * 100
+                  ))}%`,
                 }}
               />
             </div>

@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 
 import {
   fetchDatenkodierungen,
+  fetchAllTags,
   createDatenkodierung,
   deleteDatenkodierung,
   updateDatenkodierungTags,
@@ -12,15 +13,27 @@ import type { DatenkodierungInsert } from '@/types';
 
 const QUERY_KEY = 'datenkodierungen';
 
-export function useDatenkodierungen(search?: string, tag?: string) {
+export function useDatenkodierungen(search?: string) {
   const { company } = useAuth();
   const companyId = company?.companyId ?? '';
 
   return useQuery({
-    queryKey: [QUERY_KEY, companyId, search, tag],
-    queryFn: () => fetchDatenkodierungen(companyId, search, tag),
+    queryKey: [QUERY_KEY, companyId, search],
+    queryFn: () => fetchDatenkodierungen(companyId, search),
     enabled: !!companyId,
     staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useAllTags() {
+  const { company } = useAuth();
+  const companyId = company?.companyId ?? '';
+
+  return useQuery({
+    queryKey: [QUERY_KEY, 'all-tags', companyId],
+    queryFn: () => fetchAllTags(companyId),
+    enabled: !!companyId,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

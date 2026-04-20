@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { Plus, Search, X } from 'lucide-react';
+import { useState, useCallback, useMemo } from 'react';
+import { Plus, Search, X, ArrowUpDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,16 @@ import { KodierungErstellenDialog } from '@/components/datenkodierung/kodierung-
 
 import { useDatenkodierungen } from '@/hooks/use-datenkodierung';
 import { useDebounce } from '@/hooks/use-debounce';
+import type { Datenkodierung } from '@/types';
+
+type SortOption = 'date_desc' | 'date_asc' | 'name_asc' | 'tag_asc';
+
+const SORT_LABELS: Record<SortOption, string> = {
+  date_desc: 'Neueste zuerst',
+  date_asc: 'Älteste zuerst',
+  name_asc: 'Name A–Z',
+  tag_asc: 'Tag A–Z',
+};
 
 function tagColor(tag: string): string {
   const colors = ['#c96442', '#2563eb', '#16a34a', '#7C3AED', '#d97706', '#0891b2'];
@@ -21,16 +31,44 @@ function tagColor(tag: string): string {
   return colors[hash % colors.length];
 }
 
+function sortDaten(daten: Datenkodierung[], sort: SortOption): Datenkodierung[] {
+  const copy = [...daten];
+  switch (sort) {
+    case 'date_desc':
+      return copy.sort((a, b) => b.created_at.localeCompare(a.created_at));
+    case 'date_asc':
+      return copy.sort((a, b) => a.created_at.localeCompare(b.created_at));
+    case 'name_asc':
+      return copy.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    case 'tag_asc':
+      return copy.sort((a, b) => {
+        const ta = a.tags?.[0] ?? '';
+        const tb = b.tags?.[0] ?? '';
+        if (!ta && !tb) return 0;
+        if (!ta) return 1;
+        if (!tb) return -1;
+        return ta.localeCompare(tb, 'de');
+      });
+  }
+}
+
 export default function DatenkodierungPage(): React.JSX.Element {
   const [dialogOffen, setDialogOffen] = useState(false);
   const [suchbegriff, setSuchbegriff] = useState('');
   const [aktiverTag, setAktiverTag] = useState<string | undefined>(undefined);
+  const [sortierung, setSortierung] = useState<SortOption>('date_desc');
+  const [sortMenuOffen, setSortMenuOffen] = useState(false);
   const debouncedSuche = useDebounce(suchbegriff, 300);
 
-  const { data, isLoading, error, refetch } = useDatenkodierungen(
-    debouncedSuche || undefined,
-    aktiverTag,
-  );
+  const { data, isLoading, error, refetch } = useDatenkodierungen(debouncedSuche || undefined);
+
+  // Client-side tag filter + sort
+  const verarbeiteteDaten = useMemo(() => {
+    const gefiltert = aktiverTag
+      ? (data ?? []).filter((d) => d.tags?.includes(aktiverTag))
+      : (data ?? []);
+    return sortDaten(gefiltert, sortierung);
+  }, [data, aktiverTag, sortierung]);
 
   const handleNeuErstellen = useCallback((): void => {
     setDialogOffen(true);
@@ -78,6 +116,34 @@ export default function DatenkodierungPage(): React.JSX.Element {
           />
         </div>
 
+        {/* Sortierung */}
+        <div className="relative">
+          <button
+            onClick={() => setSortMenuOffen((v) => !v)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+          >
+            <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+            {SORT_LABELS[sortierung]}
+          </button>
+          {sortMenuOffen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setSortMenuOffen(false)} />
+              <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-lg border border-border bg-card shadow-lg overflow-hidden">
+                {(Object.entries(SORT_LABELS) as [SortOption, string][]).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => { setSortierung(key); setSortMenuOffen(false); }}
+                    className={`w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-muted ${sortierung === key ? 'font-semibold text-foreground bg-muted/50' : 'text-foreground/80'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Aktiver Tag-Filter */}
         {aktiverTag && (
           <button
             onClick={() => setAktiverTag(undefined)}
@@ -85,21 +151,21 @@ export default function DatenkodierungPage(): React.JSX.Element {
             style={{ backgroundColor: tagColor(aktiverTag) }}
             title="Filter entfernen"
           >
-            Tag: {aktiverTag}
+            {aktiverTag}
             <X className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
 
       {/* Ergebnisanzahl */}
-      {data && data.length > 0 && (
+      {verarbeiteteDaten.length > 0 && (
         <p className="text-sm text-muted-foreground">
-          {data.length} {data.length === 1 ? 'Datensatz' : 'Datensätze'} gefunden
+          {verarbeiteteDaten.length} {verarbeiteteDaten.length === 1 ? 'Datensatz' : 'Datensätze'}{aktiverTag ? ` mit Tag „${aktiverTag}"` : ''} gefunden
         </p>
       )}
 
       <KodierungTable
-        daten={data ?? []}
+        daten={verarbeiteteDaten}
         onNeuErstellen={handleNeuErstellen}
         activeTag={aktiverTag}
         onTagFilter={handleTagFilter}
