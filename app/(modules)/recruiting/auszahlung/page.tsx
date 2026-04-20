@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Search, Copy, Check, X, CreditCard, ArrowLeft } from "lucide-react";
+import { Search, Copy, Check, X, CreditCard, ArrowLeft, FileDown } from "lucide-react";
+import { generateQuittung } from "@/lib/utils/generate-quittung";
 import type { EmpfehlungWithStelle } from "@/types/recruiting";
 import { StatCard } from "../_components/ui/StatCard";
 import { Card } from "../_components/ui/Card";
@@ -282,6 +283,28 @@ export default function AuszahlungPage(): React.JSX.Element {
                           title="Zurück zu Eingestellt"
                         >
                           <ArrowLeft size={12} /> Zurück
+                        </button>
+                        <button
+                          onClick={() =>
+                            generateQuittung({
+                              type: 'recruiting',
+                              ref_code: emp.ref_code,
+                              datum: emp.ausgezahlt_am ?? new Date().toISOString(),
+                              empfaenger_name: emp.empfehler_name,
+                              empfaenger_email: emp.empfehler_email,
+                              stelle_title: emp.stelle?.title ?? '–',
+                              kandidat_name: emp.kandidat_name,
+                              praemie_betrag: emp.praemie_betrag,
+                              iban: emp.iban,
+                              bic: emp.bic,
+                              kontoinhaber: emp.kontoinhaber,
+                              bank_name: emp.bank_name,
+                            })
+                          }
+                          className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:bg-muted transition-colors flex items-center gap-1.5 cursor-pointer"
+                          title="Quittung als PDF herunterladen"
+                        >
+                          <FileDown size={12} /> Quittung
                         </button>
                         <button
                           onClick={() => handleMarkAusgezahlt(emp)}

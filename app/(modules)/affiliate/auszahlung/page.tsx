@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Search, Copy, Check, X, CreditCard, ArrowLeft } from "lucide-react";
+import { Search, Copy, Check, X, CreditCard, ArrowLeft, FileDown } from "lucide-react";
+import { generateQuittung } from "@/lib/utils/generate-quittung";
 import type { EmpfehlungWithHandwerker } from "@/types/affiliate";
 import { StatCard } from "../_components/ui/StatCard";
 import { Card } from "../_components/ui/Card";
@@ -368,6 +369,30 @@ export default function AuszahlungPage(): React.JSX.Element {
                           title="Zurück zu Affiliate (offen)"
                         >
                           <ArrowLeft size={12} /> Zurück
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() =>
+                            generateQuittung({
+                              type: 'affiliate',
+                              ref_code: emp.ref_code,
+                              datum: emp.ausgezahlt_am ?? new Date().toISOString(),
+                              empfaenger_name: emp.empfehler_name,
+                              empfaenger_email: emp.empfehler_email,
+                              affiliate_partner: emp.handwerker?.name ?? '–',
+                              rechnungsbetrag: emp.rechnungsbetrag,
+                              provision_betrag: emp.provision_betrag,
+                              iban: emp.iban,
+                              bic: emp.bic,
+                              kontoinhaber: emp.kontoinhaber,
+                              bank_name: emp.bank_name,
+                            })
+                          }
+                          className="flex items-center gap-1"
+                          title="Quittung als PDF herunterladen"
+                        >
+                          <FileDown size={12} /> Quittung
                         </Button>
                         <Button
                           size="sm"
