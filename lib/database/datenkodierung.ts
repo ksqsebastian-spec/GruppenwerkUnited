@@ -18,7 +18,7 @@ export async function fetchDatenkodierungen(search?: string): Promise<Datenkodie
 
   if (error) {
     console.error('Fehler beim Laden der Datenkodierungen:', error);
-    throw new Error(ERROR_MESSAGES.KODIERUNG_LOAD_FAILED);
+    throw new Error(`[${error.code}] ${error.message}`);
   }
 
   return data ?? [];

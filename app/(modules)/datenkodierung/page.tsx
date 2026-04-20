@@ -34,7 +34,7 @@ export default function DatenkodierungPage(): React.JSX.Element {
   if (error) {
     return (
       <ErrorState
-        message="Datensätze konnten nicht geladen werden"
+        message={error instanceof Error ? error.message : 'Datensätze konnten nicht geladen werden'}
         onRetry={() => refetch()}
       />
     );

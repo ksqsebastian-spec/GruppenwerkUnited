@@ -9,8 +9,9 @@
 ## 0. GIT & DEPLOYMENT
 
 - Nach jedem Commit **automatisch pushen** – kein Warten auf Bestätigung.
-- Immer auf `main` pushen (Vercel deployed von `main`): `git push origin HEAD:main`
-- Feature-Branch ebenfalls synchron halten.
+- **NIEMALS direkt auf `main` pushen** – nur auf den aktuellen Feature-Branch.
+- `git push origin HEAD:<feature-branch-name>`
+- Merges auf `main` erfolgen ausschließlich über Pull Requests.
 
 ---
 
