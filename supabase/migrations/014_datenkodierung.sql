@@ -29,3 +29,6 @@ ALTER TABLE datenkodierungen ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "datenkodierungen_all" ON datenkodierungen;
 CREATE POLICY "datenkodierungen_all" ON datenkodierungen
   FOR ALL TO anon USING (true) WITH CHECK (true);
+
+-- Berechtigungen für die Tabelle (PostgREST/Supabase API)
+GRANT ALL ON TABLE datenkodierungen TO anon, authenticated, service_role;
