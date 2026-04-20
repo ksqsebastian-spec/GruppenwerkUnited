@@ -9,20 +9,29 @@ import {
   deleteVehicle,
 } from '@/lib/database/vehicles';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useFuhrparkCompanyId } from '@/hooks/use-fuhrpark-company';
 import type { VehicleInsert, VehicleUpdate, VehicleFilters } from '@/types';
 import { QUERY_STALE_TIMES } from '@/lib/constants';
 
 /**
- * Hook für alle Fahrzeuge mit optionalen Filtern
+ * Hook für alle Fahrzeuge mit optionalen Filtern.
+ * Filtert automatisch nach Firma des eingeloggten Mandanten.
  */
 export function useVehicles(filters?: VehicleFilters) {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
+  const { companyId, isLoading: companyLoading } = useFuhrparkCompanyId();
+
+  const mergedFilters: VehicleFilters = {
+    ...filters,
+    ...(company && !company.isAdmin ? { companyId: companyId ?? undefined } : {}),
+  };
 
   return useQuery({
-    queryKey: ['vehicles', filters],
-    queryFn: () => fetchVehicles(filters),
+    queryKey: ['vehicles', mergedFilters],
+    queryFn: () => fetchVehicles(mergedFilters),
     staleTime: QUERY_STALE_TIMES.vehicles,
-    enabled: !!user,
+    // Warten bis Firmen-ID aufgelöst ist (außer bei Admins)
+    enabled: !!user && (!company || company.isAdmin || (!!companyId && !companyLoading)),
   });
 }
 

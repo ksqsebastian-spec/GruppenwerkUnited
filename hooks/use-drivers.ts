@@ -8,20 +8,28 @@ import {
   archiveDriver,
 } from '@/lib/database/drivers';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useFuhrparkCompanyId } from '@/hooks/use-fuhrpark-company';
 import type { DriverInsert, DriverUpdate } from '@/types';
 import { QUERY_STALE_TIMES } from '@/lib/constants';
 
 /**
- * Hook für alle Fahrer mit optionalen Filtern
+ * Hook für alle Fahrer mit optionalen Filtern.
+ * Filtert automatisch nach Firma des eingeloggten Mandanten.
  */
 export function useDrivers(filters?: { companyId?: string; status?: 'active' | 'archived' }) {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
+  const { companyId, isLoading: companyLoading } = useFuhrparkCompanyId();
+
+  const mergedFilters = {
+    ...filters,
+    ...(company && !company.isAdmin ? { companyId: companyId ?? undefined } : {}),
+  };
 
   return useQuery({
-    queryKey: ['drivers', filters],
-    queryFn: () => fetchDrivers(filters),
+    queryKey: ['drivers', mergedFilters],
+    queryFn: () => fetchDrivers(mergedFilters),
     staleTime: QUERY_STALE_TIMES.drivers,
-    enabled: !!user,
+    enabled: !!user && (!company || company.isAdmin || (!!companyId && !companyLoading)),
   });
 }
 
