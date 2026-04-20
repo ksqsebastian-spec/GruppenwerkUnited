@@ -27,28 +27,28 @@ export const COMPANY_CONFIGS: CompanyConfig[] = [
   {
     id: 'seehafer',
     name: 'Seehafer Elemente',
-    modules: ['recruiting', 'affiliate', 'roi'],
+    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung'],
     isAdmin: false,
     passwordEnvKey: 'SEEHAFER_PASSWORD',
   },
   {
     id: 'brink',
     name: 'Tischlerei Brink',
-    modules: ['affiliate', 'recruiting', 'roi'],
+    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung'],
     isAdmin: false,
     passwordEnvKey: 'BRINK_PASSWORD',
   },
   {
     id: 'hantke',
     name: 'Malerei Hantke',
-    modules: ['recruiting', 'affiliate', 'roi'],
+    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung'],
     isAdmin: false,
     passwordEnvKey: 'HANTKE_PASSWORD',
   },
   {
     id: 'gruppenwerk',
     name: 'Gruppenwerk',
-    modules: ['fuhrpark'],
+    modules: ['vob', 'fuhrpark'],
     isAdmin: false,
     passwordEnvKey: 'GRUPPENWERK_PASSWORD',
   },
@@ -75,6 +75,7 @@ export const ROUTE_TO_MODULE: Record<string, string> = {
   '/affiliate': 'affiliate',
   '/roi': 'roi',
   '/vob': 'vob',
+  '/datenkodierung': 'datenkodierung',
 };
 
 /**

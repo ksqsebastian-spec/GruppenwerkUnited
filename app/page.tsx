@@ -1,108 +1,116 @@
 'use client';
 
 import Link from 'next/link';
-import { Wrench, ArrowRight, Clock } from 'lucide-react';
+import { Wrench, ArrowRight, Clock, LogOut } from 'lucide-react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { MODULES, MODULE_ICONS, type ModuleConfig } from '@/lib/modules';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
-interface ModuleCardProps {
-  module: ModuleConfig;
-}
-
-/**
- * Modul-Karte auf dem Werkbank-Dashboard
- */
-function ModuleCard({ module }: ModuleCardProps): React.JSX.Element {
+function ModuleCard({ module }: { module: ModuleConfig }): React.JSX.Element {
   const Icon = MODULE_ICONS[module.icon] ?? Wrench;
   const isComingSoon = module.status === 'coming_soon';
 
-  const cardContent = (
+  const inner = (
     <div
-      className={`group relative flex flex-col gap-4 rounded-xl border bg-white p-6 transition-all
+      className={`group relative flex flex-col gap-4 rounded-xl border border-border bg-card p-6 transition-all shadow-whisper
         ${isComingSoon
-          ? 'cursor-not-allowed opacity-60'
+          ? 'cursor-not-allowed opacity-50'
           : 'hover:border-primary/40 hover:shadow-md cursor-pointer'
         }`}
     >
-      {/* Icon + Firmen-Farbbalken */}
       <div className="flex items-start justify-between">
-        <div
-          className="flex h-12 w-12 items-center justify-center rounded-lg"
-          style={{
-            backgroundColor: module.companyColor
-              ? `${module.companyColor}15`
-              : 'hsl(var(--primary) / 0.1)',
-          }}
-        >
-          <Icon
-            className="h-6 w-6"
-            style={{ color: module.companyColor ?? 'hsl(var(--primary))' }}
-          />
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+          <Icon className="h-5 w-5 text-primary" />
         </div>
-
         {isComingSoon ? (
-          <span className="flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
+          <span className="flex items-center gap-1 rounded-full bg-warm-sand px-2.5 py-1 text-xs font-medium text-stone-gray">
             <Clock className="h-3 w-3" />
-            Bald verfügbar
+            Bald
           </span>
         ) : (
-          <ArrowRight className="h-5 w-5 text-gray-300 transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+          <ArrowRight className="h-5 w-5 text-border transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
         )}
       </div>
 
-      {/* Titel + Beschreibung */}
       <div>
-        <h3 className="font-semibold text-gray-900">{module.name}</h3>
-        <p className="mt-1 text-sm text-gray-500 leading-relaxed">{module.description}</p>
+        <h3 className="font-semibold text-foreground">{module.name}</h3>
+        <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{module.description}</p>
       </div>
-
-      {/* Firmen-Label (nur bei company-Modulen) */}
-      {module.category === 'company' && module.companyName && (
-        <div className="mt-auto">
-          <span
-            className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
-            style={{
-              backgroundColor: module.companyColor ? `${module.companyColor}15` : '#e5e7eb',
-              color: module.companyColor ?? '#6b7280',
-            }}
-          >
-            {module.companyName}
-          </span>
-        </div>
-      )}
     </div>
   );
 
-  if (isComingSoon) {
-    return cardContent;
-  }
-
-  return <Link href={module.route}>{cardContent}</Link>;
+  if (isComingSoon) return inner;
+  return <Link href={module.route}>{inner}</Link>;
 }
 
-/**
- * Werkbank Haupt-Dashboard
- * Zeigt alle verfügbaren Module als klickbare Karten an.
- * Neue Module werden automatisch angezeigt, wenn sie in lib/modules.ts eingetragen werden.
- */
 export default function WerkbankDashboard(): React.JSX.Element {
-  const { company } = useAuth();
+  const { company, signOut } = useAuth();
+  const router = useRouter();
 
-  // Nur erlaubte Module anzeigen
   const allowedModules = company?.allowedModules;
   const visibleModules = MODULES.filter((m) => {
+    if (m.status === 'disabled') return false;
     if (allowedModules === '*') return true;
     if (Array.isArray(allowedModules)) return allowedModules.includes(m.id);
     return false;
   });
 
+  const handleSignOut = async (): Promise<void> => {
+    try {
+      await signOut();
+      toast.success('Erfolgreich abgemeldet');
+      router.push('/login');
+    } catch {
+      toast.error('Abmelden fehlgeschlagen');
+    }
+  };
+
   return (
     <AppLayout>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {visibleModules.map((mod) => (
-          <ModuleCard key={mod.id} module={mod} />
-        ))}
+      <div className="max-w-4xl mx-auto flex flex-col gap-8">
+
+        {/* Willkommens-Header */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-stone-gray mb-1">
+              Eingeloggt als
+            </p>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">
+              {company?.companyName ?? '…'}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {visibleModules.length === 1
+                ? '1 Modul verfügbar'
+                : `${visibleModules.length} Module verfügbar`}
+            </p>
+          </div>
+
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-warm-sand hover:text-foreground transition-colors mt-1 shrink-0"
+          >
+            <LogOut className="h-4 w-4" />
+            Abmelden
+          </button>
+        </div>
+
+        {/* Trennlinie */}
+        <div className="border-t border-border" />
+
+        {/* Modul-Karten */}
+        {visibleModules.length === 0 ? (
+          <div className="text-center py-16 text-sm text-muted-foreground">
+            Keine Module verfügbar.
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {visibleModules.map((mod) => (
+              <ModuleCard key={mod.id} module={mod} />
+            ))}
+          </div>
+        )}
       </div>
     </AppLayout>
   );
