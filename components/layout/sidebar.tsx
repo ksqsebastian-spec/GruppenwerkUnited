@@ -15,6 +15,7 @@ import {
   Shield,
   ChevronLeft,
   Wrench,
+  Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLicenseWarningCount } from '@/hooks/use-license-control';
@@ -208,7 +209,7 @@ export function Sidebar(): React.JSX.Element {
         <div className="flex h-16 shrink-0 items-center">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center shadow-[#c96442_0px_0px_0px_0px,#c96442_0px_0px_0px_1px]">
-              <Wrench className="h-4 w-4 text-primary-foreground" />
+              <Building2 className="h-4 w-4 text-primary-foreground" />
             </div>
             <span className="font-semibold text-base text-foreground tracking-tight">
               Werkbank
