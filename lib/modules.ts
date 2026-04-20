@@ -81,6 +81,15 @@ export const MODULES: ModuleConfig[] = [
     schema: 'affiliate',
     status: 'active',
   },
+  {
+    id: 'datenkodierung',
+    name: 'Datenkodierung',
+    description: 'Kundendaten pseudonymisieren für sichere KI-Nutzung',
+    route: '/datenkodierung',
+    icon: 'ShieldCheck',
+    category: 'tool',
+    status: 'active',
+  },
 ];
 
 /**

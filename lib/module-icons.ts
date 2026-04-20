@@ -4,6 +4,7 @@ import {
   Car,
   Users,
   Share2,
+  ShieldCheck,
   Star,
   Wrench,
 } from 'lucide-react';
@@ -18,6 +19,7 @@ export const MODULE_ICONS: Record<string, React.ElementType> = {
   Car,
   Users,
   Share2,
+  ShieldCheck,
   Star,
   Wrench,
 };
