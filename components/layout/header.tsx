@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, Menu, Building2, User } from 'lucide-react';
+import { LogOut, Menu, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -60,7 +60,7 @@ export function Header(): React.JSX.Element {
         {/* Logo-Icon */}
         <Link href="/" className="flex items-center shrink-0">
           <div className="h-7 w-7 bg-primary rounded-lg flex items-center justify-center shadow-[#c96442_0px_0px_0px_0px,#c96442_0px_0px_0px_1px]">
-            <Building2 className="h-3.5 w-3.5 text-primary-foreground" />
+            <span className="text-[10px] font-bold text-primary-foreground leading-none tracking-tight">GW</span>
           </div>
         </Link>
 
