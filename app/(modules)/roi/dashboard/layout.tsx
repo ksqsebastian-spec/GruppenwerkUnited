@@ -8,9 +8,6 @@ import { AppLayout } from '@/components/layout/app-layout';
 const NAV_ITEMS = [
   { href: '/roi/dashboard', label: 'Aufträge' },
   { href: '/roi/dashboard/roi', label: 'ROI-Rechnung' },
-  { href: '/roi/dashboard/flywheel', label: 'Flywheel' },
-  { href: '/roi/dashboard/ausgaben', label: 'Ausgaben' },
-  { href: '/roi/dashboard/bestpractices', label: 'Best Practice' },
 ];
 
 interface DashboardLayoutProps {

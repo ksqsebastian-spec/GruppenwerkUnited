@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Header } from './header';
 import { FuhrparkSubnav } from './fuhrpark-subnav';
@@ -13,6 +14,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps): React.JSX.Element {
   const pathname = usePathname();
   const isInFuhrpark = pathname.startsWith('/fuhrpark');
+  const [showCrab, setShowCrab] = useState(false);
 
   return (
     <AuthGuard>
@@ -28,8 +30,19 @@ export function AppLayout({ children }: AppLayoutProps): React.JSX.Element {
           <div className="px-4 sm:px-6 lg:px-8">{children}</div>
         </main>
 
+        {/* Krabben-Toggle */}
+        {!showCrab && (
+          <button
+            className="fixed bottom-3 left-3 z-40 text-lg leading-none opacity-40 hover:opacity-100 transition-opacity select-none"
+            onClick={() => setShowCrab(true)}
+            title="Maskottchen einblenden"
+          >
+            🦀
+          </button>
+        )}
+
         {/* Maskottchen */}
-        <MascotCrab />
+        {showCrab && <MascotCrab onHide={() => setShowCrab(false)} />}
       </div>
     </AuthGuard>
   );
