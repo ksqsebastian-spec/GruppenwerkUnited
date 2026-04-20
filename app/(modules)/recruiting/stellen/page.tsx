@@ -184,7 +184,7 @@ export default function StellenPage(): React.JSX.Element {
                 <input
                   type="number"
                   min="0"
-                  step="50"
+                  step="any"
                   value={formData.praemie_betrag}
                   onChange={(e) => setFormData({ ...formData, praemie_betrag: e.target.value })}
                   placeholder="z.B. 1500"
@@ -250,7 +250,7 @@ export default function StellenPage(): React.JSX.Element {
                           <input
                             type="number"
                             min="0"
-                            step="50"
+                            step="any"
                             value={praemieInput}
                             onChange={(e) => setPraemieInput(e.target.value)}
                             className="w-24 px-2 py-1.5 border border-border rounded-lg text-sm font-semibold bg-card text-foreground outline-none focus:border-foreground/30"
