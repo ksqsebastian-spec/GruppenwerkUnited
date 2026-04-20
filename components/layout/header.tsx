@@ -59,8 +59,8 @@ export function Header(): React.JSX.Element {
 
         {/* Logo-Icon */}
         <Link href="/" className="flex items-center shrink-0">
-          <div className="h-7 w-7 bg-primary rounded-lg flex items-center justify-center shadow-[#c96442_0px_0px_0px_0px,#c96442_0px_0px_0px_1px]">
-            <span className="text-[10px] font-bold text-primary-foreground leading-none tracking-tight">GW</span>
+          <div className="h-7 w-7 bg-foreground rounded-lg flex items-center justify-center">
+            <span className="text-[10px] font-bold text-background leading-none tracking-tight">GW</span>
           </div>
         </Link>
 
@@ -82,10 +82,10 @@ export function Header(): React.JSX.Element {
                 className={cn(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
                   isActive
-                    ? 'bg-primary/10 text-primary'
+                    ? 'bg-foreground/10 text-foreground font-semibold'
                     : isComingSoon
-                      ? 'text-muted-foreground/50 cursor-not-allowed'
-                      : 'text-olive-gray hover:bg-warm-sand hover:text-foreground'
+                      ? 'text-muted-foreground/40 cursor-not-allowed'
+                      : 'text-foreground/70 hover:bg-warm-sand hover:text-foreground'
                 )}
                 aria-disabled={isComingSoon}
               >

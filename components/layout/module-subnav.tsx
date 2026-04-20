@@ -43,7 +43,7 @@ export function ModuleSubnav({ navItems, children }: ModuleSubnavProps): React.J
     <AppLayout>
       {/* Sub-Navigation */}
       <div className="mb-6 overflow-x-auto">
-        <nav className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+        <nav className="flex gap-1 bg-muted rounded-lg p-1 w-fit">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.exact
@@ -56,8 +56,8 @@ export function ModuleSubnav({ navItems, children }: ModuleSubnavProps): React.J
                 className={cn(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
                   isActive
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
+                    ? 'bg-[#c96442] text-white shadow-sm'
+                    : 'text-foreground/70 hover:text-foreground hover:bg-background/60'
                 )}
               >
                 <Icon className="h-4 w-4" />
