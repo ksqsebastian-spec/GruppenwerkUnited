@@ -8,8 +8,12 @@ const PX   = 5;  // SVG-Einheiten pro Logik-Pixel
 const COLS = 14;
 const ROWS = 14;
 
+interface MascotCrabProps {
+  onHide?: () => void;
+}
+
 /** Blauer Pixel-Art Werkbank-Krebs — lebt in der unteren linken Ecke */
-export function MascotCrab(): React.JSX.Element {
+export function MascotCrab({ onHide }: MascotCrabProps): React.JSX.Element {
   const [anim, setAnim]           = useState<AnimName>('idle');
   const [frameIdx, setFrameIdx]   = useState(0);
   const [pos, setPos]             = useState({ x: 0, y: 0 });
@@ -149,6 +153,17 @@ export function MascotCrab(): React.JSX.Element {
       >
         <PixelSprite frame={frame} flip={facingRight && anim === 'walk'} />
       </div>
+
+      {/* Ausblenden-Button */}
+      {onHide && (
+        <button
+          className="fixed bottom-3 left-3 z-40 text-xs leading-none opacity-30 hover:opacity-80 transition-opacity select-none"
+          onClick={onHide}
+          title="Maskottchen ausblenden"
+        >
+          ✕
+        </button>
+      )}
 
       {/* Easter Egg: Krabben-Höhle */}
       <CrabLair isOpen={lairOpen} onClose={() => setLairOpen(false)} />
