@@ -15,7 +15,7 @@ export async function fetchAllTags(companyId: string): Promise<string[]> {
   return [...new Set(all)].sort();
 }
 
-export async function fetchDatenkodierungen(companyId: string, search?: string, tag?: string): Promise<Datenkodierung[]> {
+export async function fetchDatenkodierungen(companyId: string, search?: string): Promise<Datenkodierung[]> {
   let query = supabase
     .from('datenkodierungen')
     .select('*')
@@ -25,10 +25,6 @@ export async function fetchDatenkodierungen(companyId: string, search?: string, 
   if (search && search.trim().length > 0) {
     const term = `%${search.trim()}%`;
     query = query.or(`code.ilike.${term},name.ilike.${term},adresse.ilike.${term}`);
-  }
-
-  if (tag && tag.trim().length > 0) {
-    query = query.contains('tags', [tag.trim()]);
   }
 
   const { data, error } = await query;

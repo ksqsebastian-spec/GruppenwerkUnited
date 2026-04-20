@@ -60,15 +60,15 @@ export default function DatenkodierungPage(): React.JSX.Element {
   const [sortMenuOffen, setSortMenuOffen] = useState(false);
   const debouncedSuche = useDebounce(suchbegriff, 300);
 
-  const { data, isLoading, error, refetch } = useDatenkodierungen(
-    debouncedSuche || undefined,
-    aktiverTag,
-  );
+  const { data, isLoading, error, refetch } = useDatenkodierungen(debouncedSuche || undefined);
 
-  const sortierteDaten = useMemo(
-    () => sortDaten(data ?? [], sortierung),
-    [data, sortierung],
-  );
+  // Client-side tag filter + sort
+  const verarbeiteteDaten = useMemo(() => {
+    const gefiltert = aktiverTag
+      ? (data ?? []).filter((d) => d.tags?.includes(aktiverTag))
+      : (data ?? []);
+    return sortDaten(gefiltert, sortierung);
+  }, [data, aktiverTag, sortierung]);
 
   const handleNeuErstellen = useCallback((): void => {
     setDialogOffen(true);
@@ -143,6 +143,7 @@ export default function DatenkodierungPage(): React.JSX.Element {
           )}
         </div>
 
+        {/* Aktiver Tag-Filter */}
         {aktiverTag && (
           <button
             onClick={() => setAktiverTag(undefined)}
@@ -150,21 +151,21 @@ export default function DatenkodierungPage(): React.JSX.Element {
             style={{ backgroundColor: tagColor(aktiverTag) }}
             title="Filter entfernen"
           >
-            Tag: {aktiverTag}
+            {aktiverTag}
             <X className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
 
       {/* Ergebnisanzahl */}
-      {sortierteDaten.length > 0 && (
+      {verarbeiteteDaten.length > 0 && (
         <p className="text-sm text-muted-foreground">
-          {sortierteDaten.length} {sortierteDaten.length === 1 ? 'Datensatz' : 'Datensätze'} gefunden
+          {verarbeiteteDaten.length} {verarbeiteteDaten.length === 1 ? 'Datensatz' : 'Datensätze'}{aktiverTag ? ` mit Tag „${aktiverTag}"` : ''} gefunden
         </p>
       )}
 
       <KodierungTable
-        daten={sortierteDaten}
+        daten={verarbeiteteDaten}
         onNeuErstellen={handleNeuErstellen}
         activeTag={aktiverTag}
         onTagFilter={handleTagFilter}
