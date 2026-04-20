@@ -1,5 +1,7 @@
-# Claude Code
-.claude/
+# Claude Code – persönliche Einstellungen ignorieren, Projekt-Skills (.claude/commands/) einchecken
+.claude/settings.json
+.claude/settings.local.json
+.claude/*.json
 
 # dependencies
 /node_modules
