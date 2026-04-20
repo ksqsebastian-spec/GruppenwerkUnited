@@ -132,6 +132,13 @@ export const ERROR_MESSAGES = {
 
   // UVV-Kontrolle - PDF
   UVV_PDF_GENERATION_FAILED: 'PDF konnte nicht erstellt werden.',
+
+  // Datenkodierung
+  KODIERUNG_NOT_FOUND: 'Datensatz nicht gefunden.',
+  KODIERUNG_CREATE_FAILED: 'Datensatz konnte nicht kodiert werden.',
+  KODIERUNG_DELETE_FAILED: 'Datensatz konnte nicht gelöscht werden.',
+  KODIERUNG_LOAD_FAILED: 'Datensätze konnten nicht geladen werden.',
+  KODIERUNG_DUPLICATE_CODE: 'Dieser Code existiert bereits.',
 } as const;
 
 export type ErrorMessageKey = keyof typeof ERROR_MESSAGES;

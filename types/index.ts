@@ -636,3 +636,19 @@ export interface UvvControlStats {
   dueSoonCount: number;
   okCount: number;
 }
+
+// ============================================================================
+// Datenkodierung
+// ============================================================================
+
+export interface Datenkodierung {
+  id: string;
+  code: string;
+  name: string;
+  adresse: string | null;
+  notizen: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type DatenkodierungInsert = Omit<Datenkodierung, 'id' | 'code' | 'created_at' | 'updated_at'>;
