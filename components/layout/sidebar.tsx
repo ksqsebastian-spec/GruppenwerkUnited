@@ -22,15 +22,14 @@ import { useUvvWarningCount } from '@/hooks/use-uvv-control';
 import { MODULES, MODULE_ICONS, getModuleByRoute, type ModuleConfig } from '@/lib/modules';
 import { useAuth } from '@/components/providers/auth-provider';
 
-// Fuhrpark Modul-spezifische Navigation
 const fuhrparkNavigation = [
-  { name: 'Dashboard', href: '/fuhrpark', icon: LayoutDashboard },
-  { name: 'Fahrzeuge', href: '/fuhrpark/vehicles', icon: Car },
-  { name: 'Fahrer', href: '/fuhrpark/drivers', icon: Users },
-  { name: 'Termine', href: '/fuhrpark/appointments', icon: Calendar },
-  { name: 'Schäden', href: '/fuhrpark/damages', icon: AlertTriangle },
-  { name: 'Kosten', href: '/fuhrpark/costs', icon: Euro },
-  { name: 'Datenablage', href: '/fuhrpark/documents', icon: FolderOpen },
+  { name: 'Dashboard',    href: '/fuhrpark',              icon: LayoutDashboard },
+  { name: 'Fahrzeuge',    href: '/fuhrpark/vehicles',     icon: Car },
+  { name: 'Fahrer',       href: '/fuhrpark/drivers',      icon: Users },
+  { name: 'Termine',      href: '/fuhrpark/appointments', icon: Calendar },
+  { name: 'Schäden',      href: '/fuhrpark/damages',      icon: AlertTriangle },
+  { name: 'Kosten',       href: '/fuhrpark/costs',        icon: Euro },
+  { name: 'Datenablage',  href: '/fuhrpark/documents',    icon: FolderOpen },
 ];
 
 type BadgeType = 'uvv' | 'license' | null;
@@ -43,11 +42,10 @@ interface FuhrparkSecondaryNavItem {
 }
 
 const fuhrparkSecondaryNavigation: FuhrparkSecondaryNavItem[] = [
-  { name: 'UVV-Kontrolle', href: '/fuhrpark/uvv', icon: Shield, badgeType: 'uvv' },
-  { name: 'Führerscheinkontrolle', href: '/fuhrpark/license-control', icon: Contact, badgeType: 'license' },
-  { name: 'Einstellungen', href: '/fuhrpark/settings', icon: Settings, badgeType: null },
+  { name: 'UVV-Kontrolle',          href: '/fuhrpark/uvv',             icon: Shield,  badgeType: 'uvv'     },
+  { name: 'Führerscheinkontrolle',  href: '/fuhrpark/license-control', icon: Contact, badgeType: 'license' },
+  { name: 'Einstellungen',          href: '/fuhrpark/settings',        icon: Settings,badgeType: null      },
 ];
-
 
 interface SidebarNavItemProps {
   href: string;
@@ -71,29 +69,31 @@ function SidebarNavItem({
       <Link
         href={comingSoon ? '#' : href}
         className={cn(
-          'group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-colors',
+          'group flex gap-x-3 rounded-lg p-2 text-sm font-medium leading-6 transition-colors',
           isActive
             ? 'bg-primary/10 text-primary'
             : comingSoon
-              ? 'cursor-not-allowed text-gray-400'
-              : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+              ? 'cursor-not-allowed text-muted-foreground/50'
+              : 'text-olive-gray hover:bg-warm-sand hover:text-foreground'
         )}
         aria-disabled={comingSoon}
       >
         <Icon
           className={cn(
             'h-5 w-5 shrink-0',
-            isActive ? 'text-primary' : 'text-gray-400 group-hover:text-gray-600'
+            isActive
+              ? 'text-primary'
+              : 'text-stone-gray group-hover:text-olive-gray'
           )}
         />
         <span className="flex-1">{name}</span>
         {badge !== undefined && badge > 0 && (
-          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-medium text-white">
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-medium text-destructive-foreground">
             {badge > 99 ? '99+' : badge}
           </span>
         )}
         {comingSoon && (
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+          <span className="rounded-full bg-warm-sand px-2 py-0.5 text-xs text-stone-gray">
             Bald
           </span>
         )}
@@ -102,11 +102,9 @@ function SidebarNavItem({
   );
 }
 
-/** Werkbank-Übersicht: Module nach Firmen-Zugang gefiltert */
 function WerkbankModuleNav({ pathname }: { pathname: string }): React.JSX.Element {
   const { company } = useAuth();
 
-  // Nur erlaubte Module anzeigen — alle Kategorien (tool + company)
   const allowedModules = company?.allowedModules;
   const visibleModules = MODULES.filter((m) => {
     if (allowedModules === '*') return true;
@@ -132,13 +130,12 @@ function WerkbankModuleNav({ pathname }: { pathname: string }): React.JSX.Elemen
   return (
     <nav className="flex flex-1 flex-col">
       <ul role="list" className="flex flex-1 flex-col gap-y-7">
-        {/* Alle erlaubten Module der eingeloggten Firma */}
         {visibleModules.length > 0 && (
           <li>
-            <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-stone-gray">
               {company?.companyName ?? 'Module'}
             </div>
-            <ul role="list" className="-mx-2 space-y-1">
+            <ul role="list" className="-mx-2 space-y-0.5">
               {visibleModules.map(renderModuleItem)}
             </ul>
           </li>
@@ -148,15 +145,12 @@ function WerkbankModuleNav({ pathname }: { pathname: string }): React.JSX.Elemen
   );
 }
 
-/** Fuhrpark-Modul-Navigation */
 function FuhrparkModuleNav({ pathname }: { pathname: string }): React.JSX.Element {
   const { data: licenseWarningCount } = useLicenseWarningCount();
   const { data: uvvWarningCount } = useUvvWarningCount();
 
   const isActive = (href: string): boolean => {
-    if (href === '/fuhrpark') {
-      return pathname === '/fuhrpark';
-    }
+    if (href === '/fuhrpark') return pathname === '/fuhrpark';
     return pathname.startsWith(href);
   };
 
@@ -164,7 +158,7 @@ function FuhrparkModuleNav({ pathname }: { pathname: string }): React.JSX.Elemen
     <nav className="flex flex-1 flex-col">
       <ul role="list" className="flex flex-1 flex-col gap-y-7">
         <li>
-          <ul role="list" className="-mx-2 space-y-1">
+          <ul role="list" className="-mx-2 space-y-0.5">
             {fuhrparkNavigation.map((item) => (
               <SidebarNavItem
                 key={item.name}
@@ -176,10 +170,8 @@ function FuhrparkModuleNav({ pathname }: { pathname: string }): React.JSX.Elemen
             ))}
           </ul>
         </li>
-
-        {/* Sekundäre Navigation: UVV, Führerschein & Einstellungen */}
         <li className="mt-auto">
-          <ul role="list" className="-mx-2 space-y-1">
+          <ul role="list" className="-mx-2 space-y-0.5">
             {fuhrparkSecondaryNavigation.map((item) => {
               let badge: number | undefined;
               if (item.badgeType === 'uvv') badge = uvvWarningCount;
@@ -209,28 +201,32 @@ export function Sidebar(): React.JSX.Element {
 
   return (
     <aside className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
-      <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r bg-white px-6 pb-4">
-        {/* Logo */}
+      {/* Ivory-Oberfläche mit Border Cream Trennlinie */}
+      <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-border bg-card px-6 pb-4">
+
+        {/* Logo / Werkbank-Wordmark */}
         <div className="flex h-16 shrink-0 items-center">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-              <Wrench className="h-5 w-5 text-primary-foreground" />
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center shadow-[#c96442_0px_0px_0px_0px,#c96442_0px_0px_0px_1px]">
+              <Wrench className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-lg">Werkbank</span>
+            <span className="font-semibold text-base text-foreground tracking-tight">
+              Werkbank
+            </span>
           </Link>
         </div>
 
-        {/* Zurück zur Übersicht (nur innerhalb eines Moduls) */}
+        {/* Zurück zur Übersicht */}
         {isInsideModule && (
-          <div className="border-b pb-4">
+          <div className="border-b border-border pb-4">
             <Link
               href="/"
-              className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ChevronLeft className="h-4 w-4" />
               Zur Übersicht
             </Link>
-            <p className="mt-2 px-1 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <p className="mt-2 px-1 text-xs font-semibold uppercase tracking-wider text-stone-gray">
               {currentModule.name}
             </p>
           </div>

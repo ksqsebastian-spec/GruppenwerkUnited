@@ -17,9 +17,15 @@ module.exports = {
     },
     extend: {
       fontFamily: {
+        // Sans: Plus Jakarta Sans (geladen via next/font)
         sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        // Serif: Georgia als Anthropic-Serif-Fallback für Überschriften
+        serif: ['Georgia', 'ui-serif', 'serif'],
+        // Mono: System-Monospace für Code
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       colors: {
+        // ─── shadcn/ui Token-Mapping (über CSS-Variablen) ────────────────────
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -53,21 +59,36 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // ROI-Modul Farben (aus GWDienstleistungROI Designsystem)
+        // ─── Anthropic / Claude Designsystem – benannte Tokens ──────────────
+        // Direktzugriff: bg-parchment, text-olive-gray, border-cream, etc.
+        parchment:      '#f5f4ed',
+        ivory:          '#faf9f5',
+        terracotta:     '#c96442',
+        coral:          '#d97757',
+        'warm-sand':    '#e8e6dc',
+        'charcoal-warm':'#4d4c48',
+        'olive-gray':   '#5e5d59',
+        'stone-gray':   '#87867f',
+        'border-cream': '#f0eee6',
+        'dark-warm':    '#3d3d3a',
+        'dark-surface': '#30302e',
+        'near-black':   '#141413',
+        'warm-silver':  '#b0aea5',
+        // ─── ROI-Modul Farben ────────────────────────────────────────────────
         surface: {
-          DEFAULT: "var(--roi-surface, #FFFFFF)",
-          2: "var(--roi-surface-2, #F5F4F1)",
-          3: "var(--roi-surface-3, #ECEAE5)",
+          DEFAULT: "var(--roi-surface, #faf9f5)",
+          2: "var(--roi-surface-2, #f0eee6)",
+          3: "var(--roi-surface-3, #e8e6dc)",
         },
-        "bg": "var(--roi-bg, #FAFAF8)",
+        "bg": "var(--roi-bg, #f5f4ed)",
         "text": {
-          DEFAULT: "var(--roi-text, #1A1916)",
-          muted: "var(--roi-text-muted, #6B6860)",
-          dim: "var(--roi-text-dim, #9B9790)",
+          DEFAULT: "var(--roi-text, #141413)",
+          muted: "var(--roi-text-muted, #5e5d59)",
+          dim: "var(--roi-text-dim, #87867f)",
         },
-        // Einzelfarben mit DEFAULT für bg-red / text-red Utility-Klassen
+        // ─── Vollständige Farbpaletten für Status-Farben ─────────────────────
         red: {
-          DEFAULT: "var(--roi-red, #C1440E)",
+          DEFAULT: "var(--roi-red, #b53333)",
           light: "var(--roi-red-light, #FDECE5)",
           50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca', 300: '#fca5a5',
           400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c',
@@ -89,9 +110,21 @@ module.exports = {
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "var(--radius)",           // 8px
+        md: "calc(var(--radius) - 2px)", // 6px
+        sm: "calc(var(--radius) - 4px)", // 4px
+        xl: "calc(var(--radius) * 1.5)", // 12px
+        '2xl': "calc(var(--radius) * 2)", // 16px
+        '4xl': "calc(var(--radius) * 4)", // 32px
+      },
+      boxShadow: {
+        // Ring-basiertes Shadow-System (Anthropic-Signatur)
+        'ring-warm':   '0px 0px 0px 1px #d1cfc5',
+        'ring-subtle': '0px 0px 0px 1px #dedc01',
+        'ring-deep':   '0px 0px 0px 1px #c2c0b6',
+        'ring-dark':   '0px 0px 0px 1px #30302e',
+        // Whisper Shadow – kaum sichtbares Heben
+        'whisper':     'rgba(0,0,0,0.05) 0px 4px 24px',
       },
       keyframes: {
         "accordion-down": {
