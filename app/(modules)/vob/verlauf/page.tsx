@@ -2,7 +2,7 @@ import { getAllScans } from '@/lib/modules/vob/queries';
 import { formatDate } from '@/lib/utils';
 import { DownloadReport } from '../_components/export/DownloadReport';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 /**
  * VOB Monitor – Scan-Verlauf

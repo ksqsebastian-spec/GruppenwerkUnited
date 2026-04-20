@@ -34,7 +34,6 @@ export function Header(): React.JSX.Element {
     }
   };
 
-  // Nur erlaubte Module anzeigen
   const allowedModules = company?.allowedModules;
   const visibleModules = MODULES.filter((m) => {
     if (allowedModules === '*') return true;
@@ -44,7 +43,9 @@ export function Header(): React.JSX.Element {
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-3 border-b bg-card px-4 shadow-sm sm:px-6 lg:px-8">
+      {/* Sticky Header – Ivory-Oberfläche mit Border Cream Trennlinie */}
+      <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-3 border-b border-border bg-card px-4 sm:px-6 lg:px-8">
+
         {/* Mobile Menu Button */}
         <Button
           variant="ghost"
@@ -56,16 +57,16 @@ export function Header(): React.JSX.Element {
           <span className="sr-only">Menü öffnen</span>
         </Button>
 
-        {/* Logo */}
+        {/* Logo-Icon */}
         <Link href="/" className="flex items-center shrink-0">
-          <div className="h-7 w-7 bg-primary rounded-md flex items-center justify-center">
-            <Wrench className="h-4 w-4 text-primary-foreground" />
+          <div className="h-7 w-7 bg-primary rounded-lg flex items-center justify-center shadow-[#c96442_0px_0px_0px_0px,#c96442_0px_0px_0px_1px]">
+            <Wrench className="h-3.5 w-3.5 text-primary-foreground" />
           </div>
         </Link>
 
-        {/* Trennlinie */}
+        {/* Warme Trennlinie */}
         {visibleModules.length > 0 && (
-          <div className="hidden lg:block h-5 w-px bg-gray-200 shrink-0" />
+          <div className="hidden lg:block h-5 w-px bg-border shrink-0" />
         )}
 
         {/* Horizontale Modul-Navigation */}
@@ -79,12 +80,12 @@ export function Header(): React.JSX.Element {
                 key={mod.id}
                 href={isComingSoon ? '#' : mod.route}
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors',
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
                   isActive
                     ? 'bg-primary/10 text-primary'
                     : isComingSoon
-                      ? 'text-gray-400 cursor-not-allowed'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'text-muted-foreground/50 cursor-not-allowed'
+                      : 'text-olive-gray hover:bg-warm-sand hover:text-foreground'
                 )}
                 aria-disabled={isComingSoon}
               >
@@ -102,11 +103,12 @@ export function Header(): React.JSX.Element {
         <div className="flex items-center shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="flex items-center gap-2 h-8">
-                <div className="h-6 w-6 bg-gray-200 rounded-full flex items-center justify-center">
-                  <User className="h-3.5 w-3.5 text-gray-600" />
+              <Button variant="ghost" size="sm" className="flex items-center gap-2 h-8 px-2">
+                {/* Warm Sand Avatar – kein kühles Grau */}
+                <div className="h-6 w-6 bg-warm-sand rounded-full flex items-center justify-center">
+                  <User className="h-3.5 w-3.5 text-charcoal-warm" />
                 </div>
-                <span className="hidden sm:block text-sm font-medium">
+                <span className="hidden sm:block text-sm font-medium text-foreground">
                   {company?.companyName ?? 'Werkbank'}
                 </span>
               </Button>
@@ -121,7 +123,6 @@ export function Header(): React.JSX.Element {
         </div>
       </header>
 
-      {/* Mobile Navigation */}
       <MobileNav open={mobileMenuOpen} onOpenChange={setMobileMenuOpen} />
     </>
   );

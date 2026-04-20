@@ -6,7 +6,7 @@ import { DownloadReport } from './_components/export/DownloadReport';
 import { RecentFeed } from './RecentFeed';
 import type { DashboardRow } from '@/lib/modules/vob/types';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 /**
  * VOB Monitor – Hauptseite
