@@ -28,16 +28,25 @@ import { useCompanies, useCreateCompany, useUpdateCompany, useDeleteCompany } fr
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
+import { useAuth } from '@/components/providers/auth-provider';
 import type { Company } from '@/types';
 
 /**
  * Firmen-Verwaltung in den Einstellungen
  */
 export function CompanyList(): React.JSX.Element {
-  const { data: companies, isLoading, error, refetch } = useCompanies();
+  const { company: authCompany } = useAuth();
+  const isAdmin = authCompany?.isAdmin ?? false;
+
+  const { data: allCompanies, isLoading, error, refetch } = useCompanies();
   const createMutation = useCreateCompany();
   const updateMutation = useUpdateCompany();
   const deleteMutation = useDeleteCompany();
+
+  // Nicht-Admins sehen nur ihre eigene Firma
+  const companies = isAdmin
+    ? allCompanies
+    : allCompanies?.filter((c) => c.name === authCompany?.companyName);
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -108,10 +117,12 @@ export function CompanyList(): React.JSX.Element {
           title="Keine Firmen angelegt"
           description="Lege deine erste Firma an, um Fahrzeuge zuordnen zu können."
           action={
-            <Button onClick={handleCreate}>
-              <Plus className="mr-2 h-4 w-4" />
-              Erste Firma anlegen
-            </Button>
+            isAdmin ? (
+              <Button onClick={handleCreate}>
+                <Plus className="mr-2 h-4 w-4" />
+                Erste Firma anlegen
+              </Button>
+            ) : undefined
           }
         />
       );
@@ -119,12 +130,15 @@ export function CompanyList(): React.JSX.Element {
 
     return (
       <>
-        <div className="flex justify-end mb-4">
-          <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" />
-            Neue Firma
-          </Button>
-        </div>
+        {/* "Neue Firma" nur für Admins sichtbar */}
+        {isAdmin && (
+          <div className="flex justify-end mb-4">
+            <Button onClick={handleCreate}>
+              <Plus className="mr-2 h-4 w-4" />
+              Neue Firma
+            </Button>
+          </div>
+        )}
 
         <div className="rounded-md border">
           <Table>
@@ -132,7 +146,7 @@ export function CompanyList(): React.JSX.Element {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Angelegt am</TableHead>
-                <TableHead className="w-[100px]">Aktionen</TableHead>
+                {isAdmin && <TableHead className="w-[100px]">Aktionen</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -147,26 +161,29 @@ export function CompanyList(): React.JSX.Element {
                   <TableCell>
                     {format(new Date(company.created_at), 'dd.MM.yyyy', { locale: de })}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(company)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                        <span className="sr-only">Bearbeiten</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(company)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                        <span className="sr-only">Löschen</span>
-                      </Button>
-                    </div>
-                  </TableCell>
+                  {/* Bearbeiten/Löschen nur für Admins */}
+                  {isAdmin && (
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(company)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          <span className="sr-only">Bearbeiten</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(company)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                          <span className="sr-only">Löschen</span>
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

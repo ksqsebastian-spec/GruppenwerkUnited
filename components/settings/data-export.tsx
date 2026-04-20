@@ -8,6 +8,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase/client';
+import { useFuhrparkCompanyId } from '@/hooks/use-fuhrpark-company';
+import { useFuhrparkVehicleIds } from '@/hooks/use-fuhrpark-vehicle-ids';
 
 /**
  * Exportierbare Datentypen
@@ -63,6 +65,10 @@ export function DataExport(): React.JSX.Element {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [isExporting, setIsExporting] = useState(false);
 
+  // Mandantenfilter: nur eigene Daten exportieren
+  const { companyId } = useFuhrparkCompanyId();
+  const { vehicleIds } = useFuhrparkVehicleIds();
+
   const handleToggle = (id: string): void => {
     setSelectedTypes((prev) =>
       prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
@@ -92,19 +98,37 @@ export function DataExport(): React.JSX.Element {
 
         switch (type) {
           case 'vehicles':
-            query = supabase.from('vehicles').select('*');
+            // Mandantenfilter: nur Fahrzeuge der eigenen Firma exportieren
+            query = companyId
+              ? supabase.from('vehicles').select('*').eq('company_id', companyId)
+              : supabase.from('vehicles').select('*');
             break;
           case 'drivers':
-            query = supabase.from('drivers').select('*');
+            // Mandantenfilter: nur Fahrer der eigenen Firma exportieren
+            query = companyId
+              ? supabase.from('drivers').select('*').eq('company_id', companyId)
+              : supabase.from('drivers').select('*');
             break;
           case 'appointments':
-            query = supabase.from('appointments').select('*');
+            // Mandantenfilter: nur Termine der eigenen Fahrzeuge exportieren
+            query =
+              vehicleIds && vehicleIds.length > 0
+                ? supabase.from('appointments').select('*').in('vehicle_id', vehicleIds)
+                : supabase.from('appointments').select('*');
             break;
           case 'damages':
-            query = supabase.from('damages').select('*');
+            // Mandantenfilter: nur Schäden der eigenen Fahrzeuge exportieren
+            query =
+              vehicleIds && vehicleIds.length > 0
+                ? supabase.from('damages').select('*').in('vehicle_id', vehicleIds)
+                : supabase.from('damages').select('*');
             break;
           case 'costs':
-            query = supabase.from('costs').select('*');
+            // Mandantenfilter: nur Kosten der eigenen Fahrzeuge exportieren
+            query =
+              vehicleIds && vehicleIds.length > 0
+                ? supabase.from('costs').select('*').in('vehicle_id', vehicleIds)
+                : supabase.from('costs').select('*');
             break;
           default:
             continue;

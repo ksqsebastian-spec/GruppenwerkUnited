@@ -63,7 +63,7 @@ function EditAppointmentContent(): React.JSX.Element {
       <PageHeader
         title="Termin bearbeiten"
         description={`${appointment.appointment_type?.name ?? 'Termin'} für ${appointment.vehicle?.license_plate ?? 'Fahrzeug'}`}
-        backHref="/fuhrpark/appointments"
+        backHref={`/fuhrpark/appointments/${appointmentId}`}
       />
 
       <AppointmentForm appointment={appointment} />

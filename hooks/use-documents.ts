@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase/client';
 import { QUERY_STALE_TIMES } from '@/lib/constants';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useFuhrparkVehicleIds } from '@/hooks/use-fuhrpark-vehicle-ids';
 import type { Document, DocumentInsert, DocumentType, DocumentEntityType, DocumentFilters, DocumentSortField, SortDirection } from '@/types';
 
 /**
@@ -272,6 +273,11 @@ async function fetchAllDocuments(filters?: DocumentFilters): Promise<Document[]>
     query = query.eq('vehicle_id', filters.vehicleId);
   }
 
+  // Mandantenfilter: nur Fahrzeug-Dokumente der eigenen Fahrzeuge laden
+  if (filters?.companyVehicleIds && filters.companyVehicleIds.length > 0) {
+    query = query.in('vehicle_id', filters.companyVehicleIds);
+  }
+
   // Filter nach Datum (von)
   if (filters?.dateFrom) {
     query = query.gte('uploaded_at', filters.dateFrom);
@@ -380,12 +386,20 @@ export function useDocuments(entityType?: DocumentEntityType, entityId?: string)
  */
 export function useAllDocuments(filters?: DocumentFilters) {
   const { user } = useAuth();
+  const { vehicleIds, isLoading: vehicleIdsLoading } = useFuhrparkVehicleIds();
+
+  // Mandantenfilter in den Filtern zusammenführen
+  const mergedFilters: DocumentFilters | undefined =
+    vehicleIds !== null
+      ? { ...filters, companyVehicleIds: vehicleIds }
+      : filters;
 
   return useQuery({
-    queryKey: ['documents', 'all', filters],
-    queryFn: () => fetchAllDocuments(filters),
+    queryKey: ['documents', 'all', mergedFilters],
+    queryFn: () => fetchAllDocuments(mergedFilters),
     staleTime: QUERY_STALE_TIMES.documents,
-    enabled: !!user,
+    // Warten bis Fahrzeug-IDs aufgelöst sind
+    enabled: !!user && !vehicleIdsLoading,
   });
 }
 

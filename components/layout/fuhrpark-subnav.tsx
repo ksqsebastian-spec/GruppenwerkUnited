@@ -68,7 +68,7 @@ export function FuhrparkSubnav(): React.JSX.Element {
                 <Icon className="h-4 w-4 shrink-0" />
                 {item.name}
                 {badge !== undefined && badge > 0 && (
-                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-medium text-white">
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-xs font-medium text-destructive-foreground">
                     {badge > 99 ? '99+' : badge}
                   </span>
                 )}

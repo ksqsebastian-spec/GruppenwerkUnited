@@ -11,6 +11,7 @@ import {
   deleteDamage,
 } from '@/lib/database/damages';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useFuhrparkVehicleIds } from '@/hooks/use-fuhrpark-vehicle-ids';
 import type { DamageInsert, DamageUpdate, DamageFilters, DamageStatus, DamageType } from '@/types';
 import { QUERY_STALE_TIMES } from '@/lib/constants';
 
@@ -50,12 +51,20 @@ export function useDamageTypes() {
  */
 export function useDamages(filters?: DamageFilters) {
   const { user } = useAuth();
+  const { vehicleIds, isLoading: vehicleIdsLoading } = useFuhrparkVehicleIds();
+
+  // Mandantenfilter in den Filtern zusammenführen
+  const mergedFilters: DamageFilters | undefined =
+    vehicleIds !== null
+      ? { ...filters, companyVehicleIds: vehicleIds }
+      : filters;
 
   return useQuery({
-    queryKey: ['damages', filters],
-    queryFn: () => fetchDamages(filters),
+    queryKey: ['damages', mergedFilters],
+    queryFn: () => fetchDamages(mergedFilters),
     staleTime: QUERY_STALE_TIMES.damages,
-    enabled: !!user,
+    // Warten bis Fahrzeug-IDs aufgelöst sind
+    enabled: !!user && !vehicleIdsLoading,
   });
 }
 
@@ -78,12 +87,14 @@ export function useDamage(id: string | undefined) {
  */
 export function useOpenDamagesCount() {
   const { user } = useAuth();
+  const { vehicleIds, isLoading: vehicleIdsLoading } = useFuhrparkVehicleIds();
 
   return useQuery({
-    queryKey: ['damages', 'count'],
-    queryFn: countOpenDamages,
+    queryKey: ['damages', 'count', vehicleIds],
+    queryFn: () => countOpenDamages(vehicleIds ?? undefined),
     staleTime: QUERY_STALE_TIMES.damages,
-    enabled: !!user,
+    // Warten bis Fahrzeug-IDs aufgelöst sind
+    enabled: !!user && !vehicleIdsLoading,
   });
 }
 

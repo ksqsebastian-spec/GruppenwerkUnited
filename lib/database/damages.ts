@@ -24,6 +24,11 @@ export async function fetchDamages(filters?: DamageFilters): Promise<Damage[]> {
     query = query.eq('status', filters.status);
   }
 
+  // Mandantenfilter: nur Schäden der eigenen Fahrzeuge laden
+  if (filters?.companyVehicleIds && filters.companyVehicleIds.length > 0) {
+    query = query.in('vehicle_id', filters.companyVehicleIds);
+  }
+
   const { data, error } = await query;
 
   if (error) {
@@ -61,13 +66,20 @@ export async function fetchDamage(id: string): Promise<Damage | null> {
 }
 
 /**
- * Zählt offene Schäden
+ * Zählt offene Schäden, optional gefiltert nach Fahrzeug-IDs
  */
-export async function countOpenDamages(): Promise<number> {
-  const { count, error } = await supabase
+export async function countOpenDamages(vehicleIds?: string[]): Promise<number> {
+  let query = supabase
     .from('damages')
     .select('*', { count: 'exact', head: true })
     .neq('status', 'completed');
+
+  // Mandantenfilter: nur Schäden der eigenen Fahrzeuge zählen
+  if (vehicleIds && vehicleIds.length > 0) {
+    query = query.in('vehicle_id', vehicleIds);
+  }
+
+  const { count, error } = await query;
 
   if (error) {
     console.error('Fehler beim Zählen der Schäden:', error);

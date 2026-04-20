@@ -93,7 +93,7 @@ export function RecentActivity({
           asChild
           className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground text-xs"
         >
-          <Link href="/fuhrpark/activity">
+          <Link href="/fuhrpark/damages">
             Alle anzeigen
             <ChevronRight className="ml-1 h-4 w-4" />
           </Link>

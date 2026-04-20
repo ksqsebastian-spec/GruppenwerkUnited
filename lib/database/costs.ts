@@ -70,6 +70,11 @@ export async function fetchCosts(filters?: CostFilters): Promise<Cost[]> {
     query = query.lte('date', filters.dateTo.toISOString().split('T')[0]);
   }
 
+  // Mandantenfilter: nur Kosten der eigenen Fahrzeuge laden
+  if (filters?.companyVehicleIds && filters.companyVehicleIds.length > 0) {
+    query = query.in('vehicle_id', filters.companyVehicleIds);
+  }
+
   const { data, error } = await query;
 
   if (error) {
@@ -81,18 +86,25 @@ export async function fetchCosts(filters?: CostFilters): Promise<Cost[]> {
 }
 
 /**
- * Berechnet die Kosten für den aktuellen Monat
+ * Berechnet die Kosten für den aktuellen Monat, optional gefiltert nach Fahrzeug-IDs
  */
-export async function fetchCostsThisMonth(): Promise<number> {
+export async function fetchCostsThisMonth(vehicleIds?: string[]): Promise<number> {
   const now = new Date();
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('costs')
     .select('amount')
     .gte('date', firstDayOfMonth.toISOString().split('T')[0])
     .lte('date', lastDayOfMonth.toISOString().split('T')[0]);
+
+  // Mandantenfilter: nur Kosten der eigenen Fahrzeuge summieren
+  if (vehicleIds && vehicleIds.length > 0) {
+    query = query.in('vehicle_id', vehicleIds);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Fehler beim Laden der Monatskosten:', error);

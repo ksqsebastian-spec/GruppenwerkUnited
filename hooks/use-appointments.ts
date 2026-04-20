@@ -11,6 +11,7 @@ import {
   deleteAppointment,
 } from '@/lib/database/appointments';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useFuhrparkVehicleIds } from '@/hooks/use-fuhrpark-vehicle-ids';
 import type { AppointmentInsert, AppointmentUpdate, AppointmentFilters, AppointmentType } from '@/types';
 import { QUERY_STALE_TIMES } from '@/lib/constants';
 
@@ -64,12 +65,20 @@ export function useAppointment(id: string | undefined) {
  */
 export function useAppointments(filters?: AppointmentFilters) {
   const { user } = useAuth();
+  const { vehicleIds, isLoading: vehicleIdsLoading } = useFuhrparkVehicleIds();
+
+  // Mandantenfilter in den Filtern zusammenführen
+  const mergedFilters: AppointmentFilters | undefined =
+    vehicleIds !== null
+      ? { ...filters, companyVehicleIds: vehicleIds }
+      : filters;
 
   return useQuery({
-    queryKey: ['appointments', filters],
-    queryFn: () => fetchAppointments(filters),
+    queryKey: ['appointments', mergedFilters],
+    queryFn: () => fetchAppointments(mergedFilters),
     staleTime: QUERY_STALE_TIMES.appointments,
-    enabled: !!user,
+    // Warten bis Fahrzeug-IDs aufgelöst sind
+    enabled: !!user && !vehicleIdsLoading,
   });
 }
 
@@ -78,12 +87,14 @@ export function useAppointments(filters?: AppointmentFilters) {
  */
 export function useUpcomingAppointments() {
   const { user } = useAuth();
+  const { vehicleIds, isLoading: vehicleIdsLoading } = useFuhrparkVehicleIds();
 
   return useQuery({
-    queryKey: ['appointments', 'upcoming'],
-    queryFn: fetchUpcomingAppointments,
+    queryKey: ['appointments', 'upcoming', vehicleIds],
+    queryFn: () => fetchUpcomingAppointments(vehicleIds ?? undefined),
     staleTime: QUERY_STALE_TIMES.appointments,
-    enabled: !!user,
+    // Warten bis Fahrzeug-IDs aufgelöst sind
+    enabled: !!user && !vehicleIdsLoading,
   });
 }
 

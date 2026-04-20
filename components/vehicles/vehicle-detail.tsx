@@ -136,13 +136,15 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): React.JSX.Elemen
               Bearbeiten
             </Link>
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => setArchiveDialogOpen(true)}
-          >
-            <Archive className="mr-2 h-4 w-4" />
-            Archivieren
-          </Button>
+          {vehicle.status !== 'archived' && (
+            <Button
+              variant="outline"
+              onClick={() => setArchiveDialogOpen(true)}
+            >
+              <Archive className="mr-2 h-4 w-4" />
+              Archivieren
+            </Button>
+          )}
           <Button
             variant="destructive"
             onClick={() => setDeleteDialogOpen(true)}

@@ -10,6 +10,7 @@ import {
   deleteCost,
 } from '@/lib/database/costs';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useFuhrparkVehicleIds } from '@/hooks/use-fuhrpark-vehicle-ids';
 import type { CostInsert, CostUpdate, CostFilters } from '@/types';
 import { QUERY_STALE_TIMES } from '@/lib/constants';
 
@@ -46,12 +47,20 @@ export function useCostTypes() {
  */
 export function useCosts(filters?: CostFilters) {
   const { user } = useAuth();
+  const { vehicleIds, isLoading: vehicleIdsLoading } = useFuhrparkVehicleIds();
+
+  // Mandantenfilter in den Filtern zusammenführen
+  const mergedFilters: CostFilters | undefined =
+    vehicleIds !== null
+      ? { ...filters, companyVehicleIds: vehicleIds }
+      : filters;
 
   return useQuery({
-    queryKey: ['costs', filters],
-    queryFn: () => fetchCosts(filters),
+    queryKey: ['costs', mergedFilters],
+    queryFn: () => fetchCosts(mergedFilters),
     staleTime: QUERY_STALE_TIMES.costs,
-    enabled: !!user,
+    // Warten bis Fahrzeug-IDs aufgelöst sind
+    enabled: !!user && !vehicleIdsLoading,
   });
 }
 
@@ -60,12 +69,14 @@ export function useCosts(filters?: CostFilters) {
  */
 export function useCostsThisMonth() {
   const { user } = useAuth();
+  const { vehicleIds, isLoading: vehicleIdsLoading } = useFuhrparkVehicleIds();
 
   return useQuery({
-    queryKey: ['costs', 'thisMonth'],
-    queryFn: fetchCostsThisMonth,
+    queryKey: ['costs', 'thisMonth', vehicleIds],
+    queryFn: () => fetchCostsThisMonth(vehicleIds ?? undefined),
     staleTime: QUERY_STALE_TIMES.costs,
-    enabled: !!user,
+    // Warten bis Fahrzeug-IDs aufgelöst sind
+    enabled: !!user && !vehicleIdsLoading,
   });
 }
 

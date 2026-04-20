@@ -53,6 +53,11 @@ export async function fetchAppointments(filters?: AppointmentFilters): Promise<A
     query = query.gte('due_date', filters.dueAfter.toISOString());
   }
 
+  // Mandantenfilter: nur Termine der eigenen Fahrzeuge laden
+  if (filters?.companyVehicleIds && filters.companyVehicleIds.length > 0) {
+    query = query.in('vehicle_id', filters.companyVehicleIds);
+  }
+
   const { data, error } = await query;
 
   if (error) {
@@ -64,9 +69,10 @@ export async function fetchAppointments(filters?: AppointmentFilters): Promise<A
 }
 
 /**
- * Lädt überfällige und bald fällige Termine (für Dashboard)
+ * Lädt überfällige und bald fällige Termine (für Dashboard),
+ * optional gefiltert nach Fahrzeug-IDs
  */
-export async function fetchUpcomingAppointments(): Promise<UpcomingAppointments> {
+export async function fetchUpcomingAppointments(vehicleIds?: string[]): Promise<UpcomingAppointments> {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -76,7 +82,7 @@ export async function fetchUpcomingAppointments(): Promise<UpcomingAppointments>
   const in30Days = new Date(today);
   in30Days.setDate(today.getDate() + 30);
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('appointments')
     .select(`
       *,
@@ -86,6 +92,13 @@ export async function fetchUpcomingAppointments(): Promise<UpcomingAppointments>
     .neq('status', 'completed')
     .lte('due_date', in30Days.toISOString())
     .order('due_date');
+
+  // Mandantenfilter: nur Termine der eigenen Fahrzeuge laden
+  if (vehicleIds && vehicleIds.length > 0) {
+    query = query.in('vehicle_id', vehicleIds);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Fehler beim Laden der Termine:', error);

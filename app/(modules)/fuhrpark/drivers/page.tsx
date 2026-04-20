@@ -8,6 +8,7 @@ import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { DriverTable } from '@/components/drivers';
 import { useDrivers } from '@/hooks/use-drivers';
 
@@ -33,6 +34,30 @@ export default function DriversPage(): React.JSX.Element {
             </Link>
           </Button>
         </PageHeader>
+
+        {/* Status-Filter */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setStatus('active')}
+            className={cn(
+              status === 'active' && 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground'
+            )}
+          >
+            Aktiv
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setStatus('archived')}
+            className={cn(
+              status === 'archived' && 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground'
+            )}
+          >
+            Archiviert
+          </Button>
+        </div>
 
         {/* Inhalt */}
         {isLoading ? (

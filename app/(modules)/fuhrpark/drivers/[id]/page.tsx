@@ -113,13 +113,15 @@ export default function DriverDetailPage(): React.JSX.Element {
                 Bearbeiten
               </Link>
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => setArchiveDialogOpen(true)}
-            >
-              <Archive className="mr-2 h-4 w-4" />
-              Archivieren
-            </Button>
+            {driver.status !== 'archived' && (
+              <Button
+                variant="outline"
+                onClick={() => setArchiveDialogOpen(true)}
+              >
+                <Archive className="mr-2 h-4 w-4" />
+                Archivieren
+              </Button>
+            )}
           </div>
         </div>
 

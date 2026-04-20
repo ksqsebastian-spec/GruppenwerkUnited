@@ -393,6 +393,8 @@ export interface VehicleFilters {
 export interface DamageFilters {
   vehicleId?: string;
   status?: DamageStatus;
+  /** Mandantenfilter: Liste der erlaubten Fahrzeug-IDs */
+  companyVehicleIds?: string[];
 }
 
 export interface AppointmentFilters {
@@ -400,6 +402,8 @@ export interface AppointmentFilters {
   status?: AppointmentStatus;
   dueBefore?: Date;
   dueAfter?: Date;
+  /** Mandantenfilter: Liste der erlaubten Fahrzeug-IDs */
+  companyVehicleIds?: string[];
 }
 
 export interface CostFilters {
@@ -407,6 +411,8 @@ export interface CostFilters {
   costTypeId?: string;
   dateFrom?: Date;
   dateTo?: Date;
+  /** Mandantenfilter: Liste der erlaubten Fahrzeug-IDs */
+  companyVehicleIds?: string[];
 }
 
 export interface DocumentFilters {
@@ -417,6 +423,8 @@ export interface DocumentFilters {
   dateTo?: string;
   fileType?: 'pdf' | 'image' | 'all';
   search?: string;
+  /** Mandantenfilter: Liste der erlaubten Fahrzeug-IDs */
+  companyVehicleIds?: string[];
 }
 
 export type DocumentSortField = 'uploaded_at' | 'name' | 'entity_type' | 'file_size';

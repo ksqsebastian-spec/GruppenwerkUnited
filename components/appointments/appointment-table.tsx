@@ -7,6 +7,7 @@ import { format, isPast, differenceInDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
   MoreHorizontal,
+  Eye,
   Pencil,
   CheckCircle,
   Trash2,
@@ -207,6 +208,14 @@ export function AppointmentTable({ appointments }: AppointmentTableProps): React
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() =>
+                            router.push(`/fuhrpark/appointments/${appointment.id}`)
+                          }
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Anzeigen
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() =>
                             router.push(`/fuhrpark/appointments/${appointment.id}/edit`)
