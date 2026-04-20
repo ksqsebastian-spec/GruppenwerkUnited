@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { CompanyTenderList } from './CompanyTenderList';
 import type { Company } from '@/lib/modules/vob/types';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 interface PageProps {
   params: Promise<{ slug: string }>;

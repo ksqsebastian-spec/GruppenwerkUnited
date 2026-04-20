@@ -1,7 +1,7 @@
 import { getAllTenders, getCompanies } from '@/lib/modules/vob/queries';
 import { AllTendersClient } from './AllTendersClient';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 interface PageProps {
   searchParams: Promise<{ page?: string }>;
