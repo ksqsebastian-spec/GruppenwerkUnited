@@ -1,4 +1,3 @@
-import { jsPDF } from "jspdf";
 import { COMPANY } from "./company";
 import type { EmpfehlungWithStelle } from "@/types/recruiting";
 
@@ -23,7 +22,8 @@ function formatDatePlain(dateString: string): string {
   }).format(new Date(dateString));
 }
 
-export function generateReceipt({ empfehlung, emailSubject, emailBody }: ReceiptData): void {
+export async function generateReceipt({ empfehlung, emailSubject, emailBody }: ReceiptData): Promise<void> {
+  const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 25;

@@ -8,7 +8,7 @@ import { Button } from "../_components/ui/Button";
 import { formatCurrency } from "@/lib/modules/affiliate/utils";
 import {
   generateAusgezahltEmail,
-  generateMailtoLink,
+  generateOutlookLink,
 } from "@/lib/modules/affiliate/email-templates";
 import { generateReceipt } from "@/lib/modules/affiliate/pdf-receipt";
 
@@ -63,9 +63,9 @@ export default function EmailConfiguratorPage(): React.JSX.Element {
     }
   }
 
-  const mailtoLink =
+  const outlookLink =
     selected && generatedEmail
-      ? generateMailtoLink(selected.empfehler_email, generatedEmail.subject, generatedEmail.body)
+      ? generateOutlookLink(selected.empfehler_email, generatedEmail.subject, generatedEmail.body)
       : "";
 
   return (
@@ -197,9 +197,9 @@ export default function EmailConfiguratorPage(): React.JSX.Element {
                 <><Copy size={18} /> Alles kopieren</>
               )}
             </Button>
-            <a href={mailtoLink}>
+            <a href={outlookLink} target="_blank" rel="noopener noreferrer">
               <Button variant="secondary" size="lg">
-                <Mail size={18} /> In Mail-App öffnen
+                <Mail size={18} /> In Outlook öffnen
               </Button>
             </a>
             <Button

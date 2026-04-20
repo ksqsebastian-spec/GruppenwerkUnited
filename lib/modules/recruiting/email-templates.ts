@@ -22,7 +22,7 @@ export function generateAusgezahltEmail(params: AusgezahltParams) {
     subject: "Deine Prämie wurde ausgezahlt",
     body: `Hey ${params.empfehlerName},
 
-deine Prämie für die Empfehlung (Ref: ${params.refCode}) in Höhe von ${formatCurrency(params.praemieBetrag)} wurde soeben überwiesen.
+deine Prämie für die Empfehlung (Ref: ${params.refCode ?? '–'}) in Höhe von ${formatCurrency(params.praemieBetrag)} wurde soeben überwiesen.
 
 Danke fürs Empfehlen!
 
@@ -33,4 +33,9 @@ Seehafer Elemente`,
 
 export function generateMailtoLink(to: string, subject: string, body: string): string {
   return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+export function generateOutlookLink(to: string, subject: string, body: string): string {
+  const params = new URLSearchParams({ to, subject, body });
+  return `https://outlook.office.com/mail/deeplink/compose?${params.toString()}`;
 }
