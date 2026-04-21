@@ -1,6 +1,5 @@
 'use client';
 
-import { Users, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLicenseControlStats } from '@/hooks/use-license-control';
@@ -27,58 +26,22 @@ export function LicenseControlStats(): React.JSX.Element {
   }
 
   const statItems = [
-    {
-      label: 'Mitarbeiter gesamt',
-      value: stats?.totalEmployees ?? 0,
-      icon: Users,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10',
-    },
-    {
-      label: 'Überfällig',
-      value: stats?.overdueCount ?? 0,
-      icon: AlertTriangle,
-      color: 'text-red-600',
-      bgColor: 'bg-red-100',
-    },
-    {
-      label: 'Bald fällig',
-      value: stats?.dueSoonCount ?? 0,
-      icon: Clock,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-100',
-    },
-    {
-      label: 'In Ordnung',
-      value: stats?.okCount ?? 0,
-      icon: CheckCircle,
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-100',
-    },
+    { label: 'Mitarbeiter gesamt', value: stats?.totalEmployees ?? 0 },
+    { label: 'Überfällig', value: stats?.overdueCount ?? 0 },
+    { label: 'Bald fällig', value: stats?.dueSoonCount ?? 0 },
+    { label: 'In Ordnung', value: stats?.okCount ?? 0 },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {statItems.map((item) => {
-        const Icon = item.icon;
-        return (
-          <Card key={item.label}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {item.label}
-                  </p>
-                  <p className="text-2xl font-bold">{item.value}</p>
-                </div>
-                <div className={`p-2 rounded-lg ${item.bgColor}`}>
-                  <Icon className={`h-4 w-4 ${item.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+      {statItems.map((item) => (
+        <Card key={item.label}>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">{item.label}</p>
+            <p className="text-xl font-bold mt-1">{item.value}</p>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
