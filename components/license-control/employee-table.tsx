@@ -133,7 +133,7 @@ export function EmployeeTable({
           }
           action={showFilters ? (
             <Button asChild>
-              <Link href="/fuhrpark/fahrer/new">Fahrer anlegen</Link>
+              <Link href="/fuhrpark/drivers/new">Fahrer anlegen</Link>
             </Button>
           ) : undefined}
         />
@@ -178,7 +178,7 @@ export function EmployeeTable({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/fuhrpark/fahrer/${driver.id}`}>
+                          <Link href={`/fuhrpark/drivers/${driver.id}`}>
                             <Eye className="mr-2 h-4 w-4" />
                             Fahrer anzeigen
                           </Link>

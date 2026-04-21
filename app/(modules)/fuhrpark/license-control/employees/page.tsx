@@ -43,7 +43,7 @@ export default function LicenseEmployeesPage(): React.JSX.Element {
             description="Lege Fahrer in der zentralen Fahrerverwaltung an."
             action={
               <Button asChild>
-                <Link href="/fuhrpark/fahrer/new">
+                <Link href="/fuhrpark/drivers/new">
                   Fahrer anlegen
                 </Link>
               </Button>
