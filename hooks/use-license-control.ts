@@ -13,11 +13,14 @@ import {
   updateLicenseEmployee,
   archiveLicenseEmployee,
   fetchLicenseChecks,
+  fetchLicenseChecksByDriver,
   createLicenseCheck,
   createBatchLicenseChecks,
   deleteLicenseCheck,
   fetchLicenseControlStats,
   fetchLicenseWarningCount,
+  fetchDriversWithLicenseStatus,
+  updateDriverInspectorFlag,
 } from '@/lib/database/license-control';
 import { useAuth } from '@/components/providers/auth-provider';
 import type {
@@ -28,6 +31,7 @@ import type {
   LicenseCheckEmployeeUpdate,
   LicenseCheckEmployeeFilters,
   LicenseCheckInsert,
+  LicenseDriverFilters,
 } from '@/types';
 import { QUERY_STALE_TIMES } from '@/lib/constants';
 
@@ -60,6 +64,7 @@ export function useUpdateLicenseSettings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['license-settings'] });
       queryClient.invalidateQueries({ queryKey: ['license-employees'] });
+      queryClient.invalidateQueries({ queryKey: ['license-drivers'] });
       queryClient.invalidateQueries({ queryKey: ['license-stats'] });
       queryClient.invalidateQueries({ queryKey: ['license-warning-count'] });
       toast.success('Einstellungen erfolgreich gespeichert');
@@ -140,6 +145,58 @@ export function useArchiveLicenseInspector() {
     onError: (error: Error) => {
       toast.error(error.message);
     },
+  });
+}
+
+// ============================================================================
+// Fahrer mit Führerscheinstatus
+// ============================================================================
+
+/**
+ * Hook für alle Fahrer mit Führerscheinkontroll-Status
+ */
+export function useDriversWithLicenseStatus(filters?: LicenseDriverFilters) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['license-drivers', filters],
+    queryFn: () => fetchDriversWithLicenseStatus(filters),
+    staleTime: QUERY_STALE_TIMES.licenseControl,
+    enabled: !!user,
+  });
+}
+
+/**
+ * Hook zum Setzen/Entfernen des Prüfer-Flags bei einem Fahrer
+ */
+export function useUpdateDriverInspectorFlag() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ driverId, isInspector }: { driverId: string; isInspector: boolean }) =>
+      updateDriverInspectorFlag(driverId, isInspector),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drivers'] });
+      queryClient.invalidateQueries({ queryKey: ['license-drivers'] });
+      toast.success('Prüfer-Status aktualisiert');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+/**
+ * Hook für Kontrollen eines Fahrers
+ */
+export function useLicenseChecksByDriver(driverId: string | undefined) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['license-checks-driver', driverId],
+    queryFn: () => fetchLicenseChecksByDriver(driverId!),
+    enabled: !!driverId && !!user,
+    staleTime: QUERY_STALE_TIMES.licenseControl,
   });
 }
 
@@ -283,14 +340,16 @@ export function useCreateBatchLicenseChecks() {
 
   return useMutation({
     mutationFn: ({
-      employeeIds,
+      driverIds,
       checkData,
     }: {
-      employeeIds: string[];
-      checkData: Omit<LicenseCheckInsert, 'employee_id'>;
-    }) => createBatchLicenseChecks(employeeIds, checkData),
+      driverIds: string[];
+      checkData: Omit<LicenseCheckInsert, 'driver_id' | 'employee_id'>;
+    }) => createBatchLicenseChecks(driverIds, checkData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['license-checks'] });
+      queryClient.invalidateQueries({ queryKey: ['license-checks-driver'] });
+      queryClient.invalidateQueries({ queryKey: ['license-drivers'] });
       queryClient.invalidateQueries({ queryKey: ['license-employees'] });
       queryClient.invalidateQueries({ queryKey: ['license-stats'] });
       queryClient.invalidateQueries({ queryKey: ['license-warning-count'] });
