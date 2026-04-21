@@ -27,7 +27,7 @@ export default function LicenseControlPage(): React.JSX.Element {
                 <Settings className="h-4 w-4" />
               </Link>
             </Button>
-            <Button variant="secondary" asChild>
+            <Button variant="outline" asChild>
               <Link href="/fuhrpark/license-control/employees">
                 <Users className="mr-2 h-4 w-4" />
                 Mitarbeiter

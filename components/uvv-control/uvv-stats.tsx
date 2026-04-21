@@ -41,22 +41,22 @@ export function UvvStats(): React.JSX.Element {
       title: 'Überfällig',
       value: stats?.overdueCount ?? 0,
       icon: AlertTriangle,
-      color: 'text-red-500',
-      bgColor: 'bg-red-50',
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
     },
     {
       title: 'Bald fällig',
       value: stats?.dueSoonCount ?? 0,
       icon: Clock,
-      color: 'text-amber-500',
-      bgColor: 'bg-amber-50',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-100',
     },
     {
       title: 'In Ordnung',
       value: stats?.okCount ?? 0,
       icon: CheckCircle,
-      color: 'text-emerald-500',
-      bgColor: 'bg-emerald-50',
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-100',
     },
   ];
 

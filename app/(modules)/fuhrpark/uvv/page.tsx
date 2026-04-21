@@ -31,7 +31,7 @@ export default function UvvControlPage(): React.JSX.Element {
                   <Settings className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button variant="secondary" onClick={() => setBatchDialogOpen(true)}>
+              <Button onClick={() => setBatchDialogOpen(true)}>
                 <Users className="mr-2 h-4 w-4" />
                 Sammel-Unterweisung
               </Button>
