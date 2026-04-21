@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Upload, X, FileText } from 'lucide-react';
+import { getCostTypeIcon } from '@/lib/cost-type-icons';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -208,11 +209,17 @@ export function CostForm(): React.JSX.Element {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {costTypes?.map((type) => (
-                        <SelectItem key={type.id} value={type.id}>
-                          {type.icon ? `${type.icon} ` : ''}{type.name}
-                        </SelectItem>
-                      ))}
+                      {costTypes?.map((type) => {
+                        const IconComponent = getCostTypeIcon(type.icon);
+                        return (
+                          <SelectItem key={type.id} value={type.id}>
+                            <span className="flex items-center gap-2">
+                              <IconComponent className="h-4 w-4 text-muted-foreground shrink-0" />
+                              {type.name}
+                            </span>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   <FormMessage />

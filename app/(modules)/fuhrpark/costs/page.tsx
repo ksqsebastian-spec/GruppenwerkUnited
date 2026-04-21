@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Plus, Receipt } from 'lucide-react';
+import { getCostTypeIcon } from '@/lib/cost-type-icons';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -102,11 +103,17 @@ export default function CostsPage(): React.JSX.Element {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Alle Kostenarten</SelectItem>
-              {costTypes?.map((type) => (
-                <SelectItem key={type.id} value={type.id}>
-                  {type.icon} {type.name}
-                </SelectItem>
-              ))}
+              {costTypes?.map((type) => {
+                const IconComponent = getCostTypeIcon(type.icon);
+                return (
+                  <SelectItem key={type.id} value={type.id}>
+                    <span className="flex items-center gap-2">
+                      <IconComponent className="h-4 w-4 text-muted-foreground shrink-0" />
+                      {type.name}
+                    </span>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
 
