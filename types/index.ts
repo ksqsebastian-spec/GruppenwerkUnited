@@ -680,3 +680,45 @@ export interface Datenkodierung {
 }
 
 export type DatenkodierungInsert = Omit<Datenkodierung, 'id' | 'code' | 'created_at' | 'updated_at'>;
+
+// ============================================================================
+// Automatisierungen
+// ============================================================================
+
+export type AutomatisierungAppTyp =
+  | 'gdrive'
+  | 'outlook'
+  | 'email'
+  | 'sheets'
+  | 'word'
+  | 'claude'
+  | 'ai'
+  | 'pdf'
+  | 'generic';
+
+export interface AutomatisierungsKnoten {
+  id: string;
+  company: string;
+  parent_id: string | null;
+  title: string;
+  description: string | null;
+  app_type: AutomatisierungAppTyp;
+  /** NULL = Kategorie-Knoten; befüllt = Blatt-Knoten mit kopierbarem Prompt */
+  prompt_template: string | null;
+  gdrive_path: string | null;
+  position_x: number;
+  position_y: number;
+  /** Reihenfolge unter Geschwistern für initiales Auto-Layout */
+  position: number;
+  use_datenkodierung: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AutomatisierungsKnotenInsert = Omit<
+  AutomatisierungsKnoten,
+  'id' | 'created_at' | 'updated_at'
+>;
+
+export type AutomatisierungsKnotenUpdate = Partial<AutomatisierungsKnotenInsert>;

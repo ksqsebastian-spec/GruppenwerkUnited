@@ -90,6 +90,15 @@ export const MODULES: ModuleConfig[] = [
     category: 'tool',
     status: 'active',
   },
+  {
+    id: 'automationen',
+    name: 'Automatisierungen',
+    description: 'KI-Workflow-Übersicht und Prompt-Bibliothek für Claude-Automatisierungen',
+    route: '/automationen',
+    icon: 'Zap',
+    category: 'company',
+    status: 'active',
+  },
 ];
 
 /**
