@@ -31,29 +31,29 @@ export function LicenseControlStats(): React.JSX.Element {
       label: 'Mitarbeiter gesamt',
       value: stats?.totalEmployees ?? 0,
       icon: Users,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
     },
     {
       label: 'Überfällig',
       value: stats?.overdueCount ?? 0,
       icon: AlertTriangle,
-      color: 'text-red-600',
-      bgColor: 'bg-red-100',
+      color: 'text-red-500',
+      bgColor: 'bg-red-50',
     },
     {
       label: 'Bald fällig',
       value: stats?.dueSoonCount ?? 0,
       icon: Clock,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
+      color: 'text-amber-500',
+      bgColor: 'bg-amber-50',
     },
     {
       label: 'In Ordnung',
       value: stats?.okCount ?? 0,
       icon: CheckCircle,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
+      color: 'text-emerald-500',
+      bgColor: 'bg-emerald-50',
     },
   ];
 
@@ -71,8 +71,8 @@ export function LicenseControlStats(): React.JSX.Element {
                   </p>
                   <p className="text-2xl font-bold">{item.value}</p>
                 </div>
-                <div className={`p-3 rounded-full ${item.bgColor}`}>
-                  <Icon className={`h-5 w-5 ${item.color}`} />
+                <div className={`p-2 rounded-lg ${item.bgColor}`}>
+                  <Icon className={`h-4 w-4 ${item.color}`} />
                 </div>
               </div>
             </CardContent>
