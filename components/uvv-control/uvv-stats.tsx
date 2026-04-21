@@ -34,29 +34,29 @@ export function UvvStats(): React.JSX.Element {
       title: 'Fahrer gesamt',
       value: stats?.totalDrivers ?? 0,
       icon: Users,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
     },
     {
       title: 'Überfällig',
       value: stats?.overdueCount ?? 0,
       icon: AlertTriangle,
-      color: 'text-red-600',
+      color: 'text-red-500',
       bgColor: 'bg-red-50',
     },
     {
       title: 'Bald fällig',
       value: stats?.dueSoonCount ?? 0,
       icon: Clock,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
+      color: 'text-amber-500',
+      bgColor: 'bg-amber-50',
     },
     {
       title: 'In Ordnung',
       value: stats?.okCount ?? 0,
       icon: CheckCircle,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+      color: 'text-emerald-500',
+      bgColor: 'bg-emerald-50',
     },
   ];
 
@@ -68,7 +68,7 @@ export function UvvStats(): React.JSX.Element {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {item.title}
             </CardTitle>
-            <div className={`p-2 rounded-full ${item.bgColor}`}>
+            <div className={`p-2 rounded-lg ${item.bgColor}`}>
               <item.icon className={`h-4 w-4 ${item.color}`} />
             </div>
           </CardHeader>

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Plus, Settings, Users } from 'lucide-react';
+import { Settings, Users } from 'lucide-react';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,6 @@ import { useLicenseEmployees } from '@/hooks/use-license-control';
 
 /**
  * Führerscheinkontrolle - Übersichtsseite
- * Zeigt Statistiken und schnellen Zugriff auf alle Funktionen
  */
 export default function LicenseControlPage(): React.JSX.Element {
   const { data: employees } = useLicenseEmployees({ status: 'active' });
@@ -28,35 +27,20 @@ export default function LicenseControlPage(): React.JSX.Element {
                 <Settings className="h-4 w-4" />
               </Link>
             </Button>
-            <BatchCheckDialog />
-            <Button asChild>
-              <Link href="/fuhrpark/license-control/employees/new">
-                <Plus className="mr-2 h-4 w-4" />
-                Neuer Mitarbeiter
+            <Button variant="outline" asChild>
+              <Link href="/fuhrpark/license-control/employees">
+                <Users className="mr-2 h-4 w-4" />
+                Mitarbeiter
               </Link>
             </Button>
+            <BatchCheckDialog />
           </div>
         </PageHeader>
 
         {/* Statistik-Karten */}
         <LicenseControlStats />
 
-        {/* Schnellzugriff */}
-        <Card className="hover:shadow-md transition-shadow w-fit">
-          <Link href="/fuhrpark/license-control/employees">
-            <CardHeader className="flex flex-row items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Mitarbeiter</CardTitle>
-                <CardDescription>Alle Mitarbeiter verwalten</CardDescription>
-              </div>
-            </CardHeader>
-          </Link>
-        </Card>
-
-        {/* Mitarbeiter-Tabelle (nur fällige/überfällige) */}
+        {/* Fällige Kontrollen */}
         <Card>
           <CardHeader>
             <CardTitle>Fällige Kontrollen</CardTitle>
