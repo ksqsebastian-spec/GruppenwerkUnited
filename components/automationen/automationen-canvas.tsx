@@ -27,7 +27,7 @@ import type { AutomatisierungsKnoten } from '@/types';
 const NODE_TYPES: NodeTypes = { canvasKnoten: CanvasKnoten };
 const NODE_WIDTH = 240;
 const NODE_H_GAP = 300; // horizontaler Abstand zwischen Ebenen
-const NODE_V_GAP = 160; // vertikaler Abstand zwischen Blatt-Knoten
+const NODE_V_GAP = 90;  // vertikaler Abstand zwischen Blatt-Knoten
 
 /**
  * Reingold-Tilford-artiges Baumlayout.
@@ -149,8 +149,8 @@ function ViewportInit({
       const root = roots[0];
       const rootPos = autoLayout.get(root.id) ?? { x: root.position_x, y: root.position_y };
 
-      // Viewport so setzen: Root links-mittig mit gutem Zoom
-      const ZOOM = 0.85;
+      // Viewport so setzen: Root links-mittig, kein Herauszoomen
+      const ZOOM = 1.0;
       const viewportHeight = window.innerHeight;
       setViewport(
         {
