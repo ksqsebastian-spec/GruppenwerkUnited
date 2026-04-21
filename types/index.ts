@@ -118,7 +118,10 @@ export interface Driver {
   vehicle_drivers?: VehicleDriver[];
 }
 
-export type DriverInsert = NullableToOptional<Omit<Driver, 'id' | 'created_at' | 'updated_at' | 'company' | 'vehicle_drivers'>>;
+export type DriverInsert = NullableToOptional<Omit<Driver, 'id' | 'created_at' | 'updated_at' | 'company' | 'vehicle_drivers' | 'is_license_inspector' | 'is_uvv_instructor'>> & {
+  is_license_inspector?: boolean;
+  is_uvv_instructor?: boolean;
+};
 export type DriverUpdate = Partial<DriverInsert>;
 
 // ============================================================================
