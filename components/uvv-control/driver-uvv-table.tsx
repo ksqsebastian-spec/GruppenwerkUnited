@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { MoreHorizontal, Eye, FileText, ClipboardCheck } from 'lucide-react';
+import { MoreHorizontal, Eye, FileText, ClipboardCheck, Trash2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -33,8 +33,10 @@ import { UvvStatusBadge } from './uvv-status-badge';
 import { UvvCheckDialog } from './uvv-check-dialog';
 import { GeneratePdfButton } from './generate-pdf-button';
 import { useDriversWithUvvStatus } from '@/hooks/use-uvv-control';
+import { useArchiveDriver } from '@/hooks/use-drivers';
 import { useCompanies } from '@/hooks/use-companies';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import type { DriverWithUvvStatus, UvvCheckStatus } from '@/types';
 
 interface DriverUvvTableProps {
@@ -58,8 +60,10 @@ export function DriverUvvTable({
   const [companyFilter, setCompanyFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [checkingDriver, setCheckingDriver] = useState<DriverWithUvvStatus | null>(null);
+  const [deleteDriver, setDeleteDriver] = useState<DriverWithUvvStatus | null>(null);
 
   const { data: companies } = useCompanies();
+  const archiveMutation = useArchiveDriver();
   const { data: drivers, isLoading } = useDriversWithUvvStatus(
     externalData
       ? undefined
@@ -194,7 +198,6 @@ export function DriverUvvTable({
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => {
-                              // PDF generieren
                               const { generateUvvInstructionPdf } =
                                 require('@/lib/pdf/uvv-instruction');
                               const { fetchUvvSettings } =
@@ -206,6 +209,14 @@ export function DriverUvvTable({
                           >
                             <FileText className="mr-2 h-4 w-4" />
                             PDF erstellen
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => setDeleteDriver(driver)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Löschen
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -226,6 +237,23 @@ export function DriverUvvTable({
           onOpenChange={(open) => !open && setCheckingDriver(null)}
         />
       )}
+
+      {/* Löschen Bestätigung */}
+      <ConfirmDialog
+        open={!!deleteDriver}
+        onOpenChange={(open) => !open && setDeleteDriver(null)}
+        title="Fahrer löschen"
+        description={`Möchtest du "${deleteDriver?.first_name} ${deleteDriver?.last_name}" wirklich löschen? Der Fahrer wird aus der Liste entfernt.`}
+        confirmText="Löschen"
+        onConfirm={async () => {
+          if (deleteDriver) {
+            await archiveMutation.mutateAsync(deleteDriver.id);
+            setDeleteDriver(null);
+          }
+        }}
+        destructive
+        isLoading={archiveMutation.isPending}
+      />
     </div>
   );
 }
