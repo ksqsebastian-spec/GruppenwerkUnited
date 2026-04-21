@@ -6,13 +6,13 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LicenseControlStats, EmployeeTable, BatchCheckDialog } from '@/components/license-control';
-import { useLicenseEmployees } from '@/hooks/use-license-control';
+import { useDriversWithLicenseStatus } from '@/hooks/use-license-control';
 
 /**
  * Führerscheinkontrolle - Übersichtsseite
  */
 export default function LicenseControlPage(): React.JSX.Element {
-  const { data: employees } = useLicenseEmployees({ status: 'active' });
+  const { data: employees } = useDriversWithLicenseStatus({ status: 'active' });
 
   return (
     <>
@@ -22,12 +22,12 @@ export default function LicenseControlPage(): React.JSX.Element {
           description="Rechtskonforme Kontrolle der Führerscheine deiner Mitarbeiter (§ 21 StVG)"
         >
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" asChild>
+            <Button variant="ghost" size="icon" asChild>
               <Link href="/fuhrpark/license-control/settings">
                 <Settings className="h-4 w-4" />
               </Link>
             </Button>
-            <Button variant="outline" asChild>
+            <Button variant="secondary" asChild>
               <Link href="/fuhrpark/license-control/employees">
                 <Users className="mr-2 h-4 w-4" />
                 Mitarbeiter

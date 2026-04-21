@@ -43,7 +43,7 @@ import { calculateNextCheckDue } from '@/lib/database/license-control';
 import {
   useLicenseInspectors,
   useLicenseSettings,
-  useLicenseEmployees,
+  useDriversWithLicenseStatus,
   useCreateBatchLicenseChecks,
 } from '@/hooks/use-license-control';
 
@@ -55,7 +55,7 @@ export function BatchCheckDialog(): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const { data: employees = [] } = useLicenseEmployees({ status: 'active' });
+  const { data: employees = [] } = useDriversWithLicenseStatus({ status: 'active' });
   const { data: inspectors = [] } = useLicenseInspectors('active');
   const { data: settings } = useLicenseSettings();
   const createBatchCheck = useCreateBatchLicenseChecks();
@@ -107,7 +107,7 @@ export function BatchCheckDialog(): React.JSX.Element {
     const nextCheckDue = calculateNextCheckDue(today, intervalMonths);
 
     await createBatchCheck.mutateAsync({
-      employeeIds: selectedIds,
+      driverIds: selectedIds,
       checkData: {
         check_date: today,
         checked_by_id: data.checked_by_id,
@@ -128,7 +128,7 @@ export function BatchCheckDialog(): React.JSX.Element {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="secondary">
           <Users className="mr-2 h-4 w-4" />
           Sammelkontrolle
           {dueCount > 0 && (

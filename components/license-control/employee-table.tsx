@@ -7,8 +7,6 @@ import { de } from 'date-fns/locale';
 import {
   MoreHorizontal,
   Eye,
-  Pencil,
-  Archive,
   ClipboardCheck,
   Search,
 } from 'lucide-react';
@@ -27,7 +25,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -38,27 +35,22 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { EmptyState } from '@/components/shared/empty-state';
 
 import { LicenseStatusBadge } from './status-badge';
 import { CheckDialog } from './check-dialog';
-import {
-  useLicenseEmployees,
-  useArchiveLicenseEmployee,
-} from '@/hooks/use-license-control';
-import { useCompanies } from '@/hooks/use-companies';
-import type { LicenseCheckEmployee, LicenseCheckStatus } from '@/types';
+import { useDriversWithLicenseStatus } from '@/hooks/use-license-control';
+import type { DriverWithLicenseStatus, LicenseCheckStatus } from '@/types';
 
 interface EmployeeTableProps {
-  /** Optional: Externe Mitarbeiterliste (sonst wird intern geladen) */
-  employees?: LicenseCheckEmployee[];
+  /** Optional: Externe Fahrerliste (sonst wird intern geladen) */
+  employees?: DriverWithLicenseStatus[];
   /** Optional: Filter anzeigen (Standard: true) */
   showFilters?: boolean;
 }
 
 /**
- * Tabelle für Führerscheinkontrolle-Mitarbeiter
+ * Tabelle für Führerscheinkontrolle (basiert auf zentraler Fahrerverwaltung)
  */
 export function EmployeeTable({
   employees: externalEmployees,
@@ -66,54 +58,31 @@ export function EmployeeTable({
 }: EmployeeTableProps): React.JSX.Element {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<LicenseCheckStatus | 'all'>('all');
-  const [companyFilter, setCompanyFilter] = useState<string>('all');
   const [checkDialogOpen, setCheckDialogOpen] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<LicenseCheckEmployee | null>(null);
-  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
-  const [employeeToArchive, setEmployeeToArchive] = useState<LicenseCheckEmployee | null>(null);
-
-  const { data: companies = [] } = useCompanies();
+  const [selectedDriver, setSelectedDriver] = useState<DriverWithLicenseStatus | null>(null);
 
   // Nur intern laden wenn keine externen Daten übergeben wurden
-  const { data: internalEmployees = [], isLoading } = useLicenseEmployees(
+  const { data: internalDrivers = [], isLoading } = useDriversWithLicenseStatus(
     externalEmployees ? undefined : {
       status: 'active',
       search: search || undefined,
       checkStatus: statusFilter !== 'all' ? statusFilter : undefined,
-      companyId: companyFilter !== 'all' ? companyFilter : undefined,
     }
   );
 
-  // Verwende externe oder interne Daten
-  const employees = externalEmployees ?? internalEmployees;
-  const archiveMutation = useArchiveLicenseEmployee();
+  const drivers = externalEmployees ?? internalDrivers;
 
-  const handleCheckClick = (employee: LicenseCheckEmployee): void => {
-    setSelectedEmployee(employee);
+  const handleCheckClick = (driver: DriverWithLicenseStatus): void => {
+    setSelectedDriver(driver);
     setCheckDialogOpen(true);
   };
 
-  const handleArchiveClick = (employee: LicenseCheckEmployee): void => {
-    setEmployeeToArchive(employee);
-    setArchiveDialogOpen(true);
-  };
-
-  const handleArchiveConfirm = async (): Promise<void> => {
-    if (employeeToArchive) {
-      await archiveMutation.mutateAsync(employeeToArchive.id);
-      setArchiveDialogOpen(false);
-      setEmployeeToArchive(null);
-    }
-  };
-
-  // Nur Loading anzeigen wenn intern geladen wird
   if (!externalEmployees && isLoading) {
     return (
       <div className="space-y-4">
         {showFilters && (
           <div className="flex gap-4">
             <Skeleton className="h-10 w-64" />
-            <Skeleton className="h-10 w-40" />
             <Skeleton className="h-10 w-40" />
           </div>
         )}
@@ -130,7 +99,6 @@ export function EmployeeTable({
 
   return (
     <div className="space-y-4">
-      {/* Filter - nur anzeigen wenn showFilters true ist */}
       {showFilters && (
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
           <div className="relative flex-1 max-w-sm">
@@ -153,33 +121,19 @@ export function EmployeeTable({
               <SelectItem value="ok">In Ordnung</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={companyFilter} onValueChange={setCompanyFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Firma" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Firmen</SelectItem>
-              {companies.map((company) => (
-                <SelectItem key={company.id} value={company.id}>
-                  {company.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       )}
 
-      {/* Tabelle */}
-      {employees.length === 0 ? (
+      {drivers.length === 0 ? (
         <EmptyState
-          title="Keine Mitarbeiter gefunden"
+          title="Keine Fahrer gefunden"
           description={showFilters
-            ? "Es wurden keine Mitarbeiter mit den ausgewählten Filtern gefunden."
-            : "Keine fälligen Kontrollen vorhanden."
+            ? 'Es wurden keine Fahrer mit den ausgewählten Filtern gefunden.'
+            : 'Keine fälligen Kontrollen vorhanden.'
           }
           action={showFilters ? (
             <Button asChild>
-              <Link href="/fuhrpark/license-control/employees/new">Mitarbeiter anlegen</Link>
+              <Link href="/fuhrpark/fahrer/new">Fahrer anlegen</Link>
             </Button>
           ) : undefined}
         />
@@ -189,33 +143,29 @@ export function EmployeeTable({
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Personalnummer</TableHead>
-                <TableHead>Firma</TableHead>
-                <TableHead>Führerschein</TableHead>
+                <TableHead>Führerscheinklasse</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Nächste Kontrolle</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {employees.map((employee) => (
-                <TableRow key={employee.id}>
+              {drivers.map((driver) => (
+                <TableRow key={driver.id}>
                   <TableCell className="font-medium">
-                    {employee.last_name}, {employee.first_name}
+                    {driver.last_name}, {driver.first_name}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {employee.personnel_number || '-'}
+                    {driver.license_class || '-'}
                   </TableCell>
-                  <TableCell>{employee.company?.name || '-'}</TableCell>
-                  <TableCell>{employee.license_classes}</TableCell>
                   <TableCell>
-                    {employee.check_status && (
-                      <LicenseStatusBadge status={employee.check_status} />
+                    {driver.check_status && (
+                      <LicenseStatusBadge status={driver.check_status} />
                     )}
                   </TableCell>
                   <TableCell>
-                    {employee.next_check_due
-                      ? format(new Date(employee.next_check_due), 'dd.MM.yyyy', { locale: de })
+                    {driver.next_check_due
+                      ? format(new Date(driver.next_check_due), 'dd.MM.yyyy', { locale: de })
                       : 'Noch keine Kontrolle'}
                   </TableCell>
                   <TableCell>
@@ -228,28 +178,14 @@ export function EmployeeTable({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/fuhrpark/license-control/employees/${employee.id}`}>
+                          <Link href={`/fuhrpark/fahrer/${driver.id}`}>
                             <Eye className="mr-2 h-4 w-4" />
-                            Anzeigen
+                            Fahrer anzeigen
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/fuhrpark/license-control/employees/${employee.id}/edit`}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Bearbeiten
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleCheckClick(employee)}>
+                        <DropdownMenuItem onClick={() => handleCheckClick(driver)}>
                           <ClipboardCheck className="mr-2 h-4 w-4" />
                           Kontrolle durchführen
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleArchiveClick(employee)}
-                          className="text-red-600"
-                        >
-                          <Archive className="mr-2 h-4 w-4" />
-                          Archivieren
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -261,26 +197,13 @@ export function EmployeeTable({
         </div>
       )}
 
-      {/* Check Dialog */}
-      {selectedEmployee && (
+      {selectedDriver && (
         <CheckDialog
           open={checkDialogOpen}
           onOpenChange={setCheckDialogOpen}
-          employee={selectedEmployee}
+          driver={selectedDriver}
         />
       )}
-
-      {/* Archive Confirmation */}
-      <ConfirmDialog
-        open={archiveDialogOpen}
-        onOpenChange={setArchiveDialogOpen}
-        title="Mitarbeiter archivieren"
-        description={`Möchtest du "${employeeToArchive?.first_name} ${employeeToArchive?.last_name}" wirklich archivieren? Der Mitarbeiter wird nicht mehr in der Liste angezeigt.`}
-        confirmText="Archivieren"
-        onConfirm={handleArchiveConfirm}
-        destructive
-        isLoading={archiveMutation.isPending}
-      />
     </div>
   );
 }

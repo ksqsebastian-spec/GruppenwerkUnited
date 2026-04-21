@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Pencil, Archive, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Archive, Loader2, UserCheck } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -44,22 +45,28 @@ import {
   useCreateLicenseInspector,
   useUpdateLicenseInspector,
   useArchiveLicenseInspector,
+  useUpdateDriverInspectorFlag,
 } from '@/hooks/use-license-control';
-import type { LicenseCheckInspector } from '@/types';
+import { useDrivers } from '@/hooks/use-drivers';
+import type { LicenseCheckInspector, Driver } from '@/types';
 
 /**
  * Verwaltung der Prüfer für Führerscheinkontrollen
+ * Erlaubt manuelles Anlegen oder Auswahl aus Fahrerliste
  */
 export function InspectorManagement(): React.JSX.Element {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [driverDialogOpen, setDriverDialogOpen] = useState(false);
   const [editingInspector, setEditingInspector] = useState<LicenseCheckInspector | null>(null);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [inspectorToArchive, setInspectorToArchive] = useState<LicenseCheckInspector | null>(null);
 
   const { data: inspectors = [], isLoading } = useLicenseInspectors();
+  const { data: drivers = [] } = useDrivers({ status: 'active' });
   const createMutation = useCreateLicenseInspector();
   const updateMutation = useUpdateLicenseInspector();
   const archiveMutation = useArchiveLicenseInspector();
+  const updateDriverFlag = useUpdateDriverInspectorFlag();
 
   const form = useForm<LicenseInspectorFormData>({
     resolver: zodResolver(licenseInspectorSchema),
@@ -80,17 +87,12 @@ export function InspectorManagement(): React.JSX.Element {
       });
     } else {
       setEditingInspector(null);
-      form.reset({
-        name: '',
-        email: '',
-        status: 'active',
-      });
+      form.reset({ name: '', email: '', status: 'active' });
     }
     setDialogOpen(true);
   };
 
   const handleSubmit = async (data: LicenseInspectorFormData): Promise<void> => {
-    // Konvertiere leere Strings und undefined zu null für die Datenbank
     const insertData = {
       name: data.name,
       email: data.email || null,
@@ -105,6 +107,18 @@ export function InspectorManagement(): React.JSX.Element {
     setDialogOpen(false);
     setEditingInspector(null);
     form.reset();
+  };
+
+  const handleAppointDriver = async (driver: Driver): Promise<void> => {
+    // Prüfer-Eintrag aus Fahrerdaten erstellen
+    await createMutation.mutateAsync({
+      name: `${driver.first_name} ${driver.last_name}`,
+      email: driver.email,
+      status: 'active',
+    });
+    // Prüfer-Flag beim Fahrer setzen
+    await updateDriverFlag.mutateAsync({ driverId: driver.id, isInspector: true });
+    setDriverDialogOpen(false);
   };
 
   const handleArchiveClick = (inspector: LicenseCheckInspector): void => {
@@ -123,6 +137,9 @@ export function InspectorManagement(): React.JSX.Element {
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const activeInspectors = inspectors.filter((i) => i.status === 'active');
   const archivedInspectors = inspectors.filter((i) => i.status === 'archived');
+
+  // Fahrer, die noch kein Prüfer-Eintrag haben (vereinfachte Prüfung über is_license_inspector)
+  const availableDrivers = drivers.filter((d) => !d.is_license_inspector);
 
   if (isLoading) {
     return (
@@ -143,16 +160,24 @@ export function InspectorManagement(): React.JSX.Element {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Prüfer verwalten</h3>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="mr-2 h-4 w-4" />
-          Prüfer hinzufügen
-        </Button>
+        <div className="flex gap-2">
+          {availableDrivers.length > 0 && (
+            <Button variant="secondary" onClick={() => setDriverDialogOpen(true)}>
+              <UserCheck className="mr-2 h-4 w-4" />
+              Fahrer als Prüfer
+            </Button>
+          )}
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="mr-2 h-4 w-4" />
+            Prüfer hinzufügen
+          </Button>
+        </div>
       </div>
 
       {activeInspectors.length === 0 ? (
         <EmptyState
           title="Keine Prüfer vorhanden"
-          description="Lege mindestens einen Prüfer an, um Führerscheinkontrollen durchzuführen."
+          description="Lege mindestens einen Prüfer an oder erenne einen Fahrer zum Prüfer."
           action={
             <Button onClick={() => handleOpenDialog()}>
               <Plus className="mr-2 h-4 w-4" />
@@ -233,7 +258,7 @@ export function InspectorManagement(): React.JSX.Element {
         </div>
       )}
 
-      {/* Prüfer Dialog */}
+      {/* Prüfer manuell anlegen/bearbeiten */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -277,11 +302,7 @@ export function InspectorManagement(): React.JSX.Element {
               />
 
               <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   Abbrechen
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
@@ -299,6 +320,52 @@ export function InspectorManagement(): React.JSX.Element {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fahrer als Prüfer ernennen */}
+      <Dialog open={driverDialogOpen} onOpenChange={setDriverDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Fahrer als Prüfer ernennen</DialogTitle>
+            <DialogDescription>
+              Wähle einen Fahrer aus, der Führerscheinkontrollen durchführen darf.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="border rounded-lg max-h-64 overflow-y-auto">
+            {availableDrivers.length === 0 ? (
+              <p className="p-4 text-sm text-muted-foreground text-center">
+                Alle Fahrer sind bereits als Prüfer eingetragen
+              </p>
+            ) : (
+              availableDrivers.map((driver) => (
+                <button
+                  key={driver.id}
+                  type="button"
+                  className="w-full flex items-center justify-between p-3 border-b last:border-b-0 hover:bg-muted/50 text-left"
+                  onClick={() => handleAppointDriver(driver)}
+                  disabled={createMutation.isPending || updateDriverFlag.isPending}
+                >
+                  <div>
+                    <span className="text-sm font-medium">
+                      {driver.last_name}, {driver.first_name}
+                    </span>
+                    {driver.email && (
+                      <span className="block text-xs text-muted-foreground">{driver.email}</span>
+                    )}
+                  </div>
+                  {(createMutation.isPending || updateDriverFlag.isPending) && (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                </button>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDriverDialogOpen(false)}>
+              Schließen
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

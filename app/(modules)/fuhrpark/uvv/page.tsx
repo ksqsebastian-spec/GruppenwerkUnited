@@ -26,12 +26,12 @@ export default function UvvControlPage(): React.JSX.Element {
           description="Jährliche Fahrerunterweisung verwalten"
           actions={
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" asChild>
+              <Button variant="ghost" size="icon" asChild>
                 <Link href="/fuhrpark/uvv/settings">
                   <Settings className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button variant="outline" onClick={() => setBatchDialogOpen(true)}>
+              <Button variant="secondary" onClick={() => setBatchDialogOpen(true)}>
                 <Users className="mr-2 h-4 w-4" />
                 Sammel-Unterweisung
               </Button>

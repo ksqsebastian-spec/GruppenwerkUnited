@@ -14,6 +14,9 @@ import type {
   LicenseCheckInsert,
   LicenseCheckStatus,
   LicenseControlStats,
+  DriverWithLicenseStatus,
+  LicenseDriverFilters,
+  Driver,
 } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
@@ -364,6 +367,114 @@ export async function archiveLicenseEmployee(id: string): Promise<void> {
 // ============================================================================
 
 /**
+ * Lädt alle Fahrer mit Führerscheinkontroll-Status
+ */
+export async function fetchDriversWithLicenseStatus(
+  filters?: LicenseDriverFilters
+): Promise<DriverWithLicenseStatus[]> {
+  const settings = await fetchLicenseSettings();
+
+  let query = supabase
+    .from('drivers')
+    .select(`
+      *,
+      company:companies(id, name),
+      license_checks(
+        id,
+        check_date,
+        next_check_due,
+        license_verified,
+        notes,
+        checked_by:license_check_inspectors(id, name)
+      )
+    `)
+    .order('last_name');
+
+  if (filters?.status) {
+    query = query.eq('status', filters.status);
+  }
+
+  if (filters?.search) {
+    query = query.or(
+      `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`
+    );
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Fehler beim Laden der Fahrer:', error);
+    throw new Error(ERROR_MESSAGES.LICENSE_EMPLOYEE_LOAD_FAILED);
+  }
+
+  const drivers = (data ?? []).map((driver) => {
+    const sortedChecks = [...(driver.license_checks || [])].sort(
+      (a, b) => new Date(b.check_date).getTime() - new Date(a.check_date).getTime()
+    );
+    const latestCheck = sortedChecks[0] || null;
+    const nextCheckDue = latestCheck?.next_check_due || null;
+    const checkStatus = calculateCheckStatus(nextCheckDue, settings.warning_days_before);
+
+    return {
+      ...driver,
+      latest_license_check: latestCheck,
+      next_check_due: nextCheckDue,
+      check_status: checkStatus,
+    } as DriverWithLicenseStatus;
+  });
+
+  if (filters?.checkStatus) {
+    return drivers.filter((d) => d.check_status === filters.checkStatus);
+  }
+
+  return drivers;
+}
+
+/**
+ * Aktualisiert das Prüfer-Flag eines Fahrers
+ */
+export async function updateDriverInspectorFlag(
+  driverId: string,
+  isInspector: boolean
+): Promise<Driver> {
+  const { data, error } = await supabase
+    .from('drivers')
+    .update({ is_license_inspector: isInspector, updated_at: new Date().toISOString() })
+    .eq('id', driverId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Fehler beim Aktualisieren des Prüfer-Flags:', error);
+    throw new Error('Prüfer-Status konnte nicht aktualisiert werden');
+  }
+
+  return data;
+}
+
+/**
+ * Lädt alle Kontrollen für einen Fahrer (inkl. Dokumente)
+ */
+export async function fetchLicenseChecksByDriver(driverId: string): Promise<LicenseCheck[]> {
+  const { data, error } = await supabase
+    .from('license_checks')
+    .select(`
+      *,
+      checked_by:license_check_inspectors(id, name, email),
+      documents(id, name, file_path, mime_type)
+    `)
+    .eq('driver_id', driverId)
+    .order('check_date', { ascending: false });
+
+  if (error) {
+    console.error('Fehler beim Laden der Kontrollen:', error);
+    throw new Error(ERROR_MESSAGES.LICENSE_CHECK_LOAD_FAILED);
+  }
+
+  return data ?? [];
+}
+
+/**
  * Lädt alle Kontrollen für einen Mitarbeiter (inkl. Dokumente)
  */
 export async function fetchLicenseChecks(employeeId: string): Promise<LicenseCheck[]> {
@@ -407,15 +518,16 @@ export async function createLicenseCheck(check: LicenseCheckInsert): Promise<Lic
 }
 
 /**
- * Erstellt Kontrollen für mehrere Mitarbeiter (Sammelkontrolle)
+ * Erstellt Kontrollen für mehrere Fahrer (Sammelkontrolle)
  */
 export async function createBatchLicenseChecks(
-  employeeIds: string[],
-  checkData: Omit<LicenseCheckInsert, 'employee_id'>
+  driverIds: string[],
+  checkData: Omit<LicenseCheckInsert, 'driver_id' | 'employee_id'>
 ): Promise<LicenseCheck[]> {
-  const checks = employeeIds.map((employeeId) => ({
+  const checks = driverIds.map((driverId) => ({
     ...checkData,
-    employee_id: employeeId,
+    driver_id: driverId,
+    employee_id: null,
   }));
 
   const { data, error } = await supabase
@@ -457,25 +569,25 @@ export async function deleteLicenseCheck(id: string): Promise<void> {
  * Lädt Statistiken für das Führerscheinkontrolle-Dashboard
  */
 export async function fetchLicenseControlStats(): Promise<LicenseControlStats> {
-  const employees = await fetchLicenseEmployees({ status: 'active' });
+  const drivers = await fetchDriversWithLicenseStatus({ status: 'active' });
 
   const stats: LicenseControlStats = {
-    totalEmployees: employees.length,
-    overdueCount: employees.filter((e) => e.check_status === 'overdue').length,
-    dueSoonCount: employees.filter((e) => e.check_status === 'due_soon').length,
-    okCount: employees.filter((e) => e.check_status === 'ok').length,
+    totalEmployees: drivers.length,
+    overdueCount: drivers.filter((d) => d.check_status === 'overdue').length,
+    dueSoonCount: drivers.filter((d) => d.check_status === 'due_soon').length,
+    okCount: drivers.filter((d) => d.check_status === 'ok').length,
   };
 
   return stats;
 }
 
 /**
- * Lädt die Anzahl der Mitarbeiter mit fälligen/überfälligen Kontrollen
+ * Lädt die Anzahl der Fahrer mit fälligen/überfälligen Kontrollen
  * Wird für das Sidebar-Badge verwendet
  */
 export async function fetchLicenseWarningCount(): Promise<number> {
-  const employees = await fetchLicenseEmployees({ status: 'active' });
-  return employees.filter(
-    (e) => e.check_status === 'overdue' || e.check_status === 'due_soon'
+  const drivers = await fetchDriversWithLicenseStatus({ status: 'active' });
+  return drivers.filter(
+    (d) => d.check_status === 'overdue' || d.check_status === 'due_soon'
   ).length;
 }

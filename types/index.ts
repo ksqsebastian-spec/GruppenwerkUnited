@@ -109,6 +109,8 @@ export interface Driver {
   company_id: string;
   status: VehicleStatus;
   notes: string | null;
+  is_license_inspector: boolean;
+  is_uvv_instructor: boolean;
   created_at: string;
   updated_at: string;
   // Relationen (optional, bei Joins)
@@ -509,7 +511,8 @@ export type LicenseCheckEmployeeUpdate = Partial<LicenseCheckEmployeeInsert>;
 
 export interface LicenseCheck {
   id: string;
-  employee_id: string;
+  employee_id: string | null;
+  driver_id: string | null;
   check_date: string;
   checked_by_id: string;
   license_verified: boolean;
@@ -518,11 +521,12 @@ export interface LicenseCheck {
   created_at: string;
   // Relationen (optional, bei Joins)
   employee?: LicenseCheckEmployee;
+  driver?: Driver;
   checked_by?: LicenseCheckInspector;
   documents?: Document[];
 }
 
-export type LicenseCheckInsert = Omit<LicenseCheck, 'id' | 'created_at' | 'employee' | 'checked_by' | 'documents'>;
+export type LicenseCheckInsert = Omit<LicenseCheck, 'id' | 'created_at' | 'employee' | 'driver' | 'checked_by' | 'documents'>;
 
 // ============================================================================
 // Führerscheinkontrolle - Filter
@@ -544,6 +548,26 @@ export interface LicenseControlStats {
   overdueCount: number;
   dueSoonCount: number;
   okCount: number;
+}
+
+// ============================================================================
+// Führerscheinkontrolle - Fahrer mit Kontrollstatus
+// ============================================================================
+
+export interface DriverWithLicenseStatus extends Driver {
+  latest_license_check?: LicenseCheck | null;
+  check_status?: LicenseCheckStatus;
+  next_check_due?: string | null;
+}
+
+// ============================================================================
+// Führerscheinkontrolle - Filter (Fahrer-basiert)
+// ============================================================================
+
+export interface LicenseDriverFilters {
+  status?: VehicleStatus;
+  checkStatus?: LicenseCheckStatus;
+  search?: string;
 }
 
 // ============================================================================
