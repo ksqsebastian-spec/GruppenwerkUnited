@@ -11,6 +11,7 @@ import {
   useNodesState,
   useEdgesState,
   useReactFlow,
+  useNodesInitialized,
   type Node,
   type Edge,
   type NodeTypes,
@@ -21,154 +22,15 @@ import { Plus, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CanvasKnoten, type CanvasKnotenData } from './canvas-knoten';
 import { KnotenEditPanel } from './knoten-edit-panel';
+import { berechneDagreLayout } from '@/lib/automationen/dagre-layout';
+import { knotenZuFlowFormat, miniMapFarbe } from '@/lib/automationen/flow-format';
 import { useCreateKnoten, useUpdateKnotenPosition } from '@/hooks/use-automationen';
 import type { AutomatisierungsKnoten } from '@/types';
 
 const NODE_TYPES: NodeTypes = { canvasKnoten: CanvasKnoten };
-const NODE_WIDTH = 160;
-const NODE_H_GAP = 220; // horizontaler Abstand zwischen Ebenen
-const NODE_V_GAP = 120; // vertikaler Abstand zwischen Blatt-Knoten
-
-/**
- * Reingold-Tilford-artiges Baumlayout.
- * Blatt-Knoten bekommen aufsteigende Y-Positionen.
- * Eltern-Knoten werden vertikal auf den Mittelpunkt ihrer Kinder gesetzt.
- * Ergebnis: Root-Knoten ist immer vertikal zentriert.
- */
-function berechneAutoLayout(knoten: AutomatisierungsKnoten[]): Map<string, { x: number; y: number }> {
-  const knotenOhnePos = knoten.filter((k) => k.position_x === 0 && k.position_y === 0);
-  if (knotenOhnePos.length === 0) return new Map();
-
-  const childrenMap = new Map<string | null, AutomatisierungsKnoten[]>();
-  for (const k of knoten) {
-    if (!childrenMap.has(k.parent_id)) childrenMap.set(k.parent_id, []);
-    childrenMap.get(k.parent_id)!.push(k);
-  }
-  for (const [, children] of childrenMap) {
-    children.sort((a, b) => a.position - b.position);
-  }
-
-  const positionen = new Map<string, { x: number; y: number }>();
-  let leafY = 0;
-
-  function assign(id: string, depth: number): number {
-    const kinder = childrenMap.get(id) ?? [];
-    if (kinder.length === 0) {
-      const y = leafY * NODE_V_GAP;
-      leafY++;
-      positionen.set(id, { x: depth * NODE_H_GAP, y });
-      return y;
-    }
-    const childYs = kinder.map((k) => {
-      if (k.position_x === 0 && k.position_y === 0) {
-        return assign(k.id, depth + 1);
-      }
-      return k.position_y;
-    });
-    const centerY = (childYs[0] + childYs[childYs.length - 1]) / 2;
-    positionen.set(id, { x: depth * NODE_H_GAP, y: centerY });
-    return centerY;
-  }
-
-  const roots = (childrenMap.get(null) ?? []).sort((a, b) => a.position - b.position);
-  for (const root of roots) {
-    if (root.position_x === 0 && root.position_y === 0) {
-      assign(root.id, 0);
-    }
-  }
-
-  return positionen;
-}
-
-/** Wandelt flache Liste in React Flow Nodes + Edges um. */
-function knotenZuFlowFormat(
-  knoten: AutomatisierungsKnoten[],
-  autoLayout: Map<string, { x: number; y: number }>,
-  selectedId: string | null,
-  onEdit: (id: string) => void,
-  onAddChild: (parentId: string) => void,
-  onDelete: (id: string) => void
-): { nodes: Node[]; edges: Edge[] } {
-  const nodes: Node[] = knoten.map((k) => {
-    const auto = autoLayout.get(k.id);
-    return {
-      id: k.id,
-      type: 'canvasKnoten',
-      position: { x: auto?.x ?? k.position_x, y: auto?.y ?? k.position_y },
-      data: {
-        knoten: k,
-        onEdit,
-        onAddChild,
-        onDelete,
-        istGewaehlt: selectedId === k.id,
-      } as unknown as Record<string, unknown>,
-    };
-  });
-
-  const edges: Edge[] = knoten
-    .filter((k) => k.parent_id !== null)
-    .map((k) => ({
-      id: `e-${k.parent_id}-${k.id}`,
-      source: k.parent_id!,
-      target: k.id,
-      type: 'smoothstep',
-      animated: false,
-      style: { stroke: '#c5c2b8', strokeWidth: 2 },
-    }));
-
-  return { nodes, edges };
-}
-
-/**
- * Null-Komponente die als Kind von ReactFlow läuft.
- * Setzt den initialen Viewport so dass der Root-Knoten links-mittig sichtbar ist,
- * mit einem Zoom-Level das alle Nodes lesbar macht.
- */
-function ViewportInit({
-  knoten,
-  autoLayout,
-}: {
-  knoten: AutomatisierungsKnoten[];
-  autoLayout: Map<string, { x: number; y: number }>;
-}): null {
-  const { fitView, setViewport } = useReactFlow();
-  const initialisiert = useRef(false);
-
-  useEffect(() => {
-    if (initialisiert.current || knoten.length === 0) return;
-    initialisiert.current = true;
-
-    setTimeout(() => {
-      const roots = knoten.filter((k) => k.parent_id === null);
-      if (roots.length === 0) {
-        fitView({ padding: 0.2, duration: 500, maxZoom: 1.2 });
-        return;
-      }
-
-      // Root-Knoten-Position bestimmen
-      const root = roots[0];
-      const rootPos = autoLayout.get(root.id) ?? { x: root.position_x, y: root.position_y };
-
-      // Viewport so setzen: Root links-mittig, kein Herauszoomen
-      const ZOOM = 1.0;
-      const viewportHeight = window.innerHeight;
-      setViewport(
-        {
-          x: 80, // Root hat etwas Abstand vom linken Rand
-          y: viewportHeight / 2 - (rootPos.y + 50) * ZOOM,
-          zoom: ZOOM,
-        },
-        { duration: 400 }
-      );
-    }, 80);
-  }, [knoten, autoLayout, fitView, setViewport]);
-
-  return null;
-}
 
 interface FlowCanvasProps {
   knoten: AutomatisierungsKnoten[];
-  autoLayout: Map<string, { x: number; y: number }>;
   selectedId: string | null;
   setSelectedId: (id: string | null) => void;
   setEditPanelOffen: (v: boolean) => void;
@@ -179,10 +41,10 @@ interface FlowCanvasProps {
 
 /**
  * Innere Canvas-Komponente — hat Zugriff auf useReactFlow via ReactFlowProvider.
+ * Triggert Dagre-Layout + fitView sobald Nodes gemessen sind.
  */
 function FlowCanvas({
   knoten,
-  autoLayout,
   selectedId,
   setSelectedId,
   setEditPanelOffen,
@@ -191,6 +53,9 @@ function FlowCanvas({
   onAddChild,
 }: FlowCanvasProps): React.JSX.Element {
   const { mutate: updatePosition } = useUpdateKnotenPosition();
+  const nodesInitialized = useNodesInitialized();
+  const { getNodes, getEdges, setNodes: setRFNodes, fitView } = useReactFlow();
+  const lastLayoutNonce = useRef<string>('');
 
   const handleEdit = useCallback(
     (id: string): void => {
@@ -218,9 +83,8 @@ function FlowCanvas({
   );
 
   const { nodes: derivedNodes, edges: derivedEdges } = useMemo(
-    () =>
-      knotenZuFlowFormat(knoten, autoLayout, selectedId, handleEdit, handleAddChild, handleDelete),
-    [knoten, autoLayout, selectedId, handleEdit, handleAddChild, handleDelete]
+    () => knotenZuFlowFormat(knoten, selectedId, handleEdit, handleAddChild, handleDelete),
+    [knoten, selectedId, handleEdit, handleAddChild, handleDelete]
   );
 
   const [nodes, setNodes, onNodesChange] = useNodesState(derivedNodes);
@@ -230,6 +94,37 @@ function FlowCanvas({
     setNodes(derivedNodes);
     setEdges(derivedEdges);
   }, [derivedNodes, derivedEdges, setNodes, setEdges]);
+
+  // Layout + fitView: läuft wenn ein Node bei (0,0) liegt oder sich die
+  // Baumstruktur geändert hat. Manuell positionierte Nodes werden bei
+  // Dagre-Run mit-angepasst damit der Baum insgesamt konsistent bleibt.
+  useEffect(() => {
+    if (!nodesInitialized || knoten.length === 0) return;
+
+    const unpositioniert = knoten.some(
+      (k) => k.position_x === 0 && k.position_y === 0
+    );
+    const nonce = knoten
+      .map((k) => `${k.id}:${k.position_x}:${k.position_y}`)
+      .sort()
+      .join('|');
+    if (nonce === lastLayoutNonce.current) return;
+    lastLayoutNonce.current = nonce;
+
+    if (unpositioniert) {
+      const laidOut = berechneDagreLayout(getNodes(), getEdges());
+      setRFNodes(laidOut);
+    }
+
+    window.setTimeout(() => {
+      fitView({
+        padding: 0.15,
+        maxZoom: 1.0,
+        minZoom: 0.4,
+        duration: 400,
+      });
+    }, 50);
+  }, [nodesInitialized, knoten, getNodes, getEdges, setRFNodes, fitView]);
 
   const handleNodeDragStop: OnNodeDrag = useCallback(
     (_event, node) => {
@@ -276,8 +171,6 @@ function FlowCanvas({
         maxZoom={2}
         proOptions={{ hideAttribution: true }}
       >
-        <ViewportInit knoten={knoten} autoLayout={autoLayout} />
-
         <Background
           variant={BackgroundVariant.Dots}
           gap={24}
@@ -291,13 +184,7 @@ function FlowCanvas({
         <MiniMap
           nodeColor={(node) => {
             const d = node.data as unknown as CanvasKnotenData;
-            const typ = d?.knoten?.app_type;
-            const farben: Record<string, string> = {
-              gdrive: '#10B981', outlook: '#0078D4', email: '#0078D4',
-              sheets: '#34A853', word: '#2B579A', claude: '#c96442',
-              ai: '#c96442', pdf: '#EA4335',
-            };
-            return farben[typ] ?? '#87867f';
+            return miniMapFarbe(d?.knoten?.app_type ?? 'generic');
           }}
           nodeStrokeWidth={0}
           maskColor="rgba(245, 244, 237, 0.85)"
@@ -323,16 +210,10 @@ export function AutomatisierungenCanvas({ knoten }: AutomatisierungenCanvasProps
   const { mutate: createKnoten } = useCreateKnoten();
   const { mutate: updatePosition } = useUpdateKnotenPosition();
 
-  const autoLayout = useMemo(() => berechneAutoLayout(knoten), [knoten]);
-
   const handleAddChild = useCallback(
     (parentId: string): void => {
       const eltern = knoten.find((k) => k.id === parentId);
       const geschwister = knoten.filter((k) => k.parent_id === parentId);
-      const elternPos = autoLayout.get(parentId) ?? {
-        x: eltern?.position_x ?? 0,
-        y: eltern?.position_y ?? 0,
-      };
       createKnoten(
         {
           parent_id: parentId,
@@ -341,8 +222,8 @@ export function AutomatisierungenCanvas({ knoten }: AutomatisierungenCanvasProps
           app_type: eltern?.app_type ?? 'generic',
           prompt_template: null,
           gdrive_path: null,
-          position_x: elternPos.x + NODE_H_GAP,
-          position_y: elternPos.y + geschwister.length * NODE_V_GAP,
+          position_x: 0,
+          position_y: 0,
           position: geschwister.length,
           use_datenkodierung: false,
           is_active: true,
@@ -355,7 +236,7 @@ export function AutomatisierungenCanvas({ knoten }: AutomatisierungenCanvasProps
         }
       );
     },
-    [knoten, autoLayout, createKnoten]
+    [knoten, createKnoten]
   );
 
   const handleNeuerHauptbereich = useCallback((): void => {
@@ -369,7 +250,7 @@ export function AutomatisierungenCanvas({ knoten }: AutomatisierungenCanvasProps
         prompt_template: null,
         gdrive_path: null,
         position_x: 0,
-        position_y: wurzeln.length * (NODE_V_GAP * 3),
+        position_y: 0,
         position: wurzeln.length,
         use_datenkodierung: false,
         is_active: true,
@@ -396,7 +277,6 @@ export function AutomatisierungenCanvas({ knoten }: AutomatisierungenCanvasProps
       <ReactFlowProvider>
         <FlowCanvas
           knoten={knoten}
-          autoLayout={autoLayout}
           selectedId={selectedId}
           setSelectedId={setSelectedId}
           setEditPanelOffen={setEditPanelOffen}

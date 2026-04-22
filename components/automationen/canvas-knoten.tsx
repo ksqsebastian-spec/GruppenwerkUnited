@@ -20,8 +20,8 @@ interface CanvasKnotenProps {
   data: CanvasKnotenData;
 }
 
-/** Inline-Copy-Button ohne externe Abhängigkeit, damit die Karte schlank bleibt. */
-function KopierenZeile({
+/** Kleine Kopier-Pille für Leaf-Nodes. Ersetzt die frühere KopierenZeile. */
+function KopierenPille({
   promptText,
   usesDatenkodierung,
 }: {
@@ -50,12 +50,12 @@ function KopierenZeile({
     <button
       onClick={handleKopieren}
       className={cn(
-        'w-full flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-medium',
-        'transition-colors duration-150',
+        'mt-1.5 flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium',
+        'transition-colors duration-150 shadow-sm',
         kopiert
-          ? 'text-green-700 bg-green-50'
-          : 'text-muted-foreground hover:text-foreground hover:bg-muted/60',
-        usesDatenkodierung && !kopiert && 'text-[#c96442] hover:text-[#c96442]'
+          ? 'border-green-300 bg-green-50 text-green-700'
+          : 'border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted/60',
+        usesDatenkodierung && !kopiert && 'border-[#c96442]/30 text-[#c96442]'
       )}
       title={usesDatenkodierung ? 'Prompt mit Datenkodierung kopieren' : 'Prompt kopieren'}
     >
@@ -70,8 +70,9 @@ function KopierenZeile({
 }
 
 /**
- * Kompakter n8n-inspirierter Node für den Automatisierungs-Canvas.
- * Icon-fokussiert, farblich eindeutig, minimal Text.
+ * n8n-inspirierter Node: 80×80 Icon-Quadrat mit weißem Icon auf App-Farbe,
+ * Caption unter der Box. Der Node selbst ist transparent — das Icon-Quadrat
+ * ist das dominante visuelle Element.
  */
 export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
   const [hovered, setHovered] = useState(false);
@@ -82,67 +83,62 @@ export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.88 }}
+      initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.18, ease: 'easeOut' }}
-      className="relative cursor-default"
-      style={{ width: 160 }}
+      className="relative flex flex-col items-center cursor-default"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Handles – visuell unsichtbar, technisch nötig für Edges */}
-      <Handle type="target" position={Position.Left} style={{ visibility: 'hidden', left: -4 }} />
-      <Handle type="source" position={Position.Right} style={{ visibility: 'hidden', right: -4 }} />
-
+      {/* Icon-Quadrat (n8n-Style) */}
       <div
         className={cn(
-          'overflow-hidden rounded-xl border bg-card',
+          'relative h-20 w-20 rounded-2xl flex items-center justify-center shadow-sm',
           'transition-shadow duration-150',
-          istGewaehlt ? 'shadow-lg' : 'shadow-sm hover:shadow-md',
+          istGewaehlt && 'shadow-lg ring-2 ring-offset-2',
+          !istGewaehlt && 'hover:shadow-md'
         )}
         style={{
-          borderColor: istGewaehlt ? config.farbe : 'hsl(var(--border))',
-          outline: istGewaehlt ? `2px solid ${config.farbe}55` : undefined,
-          outlineOffset: 1,
+          backgroundColor: config.farbe,
+          ['--tw-ring-color' as string]: config.farbe,
         }}
       >
-        {/* Icon-Header mit App-Farbe als Hintergrund */}
-        <div
-          className="flex flex-col items-center justify-center gap-1.5 px-3 pt-3.5 pb-2.5"
-          style={{ backgroundColor: config.helleFarbe }}
-        >
-          <div
-            className="h-10 w-10 rounded-xl flex items-center justify-center shadow-sm"
-            style={{ backgroundColor: config.farbe }}
-          >
-            <Icon className="h-5 w-5 text-white" />
-          </div>
-        </div>
+        <Icon className="h-9 w-9 text-white" strokeWidth={1.8} />
 
-        {/* Text-Bereich */}
-        <div className="px-3 pt-2 pb-2.5 bg-card text-center">
-          <p className="text-[12px] font-semibold text-foreground leading-tight line-clamp-2">
-            {knoten.title}
-          </p>
-          <p className="mt-0.5 text-[10px] font-medium" style={{ color: config.farbe }}>
-            {config.bezeichnung}
-          </p>
-        </div>
-
-        {/* Prompt-Kopieren – nur bei Blattknoten */}
-        {istBlattknoten && knoten.prompt_template && (
-          <div className="border-t border-border/60 bg-card">
-            <KopierenZeile
-              promptText={knoten.prompt_template}
-              usesDatenkodierung={knoten.use_datenkodierung}
-            />
-          </div>
-        )}
+        {/* Handles – visuell unsichtbar, technisch nötig für Edges. top=40 → Icon-Mitte */}
+        <Handle
+          type="target"
+          position={Position.Left}
+          style={{ top: 40, left: -4, visibility: 'hidden' }}
+        />
+        <Handle
+          type="source"
+          position={Position.Right}
+          style={{ top: 40, right: -4, visibility: 'hidden' }}
+        />
       </div>
+
+      {/* Caption unter der Box */}
+      <div className="mt-1.5 w-32 text-center">
+        <p className="text-[12px] font-semibold text-foreground leading-tight line-clamp-2">
+          {knoten.title}
+        </p>
+        <p className="mt-0.5 text-[10px] font-medium" style={{ color: config.farbe }}>
+          {config.bezeichnung}
+        </p>
+      </div>
+
+      {/* Kopier-Pille (nur Blatt) */}
+      {istBlattknoten && knoten.prompt_template && (
+        <KopierenPille
+          promptText={knoten.prompt_template}
+          usesDatenkodierung={knoten.use_datenkodierung}
+        />
+      )}
 
       {/* Hover-Aktionsleiste */}
       {hovered && (
-        <div className="absolute -bottom-8 left-0 right-0 flex justify-center gap-1 z-10">
+        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex gap-1 z-10 whitespace-nowrap">
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(knoten.id); }}
             className="flex items-center gap-1 rounded-md bg-card border border-border px-2 py-1 text-[11px] text-muted-foreground shadow-sm hover:text-foreground hover:bg-muted transition-colors"
@@ -153,12 +149,14 @@ export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
           <button
             onClick={(e) => { e.stopPropagation(); onAddChild(knoten.id); }}
             className="flex items-center gap-1 rounded-md bg-card border border-border px-2 py-1 text-[11px] text-muted-foreground shadow-sm hover:text-foreground hover:bg-muted transition-colors"
+            title="Kind-Knoten hinzufügen"
           >
             <Plus className="h-3 w-3" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(knoten.id); }}
             className="flex items-center gap-1 rounded-md bg-card border border-border px-2 py-1 text-[11px] text-destructive shadow-sm hover:bg-destructive/10 transition-colors"
+            title="Löschen"
           >
             <Trash2 className="h-3 w-3" />
           </button>
