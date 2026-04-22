@@ -25,9 +25,9 @@ import { useCreateKnoten, useUpdateKnotenPosition } from '@/hooks/use-automation
 import type { AutomatisierungsKnoten } from '@/types';
 
 const NODE_TYPES: NodeTypes = { canvasKnoten: CanvasKnoten };
-const NODE_WIDTH = 240;
-const NODE_H_GAP = 300; // horizontaler Abstand zwischen Ebenen
-const NODE_V_GAP = 90;  // vertikaler Abstand zwischen Blatt-Knoten
+const NODE_WIDTH = 160;
+const NODE_H_GAP = 220; // horizontaler Abstand zwischen Ebenen
+const NODE_V_GAP = 120; // vertikaler Abstand zwischen Blatt-Knoten
 
 /**
  * Reingold-Tilford-artiges Baumlayout.
