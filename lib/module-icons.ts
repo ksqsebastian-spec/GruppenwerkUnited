@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Star,
   Wrench,
+  Zap,
 } from 'lucide-react';
 
 /**
@@ -22,4 +23,5 @@ export const MODULE_ICONS: Record<string, React.ElementType> = {
   ShieldCheck,
   Star,
   Wrench,
+  Zap,
 };

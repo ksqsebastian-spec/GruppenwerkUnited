@@ -193,6 +193,8 @@ export function generateBlankUvvPdf(settings: UvvSettings, year?: number): void 
     company_id: '',
     status: 'active',
     notes: null,
+    is_license_inspector: false,
+    is_uvv_instructor: false,
     created_at: '',
     updated_at: '',
   };

@@ -27,7 +27,7 @@ export const COMPANY_CONFIGS: CompanyConfig[] = [
   {
     id: 'seehafer',
     name: 'Seehafer Elemente',
-    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob', 'fuhrpark'],
+    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob', 'fuhrpark', 'automationen'],
     isAdmin: false,
     passwordEnvKey: 'SEEHAFER_PASSWORD',
   },
@@ -76,6 +76,7 @@ export const ROUTE_TO_MODULE: Record<string, string> = {
   '/roi': 'roi',
   '/vob': 'vob',
   '/datenkodierung': 'datenkodierung',
+  '/automationen': 'automationen',
 };
 
 /**
