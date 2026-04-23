@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Loader2, Wrench } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -61,56 +61,62 @@ export default function LoginPage(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md shadow-sm border-border">
-        <CardHeader className="text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center">
-              <Wrench className="h-8 w-8 text-primary-foreground" />
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
+      <div className="w-full max-w-sm">
+        {/* Logo + Titel */}
+        <div className="flex flex-col items-center mb-8 gap-4">
+          <Image
+            src="/logos/ollama-icon.webp"
+            width={48}
+            height={48}
+            alt="Gruppenwerk"
+            className="rounded-xl"
+          />
+          <div className="text-center">
+            <h1 className="text-2xl font-medium text-[#000000] tracking-tight">Werkbank</h1>
+            <p className="text-sm text-[#737373] mt-1">Gruppenwerk Intranet-Plattform</p>
           </div>
-          <div>
-            <CardTitle className="text-2xl">Werkbank</CardTitle>
-            <CardDescription className="mt-1">
-              Gruppenwerk Intranet-Plattform
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Passwort</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Passwort eingeben"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Anmelden...
-                  </>
-                ) : (
-                  'Anmelden'
-                )}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+        {/* Formular – Logik und Validierung unverändert */}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-[#262626]">Passwort</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="Passwort eingeben"
+                      className="rounded-full border-[#e5e5e5] bg-white h-10 px-4"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button
+              type="submit"
+              className="w-full rounded-full bg-[#000000] text-white hover:bg-[#262626] h-10"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Anmelden...
+                </>
+              ) : (
+                'Anmelden'
+              )}
+            </Button>
+          </form>
+        </Form>
+      </div>
     </div>
   );
 }
