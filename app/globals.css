@@ -4,78 +4,70 @@
 
 @layer base {
   :root {
-    /* ─── Anthropic / Claude Design System ─────────────────────────────────── */
-    /* Parchment canvas – warmes Cremepapier, die emotionale Basis des Designs */
-    --background:   54 24% 94%;    /* #f5f4ed Parchment  */
-    --foreground:   50  5%  8%;    /* #141413 Near Black  */
+    /* ─── Ollama Design System ───────────────────────────────────────────────── */
+    /* Pure white canvas – vollständig grauskaliert, keine Chromfarben */
+    --background:   0 0% 100%;      /* #ffffff pure white */
+    --foreground:   0 0% 0%;        /* #000000 pure black */
 
-    /* Ivory – Card-Oberflächen, leicht heller als Parchment */
-    --card:         50 30% 97%;    /* #faf9f5 Ivory        */
-    --card-foreground: 50 5% 8%;
+    /* Card – pure white */
+    --card:         0 0% 100%;      /* #ffffff */
+    --card-foreground: 0 0% 0%;
 
-    --popover:         50 30% 97%;
-    --popover-foreground: 50 5% 8%;
+    --popover:      0 0% 100%;
+    --popover-foreground: 0 0% 0%;
 
-    /* Terracotta – primäre Markenfarbe, einzige Chromfarbe im System */
-    --primary:      18 52% 52%;    /* #c96442 Terracotta Brand  */
-    --primary-foreground: 50 30% 97%; /* Ivory text on terracotta */
+    /* Primary – schwarzer CTA */
+    --primary:      0 0% 0%;        /* #000000 black CTA */
+    --primary-foreground: 0 0% 100%; /* #ffffff */
 
-    /* Warm Sand – sekundäre Flächen und Buttons */
-    --secondary:    48 18% 88%;    /* #e8e6dc Warm Sand    */
-    --secondary-foreground: 44 4% 29%; /* #4d4c48 Charcoal Warm */
+    /* Secondary – helles Grau */
+    --secondary:    0 0% 90%;       /* #e5e5e5 light gray */
+    --secondary-foreground: 0 0% 15%; /* #262626 */
 
-    /* Muted – gedämpfte Hintergründe */
-    --muted:        48 18% 88%;    /* #e8e6dc Warm Sand    */
-    --muted-foreground: 44 3% 51%; /* #87867f Stone Gray   */
+    /* Muted – Snow-Hintergrund */
+    --muted:        0 0% 98%;       /* #fafafa snow */
+    --muted-foreground: 0 0% 45%;   /* #737373 stone */
 
-    /* Accent – identisch mit secondary für konsistentes Hover-Verhalten */
-    --accent:       48 18% 88%;
-    --accent-foreground: 44 4% 29%;
+    /* Accent – identisch mit secondary */
+    --accent:       0 0% 90%;       /* #e5e5e5 */
+    --accent-foreground: 0 0% 15%;
 
-    /* Destructive – warmes Rot, kein kühles Signal-Rot */
-    --destructive:   0 55% 45%;    /* #b53333 Error Crimson */
-    --destructive-foreground: 50 30% 97%;
+    /* Destructive – Rot für Fehler beibehalten */
+    --destructive:  0 72% 51%;      /* keep red for errors */
+    --destructive-foreground: 0 0% 100%;
 
-    /* Borders – warme Creme-Töne, kein kühles Grau */
-    --border:       45 21% 92%;    /* #f0eee6 Border Cream  */
-    --input:        45 21% 92%;
+    /* Borders – helles Grau */
+    --border:       0 0% 90%;       /* #e5e5e5 */
+    --input:        0 0% 90%;
 
-    /* Ring – Focus Blue ist die EINZIGE kühle Farbe, nur für Accessibility */
-    --ring:         211 80% 57%;   /* #3898ec Focus Blue    */
+    /* Ring – #3b82f6 Focus Blue – EINZIGE Nicht-Graufarbe, nur Accessibility */
+    --ring:         217 91% 60%;    /* #3b82f6 focus blue — accessibility only */
 
-    /* Radius – weich aber nicht übertrieben */
-    --radius: 0.5rem;              /* 8px – comfortably rounded */
+    /* Radius – 12px Container-Radius */
+    --radius: 0.75rem;              /* 12px container radius */
   }
 
   .dark {
-    --background:   50  5%  8%;    /* #141413 Near Black    */
-    --foreground:   50 30% 97%;    /* #faf9f5 Ivory         */
-
-    --card:         45  3% 18%;    /* #30302e Dark Surface  */
-    --card-foreground: 50 30% 97%;
-
-    --popover:      45  3% 18%;
-    --popover-foreground: 50 30% 97%;
-
-    --primary:      18 52% 52%;    /* Terracotta bleibt konstant */
-    --primary-foreground: 50 30% 97%;
-
-    --secondary:    45  3% 18%;    /* Dark Surface          */
-    --secondary-foreground: 43  6% 67%; /* #b0aea5 Warm Silver */
-
-    --muted:        45  3% 18%;
-    --muted-foreground: 43  6% 67%;
-
-    --accent:       45  3% 18%;
-    --accent-foreground: 43  6% 67%;
-
-    --destructive:   0 55% 45%;
-    --destructive-foreground: 50 30% 97%;
-
-    --border:       45  3% 18%;    /* #30302e Border Dark   */
-    --input:        45  3% 18%;
-
-    --ring:         211 80% 57%;
+    /* Identisch mit :root – Ollama ist immer hell */
+    --background:   0 0% 100%;
+    --foreground:   0 0% 0%;
+    --card:         0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --popover:      0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+    --primary:      0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --secondary:    0 0% 90%;
+    --secondary-foreground: 0 0% 15%;
+    --muted:        0 0% 98%;
+    --muted-foreground: 0 0% 45%;
+    --accent:       0 0% 90%;
+    --accent-foreground: 0 0% 15%;
+    --destructive:  0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border:       0 0% 90%;
+    --input:        0 0% 90%;
+    --ring:         217 91% 60%;
   }
 }
 
@@ -85,6 +77,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "SF Pro Rounded", var(--font-sans), ui-rounded, ui-sans-serif, system-ui, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   /* Serif-Überschriften erben die Georgia-Fallback-Schrift */
@@ -95,15 +88,15 @@
 
 /* ─── ROI-Modul Designtokens ─────────────────────────────────────────────── */
 :root {
-  --roi-bg: #f5f4ed;
-  --roi-surface: #faf9f5;
-  --roi-surface-2: #f0eee6;
-  --roi-surface-3: #e8e6dc;
-  --roi-border: #f0eee6;
-  --roi-border-hover: #e8e6dc;
-  --roi-text: #141413;
-  --roi-text-muted: #5e5d59;
-  --roi-text-dim: #87867f;
+  --roi-bg: #ffffff;
+  --roi-surface: #fafafa;
+  --roi-surface-2: #f5f5f5;
+  --roi-surface-3: #e5e5e5;
+  --roi-border: #e5e5e5;
+  --roi-border-hover: #d4d4d4;
+  --roi-text: #000000;
+  --roi-text-muted: #525252;
+  --roi-text-dim: #737373;
   --roi-accent: #2D6A4F;
   --roi-accent-light: #D8F3DC;
   --roi-red: #b53333;
@@ -120,8 +113,8 @@
   --navy-light: #0a0654;
   --orange: #f28900;
   --orange-dark: #ff6b00;
-  --bg-card: #faf9f5;
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --bg-card: #ffffff;
+  --shadow-card: none;
 }
 
 /* ─── Animationen ─────────────────────────────────────────────────────────── */

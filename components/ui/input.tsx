@@ -11,9 +11,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          // Generously rounded (12px), Border Cream Rand, Parchment-Hintergrund
-          // Focus: Focus Blue Ring – einzige kühle Farbe im System
-          'flex h-10 w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground',
+          // Pill-Form, weißer Hintergrund, heller Grau-Rand
+          // Focus: Focus Blue Ring – einzige Nicht-Graufarbe im System
+          'flex h-10 w-full rounded-full border border-[#e5e5e5] bg-white px-4 py-2 text-sm text-foreground',
           'ring-offset-background placeholder:text-muted-foreground',
           'file:border-0 file:bg-transparent file:text-sm file:font-medium',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
