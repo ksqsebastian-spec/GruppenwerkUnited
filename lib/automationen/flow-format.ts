@@ -42,7 +42,7 @@ export function knotenZuFlowFormat(
       target: k.id,
       type: 'bezier',
       animated: false,
-      style: { stroke: '#a8a59a', strokeWidth: 1.5 },
+      style: { stroke: '#ef4444', strokeWidth: 2 },
     }));
 
   return { nodes, edges };

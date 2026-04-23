@@ -3,10 +3,10 @@ import type { Node, Edge } from '@xyflow/react';
 
 /**
  * Fallback-Dimensionen falls React Flow die Node noch nicht gemessen hat.
- * 80px Icon-Box + ~64px Caption (Titel + Typ + optionale Kopier-Pille).
+ * 208px n8n-Karte (w-52) + ~56px Höhe (py-2.5 + Icon h-9).
  */
-const DEFAULT_WIDTH = 128;
-const DEFAULT_HEIGHT = 150;
+const DEFAULT_WIDTH = 210;
+const DEFAULT_HEIGHT = 60;
 
 /**
  * Layoutet einen Node-Graphen mit Dagre (links-nach-rechts, hierarchisch).
@@ -22,8 +22,8 @@ export function berechneDagreLayout(nodes: Node[], edges: Edge[]): Node[] {
   const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
   g.setGraph({
     rankdir: 'LR',
-    nodesep: 20,   // weniger vertikaler Abstand zwischen Geschwistern
-    ranksep: 130,  // horizontaler Abstand zwischen Ebenen
+    nodesep: 28,   // vertikaler Abstand zwischen Geschwistern
+    ranksep: 80,   // horizontaler Abstand zwischen Ebenen
     marginx: 20,
     marginy: 20,
   });

@@ -91,7 +91,15 @@ function FlowCanvas({
   const [edges, setEdges, onEdgesChange] = useEdgesState(derivedEdges);
 
   useEffect(() => {
-    setNodes(derivedNodes);
+    // Positionen der bestehenden Nodes beibehalten – verhindert Stack-Flash
+    // wenn Daten nach einer Mutation neu geladen werden.
+    setNodes((current) => {
+      const posMap = new Map(current.map((n) => [n.id, n.position]));
+      return derivedNodes.map((n) => ({
+        ...n,
+        position: posMap.get(n.id) ?? n.position,
+      }));
+    });
     setEdges(derivedEdges);
   }, [derivedNodes, derivedEdges, setNodes, setEdges]);
 
