@@ -102,7 +102,7 @@ export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
           ['--tw-ring-color' as string]: config.farbe,
         }}
       >
-        <Logo className="h-10 w-10" />
+        <Logo size={40} />
 
         {/* Handles: visuell unsichtbar, top=36 → Icon-Mitte */}
         <Handle

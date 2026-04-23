@@ -141,7 +141,7 @@ export function KnotenEditPanel({
                           className="flex h-7 w-7 items-center justify-center rounded-md"
                           style={{ backgroundColor: aktiv ? 'white' : cfg.helleFarbe }}
                         >
-                          <Logo className="h-5 w-5" />
+                          <Logo size={20} />
                         </div>
                         {cfg.bezeichnung}
                       </button>

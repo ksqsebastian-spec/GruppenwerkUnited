@@ -1,4 +1,5 @@
 import type { AutomatisierungAppTyp } from '@/types';
+import type { LogoProps } from './app-logos';
 import {
   GmailLogo,
   GdriveLogo,
@@ -14,18 +15,18 @@ import {
 export interface AppTypKonfiguration {
   /** Akzentfarbe (HEX) */
   farbe: string;
-  /** Helle Hintergrundfarbe für Icons und Badges (HEX) */
+  /** Helle Hintergrundfarbe für Icon-Hintergrund und Badges */
   helleFarbe: string;
-  /** Logo-Komponente (echtes App-Logo als SVG) */
-  Logo: React.ComponentType<{ className?: string }>;
+  /** Logo-Komponente mit offiziellem App-Logo */
+  Logo: React.ComponentType<LogoProps>;
   /** Lesbarer Name (Deutsch) */
   bezeichnung: string;
 }
 
 export const APP_TYPEN: Record<AutomatisierungAppTyp, AppTypKonfiguration> = {
   gdrive: {
-    farbe: '#34A853',
-    helleFarbe: '#ecfdf5',
+    farbe: '#4285F4',
+    helleFarbe: '#eff6ff',
     Logo: GdriveLogo,
     bezeichnung: 'Google Drive',
   },
@@ -54,13 +55,13 @@ export const APP_TYPEN: Record<AutomatisierungAppTyp, AppTypKonfiguration> = {
     bezeichnung: 'Word',
   },
   claude: {
-    farbe: '#c96442',
+    farbe: '#D97757',
     helleFarbe: '#fdf5f2',
     Logo: ClaudeLogo,
     bezeichnung: 'Claude KI',
   },
   ai: {
-    farbe: '#c96442',
+    farbe: '#D97757',
     helleFarbe: '#fdf5f2',
     Logo: ClaudeLogo,
     bezeichnung: 'KI',
