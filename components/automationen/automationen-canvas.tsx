@@ -95,35 +95,27 @@ function FlowCanvas({
     setEdges(derivedEdges);
   }, [derivedNodes, derivedEdges, setNodes, setEdges]);
 
-  // Layout + fitView: läuft wenn ein Node bei (0,0) liegt oder sich die
-  // Baumstruktur geändert hat. Manuell positionierte Nodes werden bei
-  // Dagre-Run mit-angepasst damit der Baum insgesamt konsistent bleibt.
   useEffect(() => {
     if (!nodesInitialized || knoten.length === 0) return;
-
-    const unpositioniert = knoten.some(
-      (k) => k.position_x === 0 && k.position_y === 0
-    );
-    const nonce = knoten
-      .map((k) => `${k.id}:${k.position_x}:${k.position_y}`)
-      .sort()
-      .join('|');
+    const unpositioniert = knoten.some((k) => k.position_x === 0 && k.position_y === 0);
+    const nonce = knoten.map((k) => `${k.id}:${k.position_x}:${k.position_y}`).sort().join('|');
     if (nonce === lastLayoutNonce.current) return;
     lastLayoutNonce.current = nonce;
 
+    let aktuelleNodes = getNodes();
     if (unpositioniert) {
-      const laidOut = berechneDagreLayout(getNodes(), getEdges());
+      const laidOut = berechneDagreLayout(aktuelleNodes, getEdges());
       setRFNodes(laidOut);
+      aktuelleNodes = laidOut;
     }
 
+    // Zoom auf Root + Ebene 1 – tiefere Ebenen per Pan erreichbar
     window.setTimeout(() => {
-      fitView({
-        padding: 0.15,
-        maxZoom: 1.0,
-        minZoom: 0.4,
-        duration: 400,
-      });
-    }, 50);
+      const rootIds = new Set(knoten.filter((k) => k.parent_id === null).map((k) => k.id));
+      const lvl1Ids = new Set(knoten.filter((k) => k.parent_id && rootIds.has(k.parent_id)).map((k) => k.id));
+      const fokus = aktuelleNodes.filter((n) => rootIds.has(n.id) || lvl1Ids.has(n.id));
+      fitView({ nodes: fokus.length > 0 ? fokus : undefined, padding: 0.25, maxZoom: 1.1, minZoom: 0.4, duration: 400 });
+    }, 80);
   }, [nodesInitialized, knoten, getNodes, getEdges, setRFNodes, fitView]);
 
   const handleNodeDragStop: OnNodeDrag = useCallback(

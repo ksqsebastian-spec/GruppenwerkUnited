@@ -20,7 +20,7 @@ interface CanvasKnotenProps {
   data: CanvasKnotenData;
 }
 
-/** Kleine Kopier-Pille für Leaf-Nodes. Ersetzt die frühere KopierenZeile. */
+/** Kleine Kopier-Pille für Blatt-Nodes */
 function KopierenPille({
   promptText,
   usesDatenkodierung,
@@ -50,7 +50,7 @@ function KopierenPille({
     <button
       onClick={handleKopieren}
       className={cn(
-        'mt-1.5 flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium',
+        'mt-1.5 flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-medium',
         'transition-colors duration-150 shadow-sm',
         kopiert
           ? 'border-green-300 bg-green-50 text-green-700'
@@ -70,16 +70,15 @@ function KopierenPille({
 }
 
 /**
- * n8n-inspirierter Node: 80×80 Icon-Quadrat mit weißem Icon auf App-Farbe,
- * Caption unter der Box. Der Node selbst ist transparent — das Icon-Quadrat
- * ist das dominante visuelle Element.
+ * n8n-inspirierter Node: weißes Icon-Quadrat mit echtem App-Logo,
+ * Caption mit Titel + App-Typ unter der Box.
  */
 export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
   const [hovered, setHovered] = useState(false);
   const { knoten, onEdit, onAddChild, onDelete, istGewaehlt } = data;
   const istBlattknoten = knoten.prompt_template !== null;
   const config = getAppTypKonfiguration(knoten.app_type);
-  const Icon = config.Icon;
+  const Logo = config.Logo;
 
   return (
     <motion.div
@@ -90,45 +89,45 @@ export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Icon-Quadrat (n8n-Style) */}
+      {/* Icon-Quadrat mit weißem Hintergrund + App-Logo */}
       <div
         className={cn(
-          'relative h-20 w-20 rounded-2xl flex items-center justify-center shadow-sm',
-          'transition-shadow duration-150',
-          istGewaehlt && 'shadow-lg ring-2 ring-offset-2',
-          !istGewaehlt && 'hover:shadow-md'
+          'relative h-[72px] w-[72px] rounded-2xl flex items-center justify-center',
+          'bg-white shadow-sm transition-shadow duration-150',
+          istGewaehlt && 'shadow-md ring-2 ring-offset-2',
+          !istGewaehlt && 'hover:shadow-md',
         )}
         style={{
-          backgroundColor: config.farbe,
+          border: `1.5px solid ${config.farbe}44`,
           ['--tw-ring-color' as string]: config.farbe,
         }}
       >
-        <Icon className="h-9 w-9 text-white" strokeWidth={1.8} />
+        <Logo className="h-10 w-10" />
 
-        {/* Handles – visuell unsichtbar, technisch nötig für Edges. top=40 → Icon-Mitte */}
+        {/* Handles: visuell unsichtbar, top=36 → Icon-Mitte */}
         <Handle
           type="target"
           position={Position.Left}
-          style={{ top: 40, left: -4, visibility: 'hidden' }}
+          style={{ top: 36, left: -4, visibility: 'hidden' }}
         />
         <Handle
           type="source"
           position={Position.Right}
-          style={{ top: 40, right: -4, visibility: 'hidden' }}
+          style={{ top: 36, right: -4, visibility: 'hidden' }}
         />
       </div>
 
-      {/* Caption unter der Box */}
-      <div className="mt-1.5 w-32 text-center">
-        <p className="text-[12px] font-semibold text-foreground leading-tight line-clamp-2">
+      {/* Caption */}
+      <div className="mt-1.5 w-28 text-center">
+        <p className="text-[11px] font-semibold text-foreground leading-tight line-clamp-2">
           {knoten.title}
         </p>
-        <p className="mt-0.5 text-[10px] font-medium" style={{ color: config.farbe }}>
+        <p className="mt-0.5 text-[9px] font-medium" style={{ color: config.farbe }}>
           {config.bezeichnung}
         </p>
       </div>
 
-      {/* Kopier-Pille (nur Blatt) */}
+      {/* Kopier-Pille (nur Blatt-Nodes) */}
       {istBlattknoten && knoten.prompt_template && (
         <KopierenPille
           promptText={knoten.prompt_template}

@@ -1,14 +1,14 @@
-import {
-  FolderOpen,
-  Mail,
-  Table2,
-  FileText,
-  Bot,
-  FileType2,
-  Workflow,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import type { AutomatisierungAppTyp } from '@/types';
+import {
+  GmailLogo,
+  GdriveLogo,
+  OutlookLogo,
+  ClaudeLogo,
+  SheetsLogo,
+  GenericLogo,
+  WordLogo,
+  PdfLogo,
+} from './app-logos';
 
 /** Visuelle Konfiguration für einen App-Typ */
 export interface AppTypKonfiguration {
@@ -16,69 +16,65 @@ export interface AppTypKonfiguration {
   farbe: string;
   /** Helle Hintergrundfarbe für Icons und Badges (HEX) */
   helleFarbe: string;
-  /** Lucide-Icon-Komponente */
-  Icon: LucideIcon;
+  /** Logo-Komponente (echtes App-Logo als SVG) */
+  Logo: React.ComponentType<{ className?: string }>;
   /** Lesbarer Name (Deutsch) */
   bezeichnung: string;
 }
 
-/**
- * Zuordnung von App-Typ zu visueller Konfiguration.
- * claude/ai verwenden Terrakotta (Werkbank-Markenfarbe).
- */
 export const APP_TYPEN: Record<AutomatisierungAppTyp, AppTypKonfiguration> = {
   gdrive: {
-    farbe: '#10B981',
+    farbe: '#34A853',
     helleFarbe: '#ecfdf5',
-    Icon: FolderOpen,
+    Logo: GdriveLogo,
     bezeichnung: 'Google Drive',
   },
   outlook: {
     farbe: '#0078D4',
     helleFarbe: '#eff6ff',
-    Icon: Mail,
+    Logo: OutlookLogo,
     bezeichnung: 'Outlook',
   },
   email: {
-    farbe: '#0078D4',
-    helleFarbe: '#eff6ff',
-    Icon: Mail,
+    farbe: '#EA4335',
+    helleFarbe: '#fef2f2',
+    Logo: GmailLogo,
     bezeichnung: 'E-Mail',
   },
   sheets: {
     farbe: '#34A853',
     helleFarbe: '#f0fdf4',
-    Icon: Table2,
+    Logo: SheetsLogo,
     bezeichnung: 'Google Sheets',
   },
   word: {
     farbe: '#2B579A',
     helleFarbe: '#eff6ff',
-    Icon: FileText,
+    Logo: WordLogo,
     bezeichnung: 'Word',
   },
   claude: {
     farbe: '#c96442',
     helleFarbe: '#fdf5f2',
-    Icon: Bot,
+    Logo: ClaudeLogo,
     bezeichnung: 'Claude KI',
   },
   ai: {
     farbe: '#c96442',
     helleFarbe: '#fdf5f2',
-    Icon: Bot,
+    Logo: ClaudeLogo,
     bezeichnung: 'KI',
   },
   pdf: {
     farbe: '#EA4335',
     helleFarbe: '#fef2f2',
-    Icon: FileType2,
+    Logo: PdfLogo,
     bezeichnung: 'PDF',
   },
   generic: {
     farbe: '#87867f',
     helleFarbe: '#f5f5f4',
-    Icon: Workflow,
+    Logo: GenericLogo,
     bezeichnung: 'Allgemein',
   },
 };

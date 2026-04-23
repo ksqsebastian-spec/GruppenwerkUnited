@@ -22,8 +22,8 @@ export function berechneDagreLayout(nodes: Node[], edges: Edge[]): Node[] {
   const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
   g.setGraph({
     rankdir: 'LR',
-    nodesep: 40,
-    ranksep: 140,
+    nodesep: 20,   // weniger vertikaler Abstand zwischen Geschwistern
+    ranksep: 130,  // horizontaler Abstand zwischen Ebenen
     marginx: 20,
     marginy: 20,
   });

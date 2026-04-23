@@ -124,7 +124,7 @@ export function KnotenEditPanel({
                 {(Object.entries(APP_TYPEN) as [AutomatisierungAppTyp, typeof APP_TYPEN[AutomatisierungAppTyp]][])
                   .filter(([typ]) => typ !== 'ai') // 'ai' ist Alias für 'claude'
                   .map(([typ, cfg]) => {
-                    const Icon = cfg.Icon;
+                    const Logo = cfg.Logo;
                     const aktiv = appTyp === typ;
                     return (
                       <button
@@ -139,9 +139,9 @@ export function KnotenEditPanel({
                       >
                         <div
                           className="flex h-7 w-7 items-center justify-center rounded-md"
-                          style={{ backgroundColor: cfg.helleFarbe }}
+                          style={{ backgroundColor: aktiv ? 'white' : cfg.helleFarbe }}
                         >
-                          <Icon className="h-4 w-4" style={{ color: cfg.farbe }} />
+                          <Logo className="h-5 w-5" />
                         </div>
                         {cfg.bezeichnung}
                       </button>
