@@ -8,11 +8,43 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-function ModuleCard({ module }: { module: ModuleConfig }): React.JSX.Element {
+function ModuleCard({
+  module,
+  wide = false,
+}: {
+  module: ModuleConfig;
+  wide?: boolean;
+}): React.JSX.Element {
   const Icon = MODULE_ICONS[module.icon] ?? Wrench;
   const isComingSoon = module.status === 'coming_soon';
 
-  const inner = (
+  const inner = wide ? (
+    /* Breite horizontale Variante für vereinzelte letzte Karte */
+    <div
+      className={`group flex items-center gap-5 rounded-xl border border-border bg-card px-6 py-5 transition-all shadow-whisper
+        ${isComingSoon
+          ? 'cursor-not-allowed opacity-50'
+          : 'hover:border-primary/40 hover:shadow-md cursor-pointer'
+        }`}
+    >
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+        <Icon className="h-5 w-5 text-primary" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="font-semibold text-foreground">{module.name}</h3>
+        <p className="mt-0.5 text-sm text-muted-foreground">{module.description}</p>
+      </div>
+      {isComingSoon ? (
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-warm-sand px-2.5 py-1 text-xs font-medium text-stone-gray">
+          <Clock className="h-3 w-3" />
+          Bald
+        </span>
+      ) : (
+        <ArrowRight className="h-5 w-5 shrink-0 text-border transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+      )}
+    </div>
+  ) : (
+    /* Standard vertikale Karte */
     <div
       className={`group relative flex flex-col gap-4 rounded-xl border border-border bg-card p-6 transition-all shadow-whisper
         ${isComingSoon
@@ -33,7 +65,6 @@ function ModuleCard({ module }: { module: ModuleConfig }): React.JSX.Element {
           <ArrowRight className="h-5 w-5 text-border transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
         )}
       </div>
-
       <div>
         <h3 className="font-semibold text-foreground">{module.name}</h3>
         <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{module.description}</p>
@@ -106,9 +137,17 @@ export default function WerkbankDashboard(): React.JSX.Element {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleModules.map((mod) => (
-              <ModuleCard key={mod.id} module={mod} />
-            ))}
+            {visibleModules.map((mod, i) => {
+              const total = visibleModules.length;
+              const isLast = i === total - 1;
+              // Letzte Karte ist allein in einer Zeile → breite horizontale Variante
+              const isOrphan = isLast && total % 3 === 1;
+              return (
+                <div key={mod.id} className={isOrphan ? 'sm:col-span-2 lg:col-span-3' : ''}>
+                  <ModuleCard module={mod} wide={isOrphan} />
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
