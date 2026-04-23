@@ -12,13 +12,11 @@ import {
   useEdgesState,
   useReactFlow,
   useNodesInitialized,
-  type Node,
-  type Edge,
   type NodeTypes,
   type OnNodeDrag,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Plus, LayoutGrid } from 'lucide-react';
+import { Plus, LayoutGrid, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CanvasKnoten, type CanvasKnotenData } from './canvas-knoten';
 import { KnotenEditPanel } from './knoten-edit-panel';
@@ -35,49 +33,47 @@ interface FlowCanvasProps {
   setSelectedId: (id: string | null) => void;
   setEditPanelOffen: (v: boolean) => void;
   onNeuerHauptbereich: () => void;
-  onAutoLayout: () => void;
   onAddChild: (parentId: string) => void;
 }
 
-/**
- * Innere Canvas-Komponente — hat Zugriff auf useReactFlow via ReactFlowProvider.
- * Triggert Dagre-Layout + fitView sobald Nodes gemessen sind.
- */
 function FlowCanvas({
   knoten,
   selectedId,
   setSelectedId,
   setEditPanelOffen,
   onNeuerHauptbereich,
-  onAutoLayout,
   onAddChild,
 }: FlowCanvasProps): React.JSX.Element {
   const { mutate: updatePosition } = useUpdateKnotenPosition();
   const nodesInitialized = useNodesInitialized();
   const { getNodes, getEdges, setNodes: setRFNodes, fitView } = useReactFlow();
+
+  // Nonce = sortierte IDs – ändert sich nur bei strukturellen Änderungen
+  // (Knoten hinzugefügt/gelöscht), NICHT bei Drag oder Titel-Edit.
   const lastLayoutNonce = useRef<string>('');
+  const [layoutGeneration, setLayoutGeneration] = useState(0);
+  const lastLayoutGenRef = useRef(0);
+  const [layoutLaeuft, setLayoutLaeuft] = useState(false);
+
+  const triggerAutoLayout = useCallback((): void => {
+    setLayoutLaeuft(true);
+    setLayoutGeneration((g) => g + 1);
+    setTimeout(() => setLayoutLaeuft(false), 600);
+  }, []);
 
   const handleEdit = useCallback(
-    (id: string): void => {
-      setSelectedId(id);
-      setEditPanelOffen(true);
-    },
+    (id: string): void => { setSelectedId(id); setEditPanelOffen(true); },
     [setSelectedId, setEditPanelOffen]
   );
 
   const handleAddChild = useCallback(
-    (parentId: string): void => {
-      onAddChild(parentId);
-    },
+    (parentId: string): void => { onAddChild(parentId); },
     [onAddChild]
   );
 
   const handleDelete = useCallback(
     (id: string): void => {
-      if (selectedId === id) {
-        setSelectedId(null);
-        setEditPanelOffen(false);
-      }
+      if (selectedId === id) { setSelectedId(null); setEditPanelOffen(false); }
     },
     [selectedId, setSelectedId, setEditPanelOffen]
   );
@@ -90,41 +86,35 @@ function FlowCanvas({
   const [nodes, setNodes, onNodesChange] = useNodesState(derivedNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(derivedEdges);
 
+  // Sync: bestehende Positionen beibehalten (verhindert Snap nach Drag/Edit)
   useEffect(() => {
-    // Positionen der bestehenden Nodes beibehalten – verhindert Stack-Flash
-    // wenn Daten nach einer Mutation neu geladen werden.
     setNodes((current) => {
       const posMap = new Map(current.map((n) => [n.id, n.position]));
-      return derivedNodes.map((n) => ({
-        ...n,
-        position: posMap.get(n.id) ?? n.position,
-      }));
+      return derivedNodes.map((n) => ({ ...n, position: posMap.get(n.id) ?? n.position }));
     });
     setEdges(derivedEdges);
   }, [derivedNodes, derivedEdges, setNodes, setEdges]);
 
+  // Layout: Dagre nur bei strukturellen Änderungen (neue/gelöschte Knoten)
+  // oder manuellem Auto-Layout-Trigger.
   useEffect(() => {
     if (!nodesInitialized || knoten.length === 0) return;
-    const unpositioniert = knoten.some((k) => k.position_x === 0 && k.position_y === 0);
-    const nonce = knoten.map((k) => `${k.id}:${k.position_x}:${k.position_y}`).sort().join('|');
-    if (nonce === lastLayoutNonce.current) return;
+    const nonce = knoten.map((k) => k.id).sort().join('|');
+    const genChanged = layoutGeneration !== lastLayoutGenRef.current;
+    if (nonce === lastLayoutNonce.current && !genChanged) return;
     lastLayoutNonce.current = nonce;
+    lastLayoutGenRef.current = layoutGeneration;
 
-    let aktuelleNodes = getNodes();
-    if (unpositioniert) {
-      const laidOut = berechneDagreLayout(aktuelleNodes, getEdges());
-      setRFNodes(laidOut);
-      aktuelleNodes = laidOut;
-    }
+    const laidOut = berechneDagreLayout(getNodes(), getEdges());
+    setRFNodes(laidOut);
 
-    // Zoom auf Root + Ebene 1 – tiefere Ebenen per Pan erreichbar
     window.setTimeout(() => {
       const rootIds = new Set(knoten.filter((k) => k.parent_id === null).map((k) => k.id));
       const lvl1Ids = new Set(knoten.filter((k) => k.parent_id && rootIds.has(k.parent_id)).map((k) => k.id));
-      const fokus = aktuelleNodes.filter((n) => rootIds.has(n.id) || lvl1Ids.has(n.id));
+      const fokus = laidOut.filter((n) => rootIds.has(n.id) || lvl1Ids.has(n.id));
       fitView({ nodes: fokus.length > 0 ? fokus : undefined, padding: 0.25, maxZoom: 1.1, minZoom: 0.4, duration: 400 });
     }, 80);
-  }, [nodesInitialized, knoten, getNodes, getEdges, setRFNodes, fitView]);
+  }, [nodesInitialized, knoten, layoutGeneration, getNodes, getEdges, setRFNodes, fitView]);
 
   const handleNodeDragStop: OnNodeDrag = useCallback(
     (_event, node) => {
@@ -135,14 +125,8 @@ function FlowCanvas({
 
   return (
     <>
-      {/* Canvas Toolbar */}
       <div className="absolute left-3 top-3 z-10 flex gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8 gap-1.5 bg-card shadow-sm"
-          onClick={onNeuerHauptbereich}
-        >
+        <Button size="sm" variant="outline" className="h-8 gap-1.5 bg-card shadow-sm" onClick={onNeuerHauptbereich}>
           <Plus className="h-3.5 w-3.5" />
           Hauptbereich
         </Button>
@@ -150,11 +134,14 @@ function FlowCanvas({
           size="sm"
           variant="ghost"
           className="h-8 gap-1.5 bg-card/80 shadow-sm hover:bg-card"
-          onClick={onAutoLayout}
+          onClick={triggerAutoLayout}
+          disabled={layoutLaeuft}
           title="Knotenpositionen zurücksetzen"
         >
-          <LayoutGrid className="h-3.5 w-3.5" />
-          Auto-Layout
+          {layoutLaeuft
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            : <LayoutGrid className="h-3.5 w-3.5" />}
+          {layoutLaeuft ? 'Wird angeordnet...' : 'Auto-Layout'}
         </Button>
       </div>
 
@@ -171,16 +158,8 @@ function FlowCanvas({
         maxZoom={2}
         proOptions={{ hideAttribution: true }}
       >
-        <Background
-          variant={BackgroundVariant.Dots}
-          gap={24}
-          size={1.2}
-          color="#cac8be"
-        />
-        <Controls
-          showInteractive={false}
-          className="!shadow-sm !border !border-border !rounded-lg overflow-hidden"
-        />
+        <Background variant={BackgroundVariant.Dots} gap={24} size={1.2} color="#cac8be" />
+        <Controls showInteractive={false} className="!shadow-sm !border !border-border !rounded-lg overflow-hidden" />
         <MiniMap
           nodeColor={(node) => {
             const d = node.data as unknown as CanvasKnotenData;
@@ -199,16 +178,10 @@ interface AutomatisierungenCanvasProps {
   knoten: AutomatisierungsKnoten[];
 }
 
-/**
- * Interaktiver Automatisierungs-Canvas.
- * Wrapper stellt ReactFlowProvider bereit; Zustand wird hier verwaltet.
- */
 export function AutomatisierungenCanvas({ knoten }: AutomatisierungenCanvasProps): React.JSX.Element {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editPanelOffen, setEditPanelOffen] = useState(false);
-
   const { mutate: createKnoten } = useCreateKnoten();
-  const { mutate: updatePosition } = useUpdateKnotenPosition();
 
   const handleAddChild = useCallback(
     (parentId: string): void => {
@@ -228,12 +201,7 @@ export function AutomatisierungenCanvas({ knoten }: AutomatisierungenCanvasProps
           use_datenkodierung: false,
           is_active: true,
         },
-        {
-          onSuccess: (neuerKnoten: AutomatisierungsKnoten) => {
-            setSelectedId(neuerKnoten.id);
-            setEditPanelOffen(true);
-          },
-        }
+        { onSuccess: (neuerKnoten: AutomatisierungsKnoten) => { setSelectedId(neuerKnoten.id); setEditPanelOffen(true); } }
       );
     },
     [knoten, createKnoten]
@@ -255,20 +223,9 @@ export function AutomatisierungenCanvas({ knoten }: AutomatisierungenCanvasProps
         use_datenkodierung: false,
         is_active: true,
       },
-      {
-        onSuccess: (neuerKnoten: AutomatisierungsKnoten) => {
-          setSelectedId(neuerKnoten.id);
-          setEditPanelOffen(true);
-        },
-      }
+      { onSuccess: (neuerKnoten: AutomatisierungsKnoten) => { setSelectedId(neuerKnoten.id); setEditPanelOffen(true); } }
     );
   }, [knoten, createKnoten]);
-
-  const handleAutoLayout = useCallback((): void => {
-    for (const k of knoten) {
-      updatePosition({ id: k.id, x: 0, y: 0 });
-    }
-  }, [knoten, updatePosition]);
 
   const selectedKnoten = knoten.find((k) => k.id === selectedId) ?? null;
 
@@ -281,18 +238,13 @@ export function AutomatisierungenCanvas({ knoten }: AutomatisierungenCanvasProps
           setSelectedId={setSelectedId}
           setEditPanelOffen={setEditPanelOffen}
           onNeuerHauptbereich={handleNeuerHauptbereich}
-          onAutoLayout={handleAutoLayout}
           onAddChild={handleAddChild}
         />
       </ReactFlowProvider>
-
       <KnotenEditPanel
         knoten={selectedKnoten}
         offen={editPanelOffen}
-        onSchliessen={() => {
-          setEditPanelOffen(false);
-          setSelectedId(null);
-        }}
+        onSchliessen={() => { setEditPanelOffen(false); setSelectedId(null); }}
       />
     </div>
   );
