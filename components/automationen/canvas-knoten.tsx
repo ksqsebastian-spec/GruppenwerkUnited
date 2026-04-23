@@ -70,9 +70,9 @@ function KopierenPille({
 
 /**
  * n8n-style Node: horizontale Karte mit Icon links, Titel + App-Typ rechts.
+ * Aktionsleiste per CSS group-hover – kein JS-State-Gap-Problem.
  */
 export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
-  const [hovered, setHovered] = useState(false);
   const { knoten, onEdit, onAddChild, onDelete, istGewaehlt } = data;
   const istBlattknoten = knoten.prompt_template !== null;
   const config = getAppTypKonfiguration(knoten.app_type);
@@ -83,9 +83,9 @@ export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.15, ease: 'easeOut' }}
-      className="relative flex flex-col items-center cursor-default"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      // pb-9 verlängert die Hover-Zone nach unten – Aktionsleiste liegt
+      // innerhalb dieser Zone, sodass kein Hover-Gap entstehen kann.
+      className="group relative flex flex-col items-center cursor-default pb-9"
     >
       {/* n8n-style horizontale Karte */}
       <div
@@ -112,7 +112,6 @@ export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
           style={{ top: '50%', right: -5, visibility: 'hidden' }}
         />
 
-        {/* App-Icon */}
         <div
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
           style={{ backgroundColor: config.helleFarbe }}
@@ -120,7 +119,6 @@ export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
           <Logo size={22} />
         </div>
 
-        {/* Titel + Typ */}
         <div className="min-w-0 flex-1">
           <p className="text-[12px] font-semibold text-foreground leading-tight truncate">
             {knoten.title}
@@ -131,7 +129,6 @@ export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
         </div>
       </div>
 
-      {/* Kopier-Pille nur für Blatt-Nodes */}
       {istBlattknoten && knoten.prompt_template && (
         <KopierenPille
           promptText={knoten.prompt_template}
@@ -139,32 +136,30 @@ export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
         />
       )}
 
-      {/* Hover-Aktionsleiste */}
-      {hovered && (
-        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex gap-1 z-10 whitespace-nowrap">
-          <button
-            onClick={(e) => { e.stopPropagation(); onEdit(knoten.id); }}
-            className="flex items-center gap-1 rounded-md bg-card border border-border px-2 py-1 text-[11px] text-muted-foreground shadow-sm hover:text-foreground hover:bg-muted transition-colors"
-          >
-            <Pencil className="h-3 w-3" />
-            Bearbeiten
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onAddChild(knoten.id); }}
-            className="flex items-center gap-1 rounded-md bg-card border border-border px-2 py-1 text-[11px] text-muted-foreground shadow-sm hover:text-foreground hover:bg-muted transition-colors"
-            title="Kind-Knoten hinzufügen"
-          >
-            <Plus className="h-3 w-3" />
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(knoten.id); }}
-            className="flex items-center gap-1 rounded-md bg-card border border-border px-2 py-1 text-[11px] text-destructive shadow-sm hover:bg-destructive/10 transition-colors"
-            title="Löschen"
-          >
-            <Trash2 className="h-3 w-3" />
-          </button>
-        </div>
-      )}
+      {/* Aktionsleiste – innerhalb pb-9-Zone, via CSS group-hover eingeblendet */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-1 z-10 whitespace-nowrap invisible group-hover:visible">
+        <button
+          onClick={(e) => { e.stopPropagation(); onEdit(knoten.id); }}
+          className="flex items-center gap-1 rounded-md bg-card border border-border px-2 py-1 text-[11px] text-muted-foreground shadow-sm hover:text-foreground hover:bg-muted transition-colors"
+        >
+          <Pencil className="h-3 w-3" />
+          Bearbeiten
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onAddChild(knoten.id); }}
+          className="flex items-center gap-1 rounded-md bg-card border border-border px-2 py-1 text-[11px] text-muted-foreground shadow-sm hover:text-foreground hover:bg-muted transition-colors"
+          title="Kind-Knoten hinzufügen"
+        >
+          <Plus className="h-3 w-3" />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(knoten.id); }}
+          className="flex items-center gap-1 rounded-md bg-card border border-border px-2 py-1 text-[11px] text-destructive shadow-sm hover:bg-destructive/10 transition-colors"
+          title="Löschen"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
+      </div>
     </motion.div>
   );
 }

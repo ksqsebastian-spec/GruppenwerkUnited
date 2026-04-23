@@ -1,15 +1,16 @@
 import type { Node, Edge } from '@xyflow/react';
 import type { AutomatisierungsKnoten } from '@/types';
+import { getAppTypKonfiguration } from './app-typen';
 
 /** App-Typ → MiniMap-Farbe. Gleiche Palette wie `app-typen.ts#farbe`. */
 const MINIMAP_FARBEN: Record<string, string> = {
-  gdrive: '#10B981',
+  gdrive: '#4285F4',
   outlook: '#0078D4',
-  email: '#0078D4',
+  email: '#EA4335',
   sheets: '#34A853',
   word: '#2B579A',
-  claude: '#c96442',
-  ai: '#c96442',
+  claude: '#D97757',
+  ai: '#D97757',
   pdf: '#EA4335',
 };
 
@@ -34,16 +35,20 @@ export function knotenZuFlowFormat(
     } as unknown as Record<string, unknown>,
   }));
 
+  // Kanten-Farbe entspricht dem Ziel-Knoten (visuell: wohin führt der Pfad?)
   const edges: Edge[] = knoten
     .filter((k) => k.parent_id !== null)
-    .map((k) => ({
-      id: `e-${k.parent_id}-${k.id}`,
-      source: k.parent_id!,
-      target: k.id,
-      type: 'bezier',
-      animated: false,
-      style: { stroke: '#ef4444', strokeWidth: 2 },
-    }));
+    .map((k) => {
+      const farbe = getAppTypKonfiguration(k.app_type).farbe;
+      return {
+        id: `e-${k.parent_id}-${k.id}`,
+        source: k.parent_id!,
+        target: k.id,
+        type: 'bezier',
+        animated: false,
+        style: { stroke: farbe, strokeWidth: 2 },
+      };
+    });
 
   return { nodes, edges };
 }

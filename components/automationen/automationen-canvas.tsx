@@ -16,7 +16,7 @@ import {
   type OnNodeDrag,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Plus, LayoutGrid, Loader2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CanvasKnoten, type CanvasKnotenData } from './canvas-knoten';
 import { KnotenEditPanel } from './knoten-edit-panel';
@@ -51,15 +51,6 @@ function FlowCanvas({
   // Nonce = sortierte IDs – ändert sich nur bei strukturellen Änderungen
   // (Knoten hinzugefügt/gelöscht), NICHT bei Drag oder Titel-Edit.
   const lastLayoutNonce = useRef<string>('');
-  const [layoutGeneration, setLayoutGeneration] = useState(0);
-  const lastLayoutGenRef = useRef(0);
-  const [layoutLaeuft, setLayoutLaeuft] = useState(false);
-
-  const triggerAutoLayout = useCallback((): void => {
-    setLayoutLaeuft(true);
-    setLayoutGeneration((g) => g + 1);
-    setTimeout(() => setLayoutLaeuft(false), 600);
-  }, []);
 
   const handleEdit = useCallback(
     (id: string): void => { setSelectedId(id); setEditPanelOffen(true); },
@@ -95,15 +86,12 @@ function FlowCanvas({
     setEdges(derivedEdges);
   }, [derivedNodes, derivedEdges, setNodes, setEdges]);
 
-  // Layout: Dagre nur bei strukturellen Änderungen (neue/gelöschte Knoten)
-  // oder manuellem Auto-Layout-Trigger.
+  // Layout: Dagre nur bei strukturellen Änderungen (neue/gelöschte Knoten).
   useEffect(() => {
     if (!nodesInitialized || knoten.length === 0) return;
     const nonce = knoten.map((k) => k.id).sort().join('|');
-    const genChanged = layoutGeneration !== lastLayoutGenRef.current;
-    if (nonce === lastLayoutNonce.current && !genChanged) return;
+    if (nonce === lastLayoutNonce.current) return;
     lastLayoutNonce.current = nonce;
-    lastLayoutGenRef.current = layoutGeneration;
 
     const laidOut = berechneDagreLayout(getNodes(), getEdges());
     setRFNodes(laidOut);
@@ -114,7 +102,7 @@ function FlowCanvas({
       const fokus = laidOut.filter((n) => rootIds.has(n.id) || lvl1Ids.has(n.id));
       fitView({ nodes: fokus.length > 0 ? fokus : undefined, padding: 0.25, maxZoom: 1.1, minZoom: 0.4, duration: 400 });
     }, 80);
-  }, [nodesInitialized, knoten, layoutGeneration, getNodes, getEdges, setRFNodes, fitView]);
+  }, [nodesInitialized, knoten, getNodes, getEdges, setRFNodes, fitView]);
 
   const handleNodeDragStop: OnNodeDrag = useCallback(
     (_event, node) => {
@@ -129,19 +117,6 @@ function FlowCanvas({
         <Button size="sm" variant="outline" className="h-8 gap-1.5 bg-card shadow-sm" onClick={onNeuerHauptbereich}>
           <Plus className="h-3.5 w-3.5" />
           Hauptbereich
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-8 gap-1.5 bg-card/80 shadow-sm hover:bg-card"
-          onClick={triggerAutoLayout}
-          disabled={layoutLaeuft}
-          title="Knotenpositionen zurücksetzen"
-        >
-          {layoutLaeuft
-            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            : <LayoutGrid className="h-3.5 w-3.5" />}
-          {layoutLaeuft ? 'Wird angeordnet...' : 'Auto-Layout'}
         </Button>
       </div>
 
