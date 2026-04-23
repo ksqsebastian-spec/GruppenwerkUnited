@@ -1,36 +1,34 @@
 import Dagre from '@dagrejs/dagre';
 import type { Node, Edge } from '@xyflow/react';
 
-/**
- * Fallback-Dimensionen falls React Flow die Node noch nicht gemessen hat.
- * 256px n8n-Karte (w-64) + ~56px Höhe (py-2.5 + Icon h-9).
- */
 const DEFAULT_WIDTH = 256;
 const DEFAULT_HEIGHT = 60;
 
 /**
- * Layoutet einen Node-Graphen mit Dagre (links-nach-rechts, hierarchisch).
- * Verwendet die tatsächlich gerenderten Dimensionen (`node.measured`) sobald
- * React Flow die Nodes einmal gemessen hat – dadurch keine Überlappungen
- * unabhängig von Blatt- vs Kategorie-Höhenunterschieden.
+ * Layoutet sichtbare Nodes vertikal (TB) mit Dagre.
+ * Versteckte Nodes (hidden=true) werden nicht layoutet – ihre Position bleibt.
  *
- * React Flow verwendet in dieser App `nodeOrigin={[0, 0.5]}`:
- * → Position.x = linker Rand, Position.y = vertikaler Mittelpunkt.
- * Dagre liefert den Mittelpunkt → wir ziehen Breite/2 ab.
+ * nodeOrigin={[0, 0.5]}: position.x = linker Rand, position.y = vertikaler Mittelpunkt.
+ * Dagre liefert Mittelpunkte → x: center - width/2, y: center (unverändert).
  */
 export function berechneDagreLayout(nodes: Node[], edges: Edge[]): Node[] {
+  const sichtbareNodes = nodes.filter((n) => !n.hidden);
+  const sichtbareIds = new Set(sichtbareNodes.map((n) => n.id));
+  const sichtbareEdges = edges.filter(
+    (e) => sichtbareIds.has(e.source) && sichtbareIds.has(e.target)
+  );
+
   const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
   g.setGraph({
-    rankdir: 'LR',
-    nodesep: 20,   // vertikaler Abstand zwischen Geschwistern (Lücke zwischen Pipelines)
-    ranksep: 80,   // horizontaler Abstand zwischen Pipeline-Schritten
+    rankdir: 'TB',
+    nodesep: 60,   // horizontaler Abstand zwischen Geschwistern
+    ranksep: 60,   // vertikaler Abstand zwischen Ebenen
     marginx: 20,
     marginy: 20,
   });
 
-  edges.forEach((e) => g.setEdge(e.source, e.target));
-
-  nodes.forEach((n) => {
+  sichtbareEdges.forEach((e) => g.setEdge(e.source, e.target));
+  sichtbareNodes.forEach((n) => {
     g.setNode(n.id, {
       width: n.measured?.width ?? DEFAULT_WIDTH,
       height: n.measured?.height ?? DEFAULT_HEIGHT,
@@ -39,15 +37,15 @@ export function berechneDagreLayout(nodes: Node[], edges: Edge[]): Node[] {
 
   Dagre.layout(g);
 
-  return nodes.map((n) => {
+  const posMap = new Map<string, { x: number; y: number }>();
+  sichtbareNodes.forEach((n) => {
     const pos = g.node(n.id);
     const w = n.measured?.width ?? DEFAULT_WIDTH;
-    return {
-      ...n,
-      position: {
-        x: pos.x - w / 2,
-        y: pos.y,
-      },
-    };
+    posMap.set(n.id, { x: pos.x - w / 2, y: pos.y });
   });
+
+  return nodes.map((n) => ({
+    ...n,
+    position: posMap.has(n.id) ? posMap.get(n.id)! : n.position,
+  }));
 }

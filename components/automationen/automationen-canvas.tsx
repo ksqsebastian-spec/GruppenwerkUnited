@@ -34,6 +34,8 @@ interface FlowCanvasProps {
   setEditPanelOffen: (v: boolean) => void;
   onNeuerHauptbereich: () => void;
   onAddChild: (parentId: string) => void;
+  collapsedIds: Set<string>;
+  onToggleCollapse: (id: string) => void;
 }
 
 function FlowCanvas({
@@ -43,13 +45,12 @@ function FlowCanvas({
   setEditPanelOffen,
   onNeuerHauptbereich,
   onAddChild,
+  collapsedIds,
+  onToggleCollapse,
 }: FlowCanvasProps): React.JSX.Element {
   const { mutate: updatePosition } = useUpdateKnotenPosition();
   const nodesInitialized = useNodesInitialized();
   const { getNodes, getEdges, setNodes: setRFNodes, fitView } = useReactFlow();
-
-  // Nonce = sortierte IDs – ändert sich nur bei strukturellen Änderungen
-  // (Knoten hinzugefügt/gelöscht), NICHT bei Drag oder Titel-Edit.
   const lastLayoutNonce = useRef<string>('');
 
   const handleEdit = useCallback(
@@ -70,14 +71,17 @@ function FlowCanvas({
   );
 
   const { nodes: derivedNodes, edges: derivedEdges } = useMemo(
-    () => knotenZuFlowFormat(knoten, selectedId, handleEdit, handleAddChild, handleDelete),
-    [knoten, selectedId, handleEdit, handleAddChild, handleDelete]
+    () => knotenZuFlowFormat(
+      knoten, selectedId, collapsedIds,
+      handleEdit, handleAddChild, handleDelete, onToggleCollapse
+    ),
+    [knoten, selectedId, collapsedIds, handleEdit, handleAddChild, handleDelete, onToggleCollapse]
   );
 
   const [nodes, setNodes, onNodesChange] = useNodesState(derivedNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(derivedEdges);
 
-  // Sync: bestehende Positionen beibehalten (verhindert Snap nach Drag/Edit)
+  // Sync: Positionen beibehalten, hidden-Flag + Daten aktualisieren
   useEffect(() => {
     setNodes((current) => {
       const posMap = new Map(current.map((n) => [n.id, n.position]));
@@ -86,21 +90,22 @@ function FlowCanvas({
     setEdges(derivedEdges);
   }, [derivedNodes, derivedEdges, setNodes, setEdges]);
 
-  // Layout: Dagre nur bei strukturellen Änderungen (neue/gelöschte Knoten).
+  // Layout + fitView: bei strukturellen Änderungen UND Kollabier-Änderungen
   useEffect(() => {
     if (!nodesInitialized || knoten.length === 0) return;
-    const nonce = knoten.map((k) => k.id).sort().join('|');
+    const nonce =
+      knoten.map((k) => k.id).sort().join('|') +
+      '|c:' + [...collapsedIds].sort().join(',');
     if (nonce === lastLayoutNonce.current) return;
     lastLayoutNonce.current = nonce;
 
     const laidOut = berechneDagreLayout(getNodes(), getEdges());
     setRFNodes(laidOut);
 
-    // Alle Pipelines vollständig im Blick – kein manuelles Herauszoomen nötig
     window.setTimeout(() => {
       fitView({ padding: 0.12, maxZoom: 0.9, minZoom: 0.15, duration: 400 });
     }, 80);
-  }, [nodesInitialized, knoten, getNodes, getEdges, setRFNodes, fitView]);
+  }, [nodesInitialized, knoten, collapsedIds, getNodes, getEdges, setRFNodes, fitView]);
 
   const handleNodeDragStop: OnNodeDrag = useCallback(
     (_event, node) => {
@@ -154,7 +159,17 @@ interface AutomatisierungenCanvasProps {
 export function AutomatisierungenCanvas({ knoten }: AutomatisierungenCanvasProps): React.JSX.Element {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editPanelOffen, setEditPanelOffen] = useState(false);
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
   const { mutate: createKnoten } = useCreateKnoten();
+
+  const handleToggleCollapse = useCallback((id: string): void => {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   const handleAddChild = useCallback(
     (parentId: string): void => {
@@ -212,6 +227,8 @@ export function AutomatisierungenCanvas({ knoten }: AutomatisierungenCanvasProps
           setEditPanelOffen={setEditPanelOffen}
           onNeuerHauptbereich={handleNeuerHauptbereich}
           onAddChild={handleAddChild}
+          collapsedIds={collapsedIds}
+          onToggleCollapse={handleToggleCollapse}
         />
       </ReactFlowProvider>
       <KnotenEditPanel
