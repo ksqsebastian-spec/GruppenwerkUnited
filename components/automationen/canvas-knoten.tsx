@@ -90,7 +90,7 @@ export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
       {/* n8n-style horizontale Karte */}
       <div
         className={cn(
-          'relative flex items-center gap-3 w-52 px-3 py-2.5 rounded-xl bg-white',
+          'relative flex items-center gap-3 w-64 px-3 py-2.5 rounded-xl bg-white',
           'shadow-sm transition-all duration-150',
           istGewaehlt ? 'shadow-md' : 'hover:shadow-md',
         )}
@@ -120,7 +120,7 @@ export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-semibold text-foreground leading-tight truncate">
+          <p className="text-[12px] font-semibold text-foreground leading-tight line-clamp-2">
             {knoten.title}
           </p>
           <p className="text-[10px] font-medium mt-0.5 truncate" style={{ color: config.farbe }}>

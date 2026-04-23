@@ -96,11 +96,9 @@ function FlowCanvas({
     const laidOut = berechneDagreLayout(getNodes(), getEdges());
     setRFNodes(laidOut);
 
+    // Alle Pipelines vollständig im Blick – kein manuelles Herauszoomen nötig
     window.setTimeout(() => {
-      const rootIds = new Set(knoten.filter((k) => k.parent_id === null).map((k) => k.id));
-      const lvl1Ids = new Set(knoten.filter((k) => k.parent_id && rootIds.has(k.parent_id)).map((k) => k.id));
-      const fokus = laidOut.filter((n) => rootIds.has(n.id) || lvl1Ids.has(n.id));
-      fitView({ nodes: fokus.length > 0 ? fokus : undefined, padding: 0.25, maxZoom: 1.1, minZoom: 0.4, duration: 400 });
+      fitView({ padding: 0.12, maxZoom: 0.9, minZoom: 0.15, duration: 400 });
     }, 80);
   }, [nodesInitialized, knoten, getNodes, getEdges, setRFNodes, fitView]);
 
