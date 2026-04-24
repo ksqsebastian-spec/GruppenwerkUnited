@@ -694,6 +694,7 @@ export type AutomatisierungAppTyp =
   | 'claude'
   | 'ai'
   | 'pdf'
+  | 'composio'
   | 'generic';
 
 export interface AutomatisierungsKnoten {

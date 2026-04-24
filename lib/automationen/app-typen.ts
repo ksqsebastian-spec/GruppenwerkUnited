@@ -6,6 +6,7 @@ import {
   OutlookLogo,
   ClaudeLogo,
   SheetsLogo,
+  ComposioLogo,
   GenericLogo,
   WordLogo,
   PdfLogo,
@@ -71,6 +72,12 @@ export const APP_TYPEN: Record<AutomatisierungAppTyp, AppTypKonfiguration> = {
     helleFarbe: '#fef2f2',
     Logo: PdfLogo,
     bezeichnung: 'PDF',
+  },
+  composio: {
+    farbe: '#6d28d9',
+    helleFarbe: '#f5f3ff',
+    Logo: ComposioLogo,
+    bezeichnung: 'Composio',
   },
   generic: {
     farbe: '#87867f',

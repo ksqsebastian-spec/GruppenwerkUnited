@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { SiAnthropic } from '@icons-pack/react-simple-icons';
+import { SiAnthropic, SiGooglesheets } from '@icons-pack/react-simple-icons';
 
 /** Einheitliche Props für alle Logo-Komponenten */
 export interface LogoProps {
@@ -17,8 +17,9 @@ export function GdriveLogo({ size = 40 }: LogoProps): React.JSX.Element {
   return <Image src="/logos/google-drive.png" width={size} height={size} alt="Google Drive" />;
 }
 
+/** Offizielles Google-Sheets-Icon (nicht Excel) */
 export function SheetsLogo({ size = 40 }: LogoProps): React.JSX.Element {
-  return <Image src="/logos/excel.png" width={size} height={size} alt="Excel / Sheets" />;
+  return <SiGooglesheets size={size} color="#34A853" />;
 }
 
 export function ClaudeLogo({ size = 40 }: LogoProps): React.JSX.Element {
@@ -39,6 +40,10 @@ export function WordLogo({ size = 40 }: LogoProps): React.JSX.Element {
 
 export function PdfLogo({ size = 40 }: LogoProps): React.JSX.Element {
   return <Image src="/logos/pdf.png" width={size} height={size} alt="PDF" />;
+}
+
+export function ComposioLogo({ size = 40 }: LogoProps): React.JSX.Element {
+  return <Image src="/logos/composio.png" width={size} height={size} alt="Composio" />;
 }
 
 export function GenericLogo({ size = 40 }: LogoProps): React.JSX.Element {
