@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Folder, FileText, Table2, File, FileCode, X, Copy, Check, Clipboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEEHAFER_STRUKTUR, findeKinder, type OrdnerEintrag, type DateiTyp } from '@/lib/automationen/ordner-struktur';
@@ -9,12 +10,16 @@ interface Baustein {
   id: string;
   name: string;
   type: DateiTyp;
+  logo?: string;
   pfad: string;
   kontext: string;
 }
 
-function DateiIcon({ type, className }: { type: DateiTyp; className?: string }): React.JSX.Element {
+function DateiIcon({ type, logo, className }: { type: DateiTyp; logo?: string; className?: string }): React.JSX.Element {
   const base = cn('shrink-0', className);
+  if (logo) {
+    return <Image src={`/logos/${logo}`} width={16} height={16} alt="" className={cn('shrink-0 object-contain', className?.replace(/text-\S+/g, ''))} />;
+  }
   if (type === 'folder')   return <Folder    className={cn(base, 'text-[#3b82f6]')} />;
   if (type === 'docx')     return <FileText  className={cn(base, 'text-[#2563eb]')} />;
   if (type === 'sheet')    return <Table2    className={cn(base, 'text-[#16a34a]')} />;
@@ -26,7 +31,7 @@ function BausteinKarte({ baustein, onEntfernen }: { baustein: Baustein; onEntfer
   return (
     <div className="rounded-xl border border-[#e5e5e5] bg-white px-3 py-2.5 group relative">
       <div className="flex items-start gap-2">
-        <DateiIcon type={baustein.type} className="h-4 w-4 mt-0.5" />
+        <DateiIcon type={baustein.type} logo={baustein.logo} className="h-4 w-4 mt-0.5" />
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-semibold text-[#000000] truncate">{baustein.name}</p>
           <p className="text-[10px] text-[#737373] mt-0.5 line-clamp-3 leading-relaxed">{baustein.kontext}</p>
@@ -66,6 +71,7 @@ function Spalte({ eintraege, aktivId, onKlick }: SpalteProps): React.JSX.Element
             >
               <DateiIcon
                 type={eintrag.type}
+                logo={aktivId === eintrag.id ? undefined : eintrag.logo}
                 className={cn('h-4 w-4', aktivId === eintrag.id && 'text-white')}
               />
               <span className="text-[12px] font-medium truncate flex-1">{eintrag.name}</span>
@@ -143,7 +149,7 @@ export function DateiBrowser(): React.JSX.Element {
         }), eintrag.name].join(' / ');
         return [
           ...prev,
-          { id: eintrag.id, name: eintrag.name, type: eintrag.type, pfad: pfadLabel, kontext },
+          { id: eintrag.id, name: eintrag.name, type: eintrag.type, logo: eintrag.logo, pfad: pfadLabel, kontext },
         ];
       });
     }
