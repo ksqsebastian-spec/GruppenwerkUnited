@@ -56,7 +56,7 @@ export function ModuleSubnav({ navItems, children }: ModuleSubnavProps): React.J
                 className={cn(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
                   isActive
-                    ? 'bg-[#c96442] text-white shadow-sm'
+                    ? 'bg-[#000000] text-white shadow-sm'
                     : 'text-foreground/70 hover:text-foreground hover:bg-background/60'
                 )}
               >
