@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight, Folder, FileText, Table2, File, FileCode, X, Copy, Check, Clipboard, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Folder, FileText, Table2, File, FileCode, X, Copy, Check, Clipboard, ToggleLeft, ToggleRight, ScanSearch } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEEHAFER_STRUKTUR, findeKinder, type OrdnerEintrag, type DateiTyp } from '@/lib/automationen/ordner-struktur';
 
-type AusgabeFormat = 'pdf' | 'word' | 'excel' | null;
+type AusgabeFormat = 'pdf' | 'word' | 'excel' | 'scan' | null;
 
 interface Baustein {
   id: string;
@@ -174,6 +174,7 @@ export function DateiBrowser(): React.JSX.Element {
       pdf: 'Erstelle die Ausgabe als PDF-Dokument.',
       word: 'Erstelle die Ausgabe als Word-Dokument (.docx).',
       excel: 'Erstelle die Ausgabe als Excel-Tabelle (.xlsx).',
+      scan: 'Erstelle einen strukturierten Statusbericht / Scan der Inhalte mit Zusammenfassung, Auffälligkeiten und nächsten Schritten.',
     };
 
     const zeilen: string[] = [];
@@ -374,23 +375,27 @@ export function DateiBrowser(): React.JSX.Element {
         {/* Schritt 4 – Ausgabe-Format */}
         <div className="shrink-0 px-4 pt-3 pb-2.5 border-b border-[#e5e5e5]">
           <p className="text-[10px] font-semibold text-[#a3a3a3] uppercase tracking-wider mb-2">4 · Ausgabe-Format</p>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {([
-              { key: 'pdf', logo: 'pdf.png', label: 'PDF' },
-              { key: 'word', logo: 'word.png', label: 'Word' },
-              { key: 'excel', logo: 'excel.png', label: 'Excel' },
+              { key: 'pdf',  label: 'PDF',          logo: 'pdf.png'  },
+              { key: 'word', label: 'Word',          logo: 'word.png' },
+              { key: 'excel',label: 'Excel',         logo: 'excel.png'},
+              { key: 'scan', label: 'Statusbericht', logo: null       },
             ] as const).map(({ key, logo, label }) => (
               <button
                 key={key}
                 onClick={() => setAusgabeFormat((f) => f === key ? null : key)}
                 className={cn(
-                  'flex-1 flex flex-col items-center gap-1 rounded-xl border py-2 transition-colors',
+                  'flex flex-col items-center gap-1.5 rounded-xl border py-2.5 transition-colors',
                   ausgabeFormat === key
                     ? 'border-[#000000] bg-[#f5f5f5]'
                     : 'border-[#e5e5e5] bg-white hover:bg-[#f5f5f5]'
                 )}
               >
-                <Image src={`/logos/${logo}`} width={18} height={18} alt={label} className="object-contain" />
+                {logo
+                  ? <Image src={`/logos/${logo}`} width={20} height={20} alt={label} className="object-contain" />
+                  : <ScanSearch className={cn('h-5 w-5', ausgabeFormat === key ? 'text-[#000000]' : 'text-[#a3a3a3]')} />
+                }
                 <span className={cn('text-[10px] font-semibold', ausgabeFormat === key ? 'text-[#000000]' : 'text-[#737373]')}>
                   {label}
                 </span>
@@ -427,7 +432,7 @@ export function DateiBrowser(): React.JSX.Element {
           </button>
           {bausteine.length > 0 && (
             <p className="mt-1.5 text-center text-[10px] text-[#a3a3a3]">
-              {bausteine.length} {bausteine.length === 1 ? 'Baustein' : 'Bausteine'}{ausgabeFormat ? ` · ${ausgabeFormat.toUpperCase()}` : ''}
+              {bausteine.length} {bausteine.length === 1 ? 'Baustein' : 'Bausteine'}{ausgabeFormat ? ` · ${ausgabeFormat === 'scan' ? 'Statusbericht' : ausgabeFormat.toUpperCase()}` : ''}
             </p>
           )}
         </div>
