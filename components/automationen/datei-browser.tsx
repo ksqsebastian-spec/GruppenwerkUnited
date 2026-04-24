@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight, Folder, FileText, Table2, File, FileCode, X, Copy, Check, Clipboard } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Folder, FileText, Table2, File, FileCode, X, Copy, Check, Clipboard, ToggleLeft, ToggleRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEEHAFER_STRUKTUR, findeKinder, type OrdnerEintrag, type DateiTyp } from '@/lib/automationen/ordner-struktur';
+
+type AusgabeFormat = 'pdf' | 'word' | 'excel' | null;
 
 interface Baustein {
   id: string;
@@ -94,6 +96,8 @@ export function DateiBrowser(): React.JSX.Element {
   const [verlaufIndex, setVerlaufIndex] = useState(0);
   const [bausteine, setBausteine] = useState<Baustein[]>([]);
   const [kopiert, setKopiert] = useState(false);
+  const [mitComposio, setMitComposio] = useState(true);
+  const [ausgabeFormat, setAusgabeFormat] = useState<AusgabeFormat>(null);
   const spaltenRef = useRef<HTMLDivElement>(null);
 
   // Pfad aus dem Verlauf holen
@@ -161,9 +165,23 @@ export function DateiBrowser(): React.JSX.Element {
 
   const handleKopieren = useCallback(async (): Promise<void> => {
     if (bausteine.length === 0) return;
-    const text = bausteine
-      .map((b) => `## ${b.name}\n${b.kontext}`)
-      .join('\n\n---\n\n');
+
+    const pfade = bausteine.map((b) => b.pfad).join(', ');
+    const kontext = bausteine.map((b) => `## ${b.name}\n${b.kontext}`).join('\n\n---\n\n');
+
+    const connectorZeile = mitComposio
+      ? 'Nutze Composio um auf Google Drive zuzugreifen.'
+      : 'Greife direkt auf Google Drive zu.';
+
+    const formatMap: Record<NonNullable<AusgabeFormat>, string> = {
+      pdf: 'Erstelle die Ausgabe als PDF-Dokument.',
+      word: 'Erstelle die Ausgabe als Word-Dokument (.docx).',
+      excel: 'Erstelle die Ausgabe als Excel-Tabelle (.xlsx).',
+    };
+    const formatZeile = ausgabeFormat ? `\n\n${formatMap[ausgabeFormat]}` : '';
+
+    const text = `Hey Claude. ${connectorZeile} Öffne folgende Ordner / Dateien: ${pfade}.\n\n${kontext}${formatZeile}`;
+
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -176,7 +194,7 @@ export function DateiBrowser(): React.JSX.Element {
     }
     setKopiert(true);
     setTimeout(() => setKopiert(false), 2000);
-  }, [bausteine]);
+  }, [bausteine, mitComposio, ausgabeFormat]);
 
   // Spalten aufbauen: erste Spalte = Root-Kinder, dann je nach Pfad
   const spaltenDaten: OrdnerEintrag[][] = [SEEHAFER_STRUKTUR.kinder ?? []];
@@ -192,7 +210,6 @@ export function DateiBrowser(): React.JSX.Element {
 
   const kannZurueck = verlaufIndex > 0;
   const kannVorwaerts = verlaufIndex < verlauf.length - 1;
-  const promptText = bausteine.map((b) => `## ${b.name}\n${b.kontext}`).join('\n\n---\n\n');
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -264,45 +281,117 @@ export function DateiBrowser(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Rechte Seite: Prompt-Panel */}
+      {/* Rechte Seite: Prompt-Builder */}
       <div className="shrink-0 w-80 flex flex-col border-l border-[#e5e5e5] bg-[#fafafa]">
-        <div className="shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-[#e5e5e5]">
-          <span className="text-[12px] font-semibold text-[#000000]">
-            Kontext-Bausteine
-            {bausteine.length > 0 && (
-              <span className="ml-1.5 text-[10px] font-medium text-[#737373]">
-                {bausteine.length}
-              </span>
+
+        {/* Schritt 1 – KI */}
+        <div className="shrink-0 px-4 pt-3 pb-2.5 border-b border-[#e5e5e5]">
+          <p className="text-[10px] font-semibold text-[#a3a3a3] uppercase tracking-wider mb-2">1 · KI</p>
+          <div className="flex items-center gap-2 rounded-xl border border-[#e5e5e5] bg-white px-3 py-2">
+            <Image src="/logos/claude.png" width={18} height={18} alt="Claude" className="shrink-0 object-contain" />
+            <span className="text-[12px] font-semibold text-[#000000]">Claude</span>
+            <span className="ml-auto text-[10px] text-[#a3a3a3]">immer aktiv</span>
+          </div>
+        </div>
+
+        {/* Schritt 2 – Connector */}
+        <div className="shrink-0 px-4 pt-3 pb-2.5 border-b border-[#e5e5e5]">
+          <p className="text-[10px] font-semibold text-[#a3a3a3] uppercase tracking-wider mb-2">2 · Connector</p>
+          <button
+            onClick={() => setMitComposio((v) => !v)}
+            className={cn(
+              'w-full flex items-center gap-2.5 rounded-xl border px-3 py-2 transition-colors',
+              mitComposio
+                ? 'border-[#7c3aed] bg-[#faf5ff]'
+                : 'border-[#e5e5e5] bg-white hover:bg-[#f5f5f5]'
             )}
-          </span>
-          {bausteine.length > 0 && (
-            <button
-              onClick={() => setBausteine([])}
-              className="text-[10px] text-[#737373] hover:text-[#000000] transition-colors rounded-full px-2 py-0.5 hover:bg-[#e5e5e5]"
-            >
-              Alle entfernen
-            </button>
-          )}
+          >
+            <Image
+              src={mitComposio ? '/logos/composio.png' : '/logos/google-drive.png'}
+              width={18}
+              height={18}
+              alt={mitComposio ? 'Composio' : 'Google Drive'}
+              className="shrink-0 object-contain"
+            />
+            <span className={cn('text-[12px] font-semibold', mitComposio ? 'text-[#7c3aed]' : 'text-[#262626]')}>
+              {mitComposio ? 'Composio' : 'Google Drive direkt'}
+            </span>
+            {mitComposio
+              ? <ToggleRight className="ml-auto h-4 w-4 text-[#7c3aed] shrink-0" />
+              : <ToggleLeft className="ml-auto h-4 w-4 text-[#a3a3a3] shrink-0" />
+            }
+          </button>
+          <p className="mt-1.5 text-[10px] text-[#a3a3a3] leading-relaxed">
+            {mitComposio
+              ? 'Composio ermöglicht Umbenennen, Verschieben und Schreiben in Drive.'
+              : 'Nativer Drive-Zugriff für Lesen und Hochladen.'}
+          </p>
         </div>
 
-        {/* Bausteine-Liste */}
-        <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
-          {bausteine.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center px-4 gap-2">
-              <Clipboard className="h-8 w-8 text-[#d4d4d4]" />
-              <p className="text-[11px] text-[#a3a3a3] leading-relaxed">
-                Klicke auf Ordner oder Dateien links um Kontext-Bausteine für deinen KI-Prompt zu sammeln.
-              </p>
-            </div>
-          ) : (
-            bausteine.map((b) => (
-              <BausteinKarte key={b.id} baustein={b} onEntfernen={entferneBaustein} />
-            ))
-          )}
+        {/* Schritt 3 – Kontext */}
+        <div className="flex flex-col flex-1 min-h-0 border-b border-[#e5e5e5]">
+          <div className="shrink-0 flex items-center justify-between px-4 pt-3 pb-2">
+            <p className="text-[10px] font-semibold text-[#a3a3a3] uppercase tracking-wider">
+              3 · Kontext
+              {bausteine.length > 0 && (
+                <span className="ml-1.5 font-medium text-[#737373]">{bausteine.length}</span>
+              )}
+            </p>
+            {bausteine.length > 0 && (
+              <button
+                onClick={() => setBausteine([])}
+                className="text-[10px] text-[#737373] hover:text-[#000000] transition-colors rounded-full px-2 py-0.5 hover:bg-[#e5e5e5]"
+              >
+                Alle entfernen
+              </button>
+            )}
+          </div>
+          <div className="flex-1 overflow-y-auto px-3 pb-3 flex flex-col gap-2">
+            {bausteine.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center px-4 gap-2 py-6">
+                <Clipboard className="h-7 w-7 text-[#d4d4d4]" />
+                <p className="text-[11px] text-[#a3a3a3] leading-relaxed">
+                  Klicke auf Ordner oder Dateien links um Kontext-Bausteine zu sammeln.
+                </p>
+              </div>
+            ) : (
+              bausteine.map((b) => (
+                <BausteinKarte key={b.id} baustein={b} onEntfernen={entferneBaustein} />
+              ))
+            )}
+          </div>
         </div>
 
-        {/* Kopieren-Button */}
-        <div className="shrink-0 p-3 border-t border-[#e5e5e5]">
+        {/* Schritt 4 – Ausgabe-Format */}
+        <div className="shrink-0 px-4 pt-3 pb-2.5 border-b border-[#e5e5e5]">
+          <p className="text-[10px] font-semibold text-[#a3a3a3] uppercase tracking-wider mb-2">4 · Ausgabe-Format</p>
+          <div className="flex gap-2">
+            {([
+              { key: 'pdf', logo: 'pdf.png', label: 'PDF' },
+              { key: 'word', logo: 'word.png', label: 'Word' },
+              { key: 'excel', logo: 'excel.png', label: 'Excel' },
+            ] as const).map(({ key, logo, label }) => (
+              <button
+                key={key}
+                onClick={() => setAusgabeFormat((f) => f === key ? null : key)}
+                className={cn(
+                  'flex-1 flex flex-col items-center gap-1 rounded-xl border py-2 transition-colors',
+                  ausgabeFormat === key
+                    ? 'border-[#000000] bg-[#f5f5f5]'
+                    : 'border-[#e5e5e5] bg-white hover:bg-[#f5f5f5]'
+                )}
+              >
+                <Image src={`/logos/${logo}`} width={18} height={18} alt={label} className="object-contain" />
+                <span className={cn('text-[10px] font-semibold', ausgabeFormat === key ? 'text-[#000000]' : 'text-[#737373]')}>
+                  {label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Prompt kopieren */}
+        <div className="shrink-0 p-3">
           <button
             onClick={handleKopieren}
             disabled={bausteine.length === 0}
@@ -329,7 +418,7 @@ export function DateiBrowser(): React.JSX.Element {
           </button>
           {bausteine.length > 0 && (
             <p className="mt-1.5 text-center text-[10px] text-[#a3a3a3]">
-              {promptText.length} Zeichen · {bausteine.length} {bausteine.length === 1 ? 'Baustein' : 'Bausteine'}
+              {bausteine.length} {bausteine.length === 1 ? 'Baustein' : 'Bausteine'}{ausgabeFormat ? ` · ${ausgabeFormat.toUpperCase()}` : ''}
             </p>
           )}
         </div>
