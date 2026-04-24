@@ -16,6 +16,14 @@ import {
 const STORAGE_KEY = 'seehafer-struktur-v1';
 type AusgabeFormat = 'pdf' | 'word' | 'excel' | 'scan' | null;
 
+const TYPE_OPTIONEN: { type: DateiTyp; logo: string; label: string }[] = [
+  { type: 'folder',   logo: 'google-drive.png', label: 'Ordner'   },
+  { type: 'docx',     logo: 'word.png',          label: 'Word'     },
+  { type: 'sheet',    logo: 'excel.png',          label: 'Excel'    },
+  { type: 'pdf',      logo: 'pdf.png',            label: 'PDF'      },
+  { type: 'template', logo: 'word.png',            label: 'Vorlage'  },
+];
+
 // ── Tree helpers ──────────────────────────────────────────────────────────────
 
 function aktualisiereEintrag(baum: OrdnerEintrag, id: string, delta: Partial<OrdnerEintrag>): OrdnerEintrag {
@@ -106,7 +114,7 @@ interface SpalteZeileProps {
   aktiv: boolean;
   autoEdit: boolean;
   onKlick: () => void;
-  onSpeichern: (id: string, name: string, kontext: string) => void;
+  onSpeichern: (id: string, name: string, kontext: string, type: DateiTyp, logo: string) => void;
   onLoeschen: (id: string) => void;
 }
 
@@ -114,21 +122,42 @@ function SpalteZeile({ eintrag, aktiv, autoEdit, onKlick, onSpeichern, onLoesche
   const [editMode, setEditMode] = useState(autoEdit);
   const [editName, setEditName] = useState(eintrag.name);
   const [editKontext, setEditKontext] = useState(eintrag.kontext ?? '');
+  const [editType, setEditType] = useState<DateiTyp>(eintrag.type);
+  const [editLogo, setEditLogo] = useState(eintrag.logo ?? TYPE_OPTIONEN[0].logo);
 
   const speichern = (): void => {
-    if (editName.trim()) onSpeichern(eintrag.id, editName.trim(), editKontext.trim());
+    if (editName.trim()) onSpeichern(eintrag.id, editName.trim(), editKontext.trim(), editType, editLogo);
     setEditMode(false);
   };
 
   const abbrechen = (): void => {
     setEditName(eintrag.name);
     setEditKontext(eintrag.kontext ?? '');
+    setEditType(eintrag.type);
+    setEditLogo(eintrag.logo ?? TYPE_OPTIONEN[0].logo);
     setEditMode(false);
   };
 
   if (editMode) {
     return (
       <div className="px-2 py-2 bg-[#f5f5f5] border-b border-[#e5e5e5]">
+        {/* Typ-Auswahl */}
+        <div className="flex gap-1 mb-1.5">
+          {TYPE_OPTIONEN.map((opt) => (
+            <button
+              key={opt.type}
+              onClick={() => { setEditType(opt.type); setEditLogo(opt.logo); }}
+              title={opt.label}
+              className={cn(
+                'flex-1 flex flex-col items-center gap-0.5 py-1 rounded-lg border transition-colors',
+                editType === opt.type ? 'border-[#3b82f6] bg-white' : 'border-transparent hover:bg-white'
+              )}
+            >
+              <Image src={`/logos/${opt.logo}`} width={14} height={14} alt={opt.label} className="object-contain" />
+              <span className="text-[8px] text-[#737373] leading-none">{opt.label}</span>
+            </button>
+          ))}
+        </div>
         <input
           autoFocus
           value={editName}
@@ -199,7 +228,7 @@ interface SpalteProps {
   elternId: string;
   neuEintragId: string | null;
   onKlick: (eintrag: OrdnerEintrag) => void;
-  onSpeichern: (id: string, name: string, kontext: string) => void;
+  onSpeichern: (id: string, name: string, kontext: string, type: DateiTyp, logo: string) => void;
   onLoeschen: (id: string) => void;
   onHinzufuegen: (elternId: string) => void;
 }
@@ -278,9 +307,9 @@ export function DateiBrowser(): React.JSX.Element {
     }
   }, [navigationsPfad, navigiereZuPfad, struktur]);
 
-  const handleSpeichern = useCallback((id: string, name: string, kontext: string): void => {
-    setStruktur((prev) => aktualisiereEintrag(prev, id, { name, kontext }));
-    setBausteine((prev) => prev.map((b) => b.id === id ? { ...b, name, kontext } : b));
+  const handleSpeichern = useCallback((id: string, name: string, kontext: string, type: DateiTyp, logo: string): void => {
+    setStruktur((prev) => aktualisiereEintrag(prev, id, { name, kontext, type, logo }));
+    setBausteine((prev) => prev.map((b) => b.id === id ? { ...b, name, kontext, type, logo } : b));
     setNeuEintragId(null);
   }, []);
 
