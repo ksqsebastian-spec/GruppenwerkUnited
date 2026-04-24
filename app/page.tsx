@@ -8,67 +8,37 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-function ModuleCard({
-  module,
-  wide = false,
-}: {
-  module: ModuleConfig;
-  wide?: boolean;
-}): React.JSX.Element {
+function ModuleRow({ module }: { module: ModuleConfig }): React.JSX.Element {
   const Icon = MODULE_ICONS[module.icon] ?? Wrench;
   const isComingSoon = module.status === 'coming_soon';
 
-  const inner = wide ? (
-    /* Breite horizontale Variante für vereinzelte letzte Karte */
+  const inner = (
     <div
-      className={`group flex items-center gap-5 rounded-xl border border-[#e5e5e5] bg-white px-6 py-5 transition-all
+      className={`group flex items-center gap-4 px-5 py-3.5 transition-colors
         ${isComingSoon
-          ? 'cursor-not-allowed opacity-50'
-          : 'hover:border-[#a3a3a3] cursor-pointer'
+          ? 'cursor-not-allowed opacity-40'
+          : 'hover:bg-[#f5f5f5] cursor-pointer'
         }`}
     >
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#f5f5f5]">
-        <Icon className="h-5 w-5 text-[#000000]" />
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#f5f5f5] group-hover:bg-white transition-colors">
+        <Icon className="h-4 w-4 text-[#000000]" />
       </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="font-medium text-[#000000]">{module.name}</h3>
-        <p className="mt-0.5 text-sm text-[#737373]">{module.description}</p>
+      <div className="flex-1 flex items-baseline gap-6 min-w-0">
+        <span className="shrink-0 text-[14px] font-medium text-[#000000] w-44">
+          {module.name}
+        </span>
+        <span className="text-[13px] text-[#737373] truncate">
+          {module.description}
+        </span>
       </div>
       {isComingSoon ? (
-        <span className="flex shrink-0 items-center gap-1 rounded-full bg-[#e5e5e5] px-2.5 py-0.5 text-xs font-medium text-[#737373]">
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-[#f0f0f0] px-2.5 py-0.5 text-[11px] font-medium text-[#a3a3a3]">
           <Clock className="h-3 w-3" />
           Bald
         </span>
       ) : (
-        <ArrowRight className="h-5 w-5 shrink-0 text-[#a3a3a3] transition-transform group-hover:translate-x-0.5 group-hover:text-[#000000]" />
+        <ArrowRight className="h-4 w-4 shrink-0 text-[#d4d4d4] transition-all group-hover:text-[#000000] group-hover:translate-x-0.5" />
       )}
-    </div>
-  ) : (
-    /* Standard vertikale Karte */
-    <div
-      className={`group relative flex flex-col gap-4 rounded-xl border border-[#e5e5e5] bg-white p-6 transition-all
-        ${isComingSoon
-          ? 'cursor-not-allowed opacity-50'
-          : 'hover:border-[#a3a3a3] cursor-pointer'
-        }`}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f5f5f5]">
-          <Icon className="h-5 w-5 text-[#000000]" />
-        </div>
-        {isComingSoon ? (
-          <span className="flex items-center gap-1 rounded-full bg-[#e5e5e5] px-2.5 py-0.5 text-xs font-medium text-[#737373]">
-            <Clock className="h-3 w-3" />
-            Bald
-          </span>
-        ) : (
-          <ArrowRight className="h-5 w-5 text-[#a3a3a3] transition-transform group-hover:translate-x-0.5 group-hover:text-[#000000]" />
-        )}
-      </div>
-      <div>
-        <h3 className="font-medium text-[#000000]">{module.name}</h3>
-        <p className="mt-1 text-sm text-[#737373] leading-relaxed">{module.description}</p>
-      </div>
     </div>
   );
 
@@ -100,18 +70,18 @@ export default function WerkbankDashboard(): React.JSX.Element {
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto flex flex-col gap-8">
+      <div className="max-w-2xl mx-auto flex flex-col gap-8">
 
-        {/* Willkommens-Header */}
+        {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-widest text-[#737373] mb-1">
+            <p className="text-xs font-medium uppercase tracking-widest text-[#a3a3a3] mb-1">
               Eingeloggt als
             </p>
             <h1 className="text-2xl font-medium text-[#000000] tracking-tight">
               {company?.companyName ?? '…'}
             </h1>
-            <p className="text-sm text-[#737373] mt-1">
+            <p className="text-sm text-[#a3a3a3] mt-1">
               {visibleModules.length === 1
                 ? '1 Modul verfügbar'
                 : `${visibleModules.length} Module verfügbar`}
@@ -127,27 +97,16 @@ export default function WerkbankDashboard(): React.JSX.Element {
           </button>
         </div>
 
-        {/* Trennlinie */}
-        <div className="border-t border-[#e5e5e5]" />
-
-        {/* Modul-Karten */}
+        {/* Modul-Liste */}
         {visibleModules.length === 0 ? (
           <div className="text-center py-16 text-sm text-[#737373]">
             Keine Module verfügbar.
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleModules.map((mod, i) => {
-              const total = visibleModules.length;
-              const isLast = i === total - 1;
-              // Letzte Karte ist allein in einer Zeile → breite horizontale Variante
-              const isOrphan = isLast && total % 3 === 1;
-              return (
-                <div key={mod.id} className={isOrphan ? 'sm:col-span-2 lg:col-span-3' : ''}>
-                  <ModuleCard module={mod} wide={isOrphan} />
-                </div>
-              );
-            })}
+          <div className="rounded-xl border border-[#e5e5e5] bg-white overflow-hidden divide-y divide-[#f0f0f0]">
+            {visibleModules.map((mod) => (
+              <ModuleRow key={mod.id} module={mod} />
+            ))}
           </div>
         )}
       </div>
