@@ -149,7 +149,7 @@ export const SEEHAFER_STRUKTUR: OrdnerEintrag = {
       id: '03_rechnungen',
       name: '03_rechnungen',
       type: 'folder',
-      logo: 'pdf.png',
+      logo: 'google-drive.png',
       kontext: 'Rechnungs-Ordner – ausgestellte Kundenrechnungen nach Status: offen, bezahlt, Mahnwesen.',
       kinder: [
         {
@@ -230,7 +230,7 @@ export const SEEHAFER_STRUKTUR: OrdnerEintrag = {
       id: '05_leads',
       name: '05_leads',
       type: 'folder',
-      logo: 'excel.png',
+      logo: 'google-drive.png',
       kontext: 'Lead-Verwaltung – alle potenziellen Kunden und Neuprojekte.',
       kinder: [
         {

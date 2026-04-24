@@ -166,9 +166,6 @@ export function DateiBrowser(): React.JSX.Element {
   const handleKopieren = useCallback(async (): Promise<void> => {
     if (bausteine.length === 0) return;
 
-    const pfade = bausteine.map((b) => b.pfad).join(', ');
-    const kontext = bausteine.map((b) => `## ${b.name}\n${b.kontext}`).join('\n\n---\n\n');
-
     const connectorZeile = mitComposio
       ? 'Nutze Composio um auf Google Drive zuzugreifen.'
       : 'Greife direkt auf Google Drive zu.';
@@ -178,9 +175,21 @@ export function DateiBrowser(): React.JSX.Element {
       word: 'Erstelle die Ausgabe als Word-Dokument (.docx).',
       excel: 'Erstelle die Ausgabe als Excel-Tabelle (.xlsx).',
     };
-    const formatZeile = ausgabeFormat ? `\n\n${formatMap[ausgabeFormat]}` : '';
 
-    const text = `Hey Claude. ${connectorZeile} Öffne folgende Ordner / Dateien: ${pfade}.\n\n${kontext}${formatZeile}`;
+    const zeilen: string[] = [];
+    zeilen.push(`Hey Claude. ${connectorZeile}`);
+    zeilen.push('');
+    zeilen.push('Öffne und nutze folgende Ordner / Dateien in Google Drive:');
+    zeilen.push('');
+    for (const b of bausteine) {
+      zeilen.push(`**${b.name}**`);
+      zeilen.push(`Pfad: ${b.pfad}`);
+      zeilen.push(b.kontext);
+      zeilen.push('');
+    }
+    if (ausgabeFormat) zeilen.push(formatMap[ausgabeFormat]);
+
+    const text = zeilen.join('\n').trimEnd();
 
     try {
       await navigator.clipboard.writeText(text);
