@@ -273,7 +273,7 @@ export function DateiBrowser(): React.JSX.Element {
       setBausteine((prev) => {
         if (prev.find((b) => b.id === eintrag.id)) return prev;
         const pfadLabel = [...navigationsPfad.slice(0, spaltenIndex).map((id) => sucheName(id, struktur) ?? id), eintrag.name].join(' / ');
-        return [...prev, { id: eintrag.id, name: eintrag.name, type: eintrag.type, logo: eintrag.logo, pfad: pfadLabel, kontext: eintrag.kontext }];
+        return [...prev, { id: eintrag.id, name: eintrag.name, type: eintrag.type, logo: eintrag.logo, pfad: pfadLabel, kontext: eintrag.kontext ?? '' }];
       });
     }
   }, [navigationsPfad, navigiereZuPfad, struktur]);
