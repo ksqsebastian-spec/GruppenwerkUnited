@@ -7,6 +7,7 @@ import { MODULES, MODULE_ICONS, type ModuleConfig } from '@/lib/modules';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { DataExportButton } from '@/components/shared/data-export-button';
 
 function ModuleCard({
   module,
@@ -118,13 +119,16 @@ export default function WerkbankDashboard(): React.JSX.Element {
             </p>
           </div>
 
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-warm-sand hover:text-foreground transition-colors mt-1 shrink-0"
-          >
-            <LogOut className="h-4 w-4" />
-            Abmelden
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <DataExportButton companyName={company?.companyName ?? ''} />
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-warm-sand hover:text-foreground transition-colors mt-1"
+            >
+              <LogOut className="h-4 w-4" />
+              Abmelden
+            </button>
+          </div>
         </div>
 
         {/* Trennlinie */}
