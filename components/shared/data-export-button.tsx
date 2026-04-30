@@ -91,7 +91,7 @@ export function DataExportButton({ companyName }: DataExportButtonProps): React.
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-warm-sand hover:text-foreground transition-colors mt-1 shrink-0">
+        <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#e5e5e5] text-sm font-medium text-[#737373] hover:bg-[#f5f5f5] hover:text-[#000000] transition-colors shrink-0">
           <Download className="h-4 w-4" />
           Daten exportieren
         </button>
