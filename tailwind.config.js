@@ -59,20 +59,21 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // ─── Gruppenwerk Designsystem – benannte Tokens (neutral) ───────────
-        parchment:      '#f5f5f5',
-        ivory:          '#ffffff',
-        terracotta:     '#c96442',
-        coral:          '#d97757',
-        'warm-sand':    '#f0f0f0',
-        'charcoal-warm':'#404040',
-        'olive-gray':   '#525252',
-        'stone-gray':   '#737373',
-        'border-cream': '#e5e5e5',
-        'dark-warm':    '#262626',
-        'dark-surface': '#1f1f1f',
-        'near-black':   '#171717',
-        'warm-silver':  '#a3a3a3',
+        // ─── Anthropic / Claude Designsystem – benannte Tokens ──────────────
+        // Direktzugriff: bg-parchment, text-olive-gray, border-cream, etc.
+        parchment:       '#ffffff',
+        ivory:           '#fafafa',
+        terracotta:      '#000000',
+        coral:           '#262626',
+        'warm-sand':     '#e5e5e5',
+        'charcoal-warm': '#262626',
+        'olive-gray':    '#525252',
+        'stone-gray':    '#737373',
+        'border-cream':  '#e5e5e5',
+        'dark-warm':     '#262626',
+        'dark-surface':  '#000000',
+        'near-black':    '#000000',
+        'warm-silver':   '#a3a3a3',
         // ─── ROI-Modul Farben ────────────────────────────────────────────────
         surface: {
           DEFAULT: "var(--roi-surface, #faf9f5)",
@@ -117,13 +118,13 @@ module.exports = {
         '4xl': "calc(var(--radius) * 4)", // 32px
       },
       boxShadow: {
-        // Ring-basiertes Shadow-System
-        'ring-warm':   '0px 0px 0px 1px #d4d4d4',
+        // Ring-basiertes Shadow-System (Ollama – kein Schatten, nur Borders)
+        'ring-warm':   '0px 0px 0px 1px #e5e5e5',
         'ring-subtle': '0px 0px 0px 1px #e5e5e5',
-        'ring-deep':   '0px 0px 0px 1px #a3a3a3',
-        'ring-dark':   '0px 0px 0px 1px #262626',
-        // Whisper Shadow – kaum sichtbares Heben
-        'whisper':     'rgba(0,0,0,0.05) 0px 4px 24px',
+        'ring-deep':   '0px 0px 0px 1px #d4d4d4',
+        'ring-dark':   '0px 0px 0px 1px #000000',
+        // Kein Schatten
+        'whisper':     'none',
       },
       keyframes: {
         "accordion-down": {

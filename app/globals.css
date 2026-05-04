@@ -4,75 +4,70 @@
 
 @layer base {
   :root {
-    /* ─── Gruppenwerk Design System – Weiß/Schwarz ──────────────────────────── */
-    --background:   0 0% 100%;     /* #ffffff Weiß           */
-    --foreground:   0 0% 9%;       /* #171717 Fast Schwarz   */
+    /* ─── Ollama Design System ───────────────────────────────────────────────── */
+    /* Pure white canvas – vollständig grauskaliert, keine Chromfarben */
+    --background:   0 0% 100%;      /* #ffffff pure white */
+    --foreground:   0 0% 0%;        /* #000000 pure black */
 
-    --card:         0 0% 100%;     /* #ffffff Weiß           */
-    --card-foreground: 0 0% 9%;
+    /* Card – pure white */
+    --card:         0 0% 100%;      /* #ffffff */
+    --card-foreground: 0 0% 0%;
 
     --popover:      0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    --popover-foreground: 0 0% 0%;
 
-    /* Schwarz – primäre Markenfarbe */
-    --primary:      0 0% 9%;       /* #171717 Fast Schwarz   */
-    --primary-foreground: 0 0% 100%; /* Weiß auf Schwarz     */
+    /* Primary – schwarzer CTA */
+    --primary:      0 0% 0%;        /* #000000 black CTA */
+    --primary-foreground: 0 0% 100%; /* #ffffff */
 
-    /* Helles Grau – sekundäre Flächen */
-    --secondary:    0 0% 96%;      /* #f5f5f5 Hell Grau      */
-    --secondary-foreground: 0 0% 20%; /* #333333 Dunkel Grau */
+    /* Secondary – helles Grau */
+    --secondary:    0 0% 90%;       /* #e5e5e5 light gray */
+    --secondary-foreground: 0 0% 15%; /* #262626 */
 
-    /* Muted – gedämpfte Hintergründe */
-    --muted:        0 0% 96%;      /* #f5f5f5 Hell Grau      */
-    --muted-foreground: 0 0% 45%;  /* #737373 Mittel Grau    */
+    /* Muted – Snow-Hintergrund */
+    --muted:        0 0% 98%;       /* #fafafa snow */
+    --muted-foreground: 0 0% 45%;   /* #737373 stone */
 
-    /* Accent */
-    --accent:       0 0% 96%;
-    --accent-foreground: 0 0% 20%;
+    /* Accent – identisch mit secondary */
+    --accent:       0 0% 90%;       /* #e5e5e5 */
+    --accent-foreground: 0 0% 15%;
 
-    /* Destructive – Rot */
-    --destructive:  0 84% 60%;     /* #ef4444 Rot            */
+    /* Destructive – Rot für Fehler beibehalten */
+    --destructive:  0 72% 51%;      /* keep red for errors */
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders – neutrales Grau */
-    --border:       0 0% 90%;      /* #e5e5e5 Grau           */
+    /* Borders – helles Grau */
+    --border:       0 0% 90%;       /* #e5e5e5 */
     --input:        0 0% 90%;
 
-    /* Ring – Focus Blue für Accessibility */
-    --ring:         211 80% 57%;   /* #3898ec Focus Blue     */
+    /* Ring – #3b82f6 Focus Blue – EINZIGE Nicht-Graufarbe, nur Accessibility */
+    --ring:         217 91% 60%;    /* #3b82f6 focus blue — accessibility only */
 
-    --radius: 0.5rem;
+    /* Radius – 12px Container-Radius */
+    --radius: 0.75rem;              /* 12px container radius */
   }
 
   .dark {
-    --background:   0 0% 9%;       /* #171717 Dunkel         */
-    --foreground:   0 0% 100%;     /* #ffffff Weiß           */
-
-    --card:         0 0% 13%;      /* #212121 Dunkle Oberfläche */
-    --card-foreground: 0 0% 100%;
-
-    --popover:      0 0% 13%;
-    --popover-foreground: 0 0% 100%;
-
-    --primary:      0 0% 100%;     /* Weiß auf Dunkel        */
-    --primary-foreground: 0 0% 9%;
-
-    --secondary:    0 0% 18%;
-    --secondary-foreground: 0 0% 70%;
-
-    --muted:        0 0% 18%;
-    --muted-foreground: 0 0% 60%;
-
-    --accent:       0 0% 18%;
-    --accent-foreground: 0 0% 70%;
-
-    --destructive:  0 84% 60%;
+    /* Identisch mit :root – Ollama ist immer hell */
+    --background:   0 0% 100%;
+    --foreground:   0 0% 0%;
+    --card:         0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --popover:      0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+    --primary:      0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --secondary:    0 0% 90%;
+    --secondary-foreground: 0 0% 15%;
+    --muted:        0 0% 98%;
+    --muted-foreground: 0 0% 45%;
+    --accent:       0 0% 90%;
+    --accent-foreground: 0 0% 15%;
+    --destructive:  0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-
-    --border:       0 0% 20%;
-    --input:        0 0% 20%;
-
-    --ring:         211 80% 57%;
+    --border:       0 0% 90%;
+    --input:        0 0% 90%;
+    --ring:         217 91% 60%;
   }
 }
 
@@ -82,6 +77,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "SF Pro Rounded", var(--font-sans), ui-rounded, ui-sans-serif, system-ui, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   /* Serif-Überschriften erben die Georgia-Fallback-Schrift */
@@ -93,18 +89,18 @@
 /* ─── ROI-Modul Designtokens ─────────────────────────────────────────────── */
 :root {
   --roi-bg: #ffffff;
-  --roi-surface: #ffffff;
+  --roi-surface: #fafafa;
   --roi-surface-2: #f5f5f5;
   --roi-surface-3: #e5e5e5;
   --roi-border: #e5e5e5;
   --roi-border-hover: #d4d4d4;
-  --roi-text: #171717;
+  --roi-text: #000000;
   --roi-text-muted: #525252;
   --roi-text-dim: #737373;
   --roi-accent: #2D6A4F;
   --roi-accent-light: #D8F3DC;
-  --roi-red: #dc2626;
-  --roi-red-light: #fee2e2;
+  --roi-red: #b53333;
+  --roi-red-light: #FDECE5;
   --roi-blue: #1B4965;
   --roi-blue-light: #E3EFF6;
   --roi-amber: #B5651D;
@@ -118,7 +114,7 @@
   --orange: #f28900;
   --orange-dark: #ff6b00;
   --bg-card: #ffffff;
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-card: none;
 }
 
 /* ─── Animationen ─────────────────────────────────────────────────────────── */
