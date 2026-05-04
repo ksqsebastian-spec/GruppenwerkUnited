@@ -5,17 +5,18 @@ import { generateCode } from '@/lib/datenkodierung/code-generator';
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   const session = await requireSession();
   if (session instanceof NextResponse) return session;
 
+  const { id } = await params;
   const supabase = createAdminClient();
 
   const { data: lead, error: leadError } = await supabase
     .from('leads')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('company', session.companyId)
     .single();
 
