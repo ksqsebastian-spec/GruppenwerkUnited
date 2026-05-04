@@ -99,6 +99,15 @@ export const MODULES: ModuleConfig[] = [
     category: 'company',
     status: 'active',
   },
+  {
+    id: 'leads',
+    name: 'Grid View',
+    description: 'Lead-CRM mit Farbkodierung, Sortierung und Aktivitäten-Feed',
+    route: '/leads',
+    icon: 'TableProperties',
+    category: 'company',
+    status: 'active',
+  },
 ];
 
 /**
