@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Linkedin } from 'lucide-react';
+import { X, Linkedin, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { STATUS_CONFIG, PRIORITAET_CONFIG, tagFarbe, formatDatum } from '@/lib/leads/farben';
 import { LeadAktivitaeten } from './lead-aktivitaeten';
-import { useUpdateLead } from '@/hooks/use-leads';
+import { useUpdateLead, useExportToDatenkodierung } from '@/hooks/use-leads';
 import type { Lead, LeadStatus, LeadPrioritaet, LeadUpdate } from '@/types';
 
 interface LeadDetailDialogProps {
@@ -21,6 +22,7 @@ export function LeadDetailDialog({ lead, onClose }: LeadDetailDialogProps): Reac
   const [form, setForm] = useState<LeadUpdate>({});
   const [neuerTag, setNeuerTag] = useState('');
   const update = useUpdateLead();
+  const exportDk = useExportToDatenkodierung();
 
   useEffect(() => {
     if (lead) {
@@ -231,15 +233,33 @@ export function LeadDetailDialog({ lead, onClose }: LeadDetailDialogProps): Reac
 
         {/* Footer */}
         {tab === 'details' && (
-          <div className="px-6 py-4 border-t border-[#f0f0f0] flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose} className="rounded-lg">Abbrechen</Button>
+          <div className="px-6 py-4 border-t border-[#f0f0f0] flex items-center justify-between gap-2">
             <Button
-              onClick={handleSave}
-              disabled={update.isPending}
-              className="rounded-lg bg-[#000] text-white hover:bg-[#262626]"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                exportDk.mutate(lead.id, {
+                  onSuccess: (res) => toast.success(`In Datenkodierung exportiert — Code: ${res.code}`),
+                  onError: (e) => toast.error(e.message),
+                });
+              }}
+              disabled={exportDk.isPending}
+              className="rounded-lg text-sm h-9"
+              title="Als Datenkodierung-Eintrag mit Tag 'CRM-Lead' speichern"
             >
-              {update.isPending ? 'Wird gespeichert…' : 'Speichern'}
+              <Share2 className="h-3.5 w-3.5 mr-1.5" />
+              {exportDk.isPending ? 'Wird exportiert…' : 'In Datenkodierung'}
             </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onClose} className="rounded-lg">Abbrechen</Button>
+              <Button
+                onClick={handleSave}
+                disabled={update.isPending}
+                className="rounded-lg bg-[#000] text-white hover:bg-[#262626]"
+              >
+                {update.isPending ? 'Wird gespeichert…' : 'Speichern'}
+              </Button>
+            </div>
           </div>
         )}
       </div>

@@ -218,3 +218,16 @@ export function useDeleteDatei(): ReturnType<typeof useMutation<void, Error, { l
     onError: (e) => toast.error(e.message),
   });
 }
+
+export function useExportToDatenkodierung(): ReturnType<typeof useMutation<{ code: string; id: string }, Error, string>> {
+  return useMutation<{ code: string; id: string }, Error, string>({
+    mutationFn: async (leadId: string) => {
+      const res = await fetch(`/api/leads/${leadId}/export-datenkodierung`, { method: 'POST' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? 'Export fehlgeschlagen');
+      }
+      return res.json() as Promise<{ code: string; id: string }>;
+    },
+  });
+}
