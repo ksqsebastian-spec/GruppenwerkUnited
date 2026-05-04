@@ -31,7 +31,7 @@ export default function LeadsPage(): React.JSX.Element {
     return (
       <div className="flex flex-col gap-6 px-4 py-6 md:px-8">
         <PageHeader
-          title="Grid View"
+          title="B2B"
           description="Leads verwalten, qualifizieren und nachverfolgen"
         />
         <LoadingSpinner text="Leads werden geladen..." />
@@ -43,7 +43,7 @@ export default function LeadsPage(): React.JSX.Element {
     return (
       <div className="flex flex-col gap-6 px-4 py-6 md:px-8">
         <PageHeader
-          title="Grid View"
+          title="B2B"
           description="Leads verwalten, qualifizieren und nachverfolgen"
         />
         <ErrorState message="Leads konnten nicht geladen werden." />
@@ -55,7 +55,7 @@ export default function LeadsPage(): React.JSX.Element {
     <div className="flex flex-col gap-6 px-4 py-6 md:px-8">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <PageHeader
-          title="Grid View"
+          title="B2B"
           description="Leads verwalten, qualifizieren und nachverfolgen"
         />
         <div className="flex items-center gap-2">

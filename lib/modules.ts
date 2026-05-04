@@ -101,7 +101,7 @@ export const MODULES: ModuleConfig[] = [
   },
   {
     id: 'leads',
-    name: 'Grid View',
+    name: 'B2B',
     description: 'Lead-CRM mit Farbkodierung, Sortierung und Aktivitäten-Feed',
     route: '/leads',
     icon: 'TableProperties',

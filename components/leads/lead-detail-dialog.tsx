@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Linkedin, Share2 } from 'lucide-react';
+import { X, Linkedin, Share2, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ export function LeadDetailDialog({ lead, onClose }: LeadDetailDialogProps): Reac
   const [tab, setTab] = useState<Tab>('details');
   const [form, setForm] = useState<LeadUpdate>({});
   const [neuerTag, setNeuerTag] = useState('');
+  const [headerAufgeklappt, setHeaderAufgeklappt] = useState(true);
   const update = useUpdateLead();
   const exportDk = useExportToDatenkodierung();
 
@@ -66,32 +67,54 @@ export function LeadDetailDialog({ lead, onClose }: LeadDetailDialogProps): Reac
       <div className="relative ml-auto w-full max-w-xl h-full bg-white shadow-2xl flex flex-col overflow-hidden">
 
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-[#f0f0f0]">
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-[#000] truncate">{name}</h2>
-            <p className="text-sm text-[#737373] mt-0.5">
-              {[lead.position, lead.firma].filter(Boolean).join(' · ') || '—'}
-            </p>
-            <div className="flex items-center gap-3 mt-2 flex-wrap">
-              {lead.email && (
-                <a href={`mailto:${lead.email}`} className="text-[12px] text-[#2563eb] hover:underline">
-                  {lead.email}
-                </a>
-              )}
-              {lead.telefon && (
-                <a href={`tel:${lead.telefon}`} className="text-[12px] text-[#737373]">{lead.telefon}</a>
-              )}
-              {lead.linkedin_url && (
-                <a href={lead.linkedin_url} target="_blank" rel="noopener noreferrer"
-                  className="text-[12px] text-[#0a66c2] flex items-center gap-1 hover:underline">
-                  <Linkedin className="h-3 w-3" />LinkedIn
-                </a>
-              )}
-            </div>
+        <div className="border-b border-[#f0f0f0]">
+          <div className="flex items-center justify-between gap-4 px-6 py-4">
+            <button
+              onClick={() => setHeaderAufgeklappt((v) => !v)}
+              className="flex-1 min-w-0 text-left flex items-center gap-2 group"
+            >
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold text-[#000] truncate">{name}</h2>
+                {!headerAufgeklappt && (
+                  <p className="text-xs text-[#a3a3a3] mt-0.5 truncate">
+                    {[lead.position, lead.firma].filter(Boolean).join(' · ') || lead.email || ''}
+                  </p>
+                )}
+              </div>
+              <span className="shrink-0 text-[#a3a3a3] group-hover:text-[#737373] transition-colors">
+                {headerAufgeklappt
+                  ? <ChevronUp className="h-3.5 w-3.5" />
+                  : <ChevronDown className="h-3.5 w-3.5" />}
+              </span>
+            </button>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#f5f5f5] transition-colors shrink-0">
+              <X className="h-4 w-4 text-[#737373]" />
+            </button>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#f5f5f5] transition-colors shrink-0">
-            <X className="h-4 w-4 text-[#737373]" />
-          </button>
+
+          {headerAufgeklappt && (
+            <div className="px-6 pb-4 flex flex-col gap-1">
+              <p className="text-sm text-[#737373]">
+                {[lead.position, lead.firma].filter(Boolean).join(' · ') || '—'}
+              </p>
+              <div className="flex items-center gap-3 flex-wrap mt-1">
+                {lead.email && (
+                  <a href={`mailto:${lead.email}`} className="text-[12px] text-[#2563eb] hover:underline">
+                    {lead.email}
+                  </a>
+                )}
+                {lead.telefon && (
+                  <a href={`tel:${lead.telefon}`} className="text-[12px] text-[#737373]">{lead.telefon}</a>
+                )}
+                {lead.linkedin_url && (
+                  <a href={lead.linkedin_url} target="_blank" rel="noopener noreferrer"
+                    className="text-[12px] text-[#0a66c2] flex items-center gap-1 hover:underline">
+                    <Linkedin className="h-3 w-3" />LinkedIn
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
