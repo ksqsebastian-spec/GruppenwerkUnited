@@ -78,6 +78,7 @@ export default function LoginPage(): React.JSX.Element {
           </div>
         </div>
 
+        {/* Formular – Logik und Validierung unverändert */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
