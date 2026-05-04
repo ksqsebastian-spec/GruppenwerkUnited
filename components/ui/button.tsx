@@ -10,39 +10,39 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Terracotta – primärer CTA, die einzige Chromfarbe im System
+        // Schwarz – primärer CTA im Ollama Design System
         default:
-          'bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-[#c96442_0px_0px_0px_0px,#c96442_0px_0px_0px_1px]',
+          'bg-[#000000] text-white hover:bg-[#262626] rounded-full',
 
-        // Warm Sand – der Arbeits-Button, warm und funktional
+        // Helles Grau – sekundärer Button
         secondary:
-          'bg-warm-sand text-charcoal-warm hover:bg-[#dddbd0] rounded-lg shadow-ring-warm',
+          'bg-[#e5e5e5] text-[#262626] hover:bg-[#d4d4d4] rounded-full',
 
-        // Dark Charcoal – invertierte Variante auf hellem Untergrund
+        // Schwarz – invertierte Variante (identisch mit default)
         dark:
-          'bg-dark-surface text-ivory hover:bg-near-black rounded-lg shadow-ring-dark',
+          'bg-[#000000] text-white hover:bg-[#262626] rounded-full',
 
-        // Destructive – warmes Rot
+        // Destructive – Rot für Fehlerzustände
         destructive:
-          'bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg',
+          'bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full',
 
-        // Outline – Border Cream Rand, Parchment-Hintergrund
+        // Outline – Border mit weißem Hintergrund
         outline:
-          'border border-border-cream bg-background text-foreground hover:bg-warm-sand hover:border-warm-sand rounded-lg',
+          'border border-[#d4d4d4] bg-white text-[#404040] hover:bg-[#f5f5f5] rounded-full',
 
         // Ghost – kein Hintergrund, nur Hover-Fläche
         ghost:
-          'text-foreground hover:bg-warm-sand hover:text-charcoal-warm rounded-lg',
+          'text-[#262626] hover:bg-[#e5e5e5] rounded-full',
 
-        // Link – Terracotta-Unterstreichung
+        // Link – Unterstreichung
         link:
-          'text-primary underline-offset-4 hover:underline',
+          'text-[#000000] underline-offset-4 hover:underline',
       },
       size: {
         default: 'h-9 px-4 py-2 text-sm',
-        sm:      'h-8 px-3 text-xs rounded-lg',
-        lg:      'h-10 px-6 text-sm rounded-xl',
-        icon:    'h-9 w-9 rounded-lg',
+        sm:      'h-8 px-3 text-xs',
+        lg:      'h-10 px-6 text-sm',
+        icon:    'h-9 w-9 rounded-full',
       },
     },
     defaultVariants: {

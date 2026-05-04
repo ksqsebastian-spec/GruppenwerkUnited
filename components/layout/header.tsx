@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { LogOut, Menu, User, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
@@ -44,7 +45,7 @@ export function Header(): React.JSX.Element {
   return (
     <>
       {/* Sticky Header – Ivory-Oberfläche mit Border Cream Trennlinie */}
-      <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-3 border-b border-border bg-card px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-3 border-b border-[#e5e5e5] bg-white px-4 sm:px-6 lg:px-8">
 
         {/* Mobile Menu Button */}
         <Button
@@ -59,14 +60,12 @@ export function Header(): React.JSX.Element {
 
         {/* Logo-Icon */}
         <Link href="/" className="flex items-center shrink-0">
-          <div className="h-7 w-7 bg-foreground rounded-lg flex items-center justify-center">
-            <span className="text-[10px] font-bold text-background leading-none tracking-tight">GW</span>
-          </div>
+          <Image src="/logos/ollama-icon.webp" width={26} height={26} alt="Gruppenwerk" className="rounded-md" />
         </Link>
 
         {/* Warme Trennlinie */}
         {visibleModules.length > 0 && (
-          <div className="hidden lg:block h-5 w-px bg-border shrink-0" />
+          <div className="hidden lg:block h-5 w-px bg-[#e5e5e5] shrink-0" />
         )}
 
         {/* Horizontale Modul-Navigation */}
@@ -80,12 +79,12 @@ export function Header(): React.JSX.Element {
                 key={mod.id}
                 href={isComingSoon ? '#' : mod.route}
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
+                  'flex items-center gap-1.5 transition-colors',
                   isActive
-                    ? 'bg-foreground/10 text-foreground font-semibold'
+                    ? 'bg-[#e5e5e5] text-[#000000] font-medium rounded-full px-3 py-1.5 text-sm'
                     : isComingSoon
-                      ? 'text-muted-foreground/40 cursor-not-allowed'
-                      : 'text-foreground/70 hover:bg-warm-sand hover:text-foreground'
+                      ? 'text-[#a3a3a3] cursor-not-allowed rounded-full px-3 py-1.5 text-sm'
+                      : 'text-[#525252] hover:bg-[#f5f5f5] hover:text-[#000000] rounded-full px-3 py-1.5 text-sm'
                 )}
                 aria-disabled={isComingSoon}
               >
@@ -105,10 +104,10 @@ export function Header(): React.JSX.Element {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-2 h-8 px-2">
                 {/* Warm Sand Avatar – kein kühles Grau */}
-                <div className="h-6 w-6 bg-warm-sand rounded-full flex items-center justify-center">
-                  <User className="h-3.5 w-3.5 text-charcoal-warm" />
+                <div className="h-6 w-6 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+                  <User className="h-3.5 w-3.5 text-[#525252]" />
                 </div>
-                <span className="hidden sm:block text-sm font-medium text-foreground">
+                <span className="hidden sm:block text-sm font-medium text-[#262626]">
                   {company?.companyName ?? 'Werkbank'}
                 </span>
               </Button>

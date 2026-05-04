@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -69,12 +70,12 @@ function SidebarNavItem({
       <Link
         href={comingSoon ? '#' : href}
         className={cn(
-          'group flex gap-x-3 rounded-lg p-2 text-sm font-medium leading-6 transition-colors',
+          'group flex gap-x-3 rounded-full p-2 text-sm font-medium leading-6 transition-colors',
           isActive
-            ? 'bg-primary/10 text-primary'
+            ? 'bg-[#e5e5e5] text-[#000000]'
             : comingSoon
-              ? 'cursor-not-allowed text-muted-foreground/50'
-              : 'text-olive-gray hover:bg-warm-sand hover:text-foreground'
+              ? 'cursor-not-allowed text-[#a3a3a3]'
+              : 'text-[#525252] hover:bg-[#f5f5f5] hover:text-[#000000]'
         )}
         aria-disabled={comingSoon}
       >
@@ -82,18 +83,18 @@ function SidebarNavItem({
           className={cn(
             'h-5 w-5 shrink-0',
             isActive
-              ? 'text-primary'
-              : 'text-stone-gray group-hover:text-olive-gray'
+              ? 'text-[#000000]'
+              : 'text-[#737373] group-hover:text-[#525252]'
           )}
         />
         <span className="flex-1">{name}</span>
         {badge !== undefined && badge > 0 && (
-          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-medium text-destructive-foreground">
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#000000] px-1.5 text-xs font-medium text-white">
             {badge > 99 ? '99+' : badge}
           </span>
         )}
         {comingSoon && (
-          <span className="rounded-full bg-warm-sand px-2 py-0.5 text-xs text-stone-gray">
+          <span className="rounded-full bg-[#e5e5e5] px-2 py-0.5 text-xs text-[#737373]">
             Bald
           </span>
         )}
@@ -132,7 +133,7 @@ function WerkbankModuleNav({ pathname }: { pathname: string }): React.JSX.Elemen
       <ul role="list" className="flex flex-1 flex-col gap-y-7">
         {visibleModules.length > 0 && (
           <li>
-            <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-stone-gray">
+            <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-[#737373]">
               {company?.companyName ?? 'Module'}
             </div>
             <ul role="list" className="-mx-2 space-y-0.5">
@@ -202,31 +203,27 @@ export function Sidebar(): React.JSX.Element {
   return (
     <aside className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
       {/* Ivory-Oberfläche mit Border Cream Trennlinie */}
-      <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-border bg-card px-6 pb-4">
+      <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-[#e5e5e5] bg-white px-6 pb-4">
 
         {/* Logo / Werkbank-Wordmark */}
         <div className="flex h-16 shrink-0 items-center">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center shadow-[#c96442_0px_0px_0px_0px,#c96442_0px_0px_0px_1px]">
-              <span className="text-xs font-bold text-primary-foreground leading-none tracking-tight">GW</span>
-            </div>
-            <span className="font-semibold text-base text-foreground tracking-tight">
-              Werkbank
-            </span>
+            <Image src="/logos/ollama-icon.webp" width={28} height={28} alt="Gruppenwerk" className="rounded-lg" />
+            <span className="font-semibold text-base text-[#000000] tracking-tight">Werkbank</span>
           </Link>
         </div>
 
         {/* Zurück zur Übersicht */}
         {isInsideModule && (
-          <div className="border-b border-border pb-4">
+          <div className="border-b border-[#e5e5e5] pb-4">
             <Link
               href="/"
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-2 text-sm text-[#737373] hover:text-[#000000] transition-colors"
             >
               <ChevronLeft className="h-4 w-4" />
               Zur Übersicht
             </Link>
-            <p className="mt-2 px-1 text-xs font-semibold uppercase tracking-wider text-stone-gray">
+            <p className="mt-2 px-1 text-xs font-semibold uppercase tracking-wider text-[#737373]">
               {currentModule.name}
             </p>
           </div>

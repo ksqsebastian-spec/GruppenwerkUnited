@@ -722,3 +722,64 @@ export type AutomatisierungsKnotenInsert = Omit<
 >;
 
 export type AutomatisierungsKnotenUpdate = Partial<AutomatisierungsKnotenInsert>;
+
+// ============================================================================
+// Leads / Grid View CRM
+// ============================================================================
+
+export type LeadStatus =
+  | 'neu'
+  | 'kontaktiert'
+  | 'qualifiziert'
+  | 'angebot_versendet'
+  | 'in_verhandlung'
+  | 'gewonnen'
+  | 'verloren'
+  | 'pausiert';
+
+export type LeadPrioritaet = 'hoch' | 'mittel' | 'niedrig';
+
+export interface Lead {
+  id: string;
+  company: string;
+  vorname: string;
+  nachname: string;
+  email: string | null;
+  telefon: string | null;
+  firma: string | null;
+  position: string | null;
+  linkedin_url: string | null;
+  stadt: string | null;
+  land: string | null;
+  branche: string | null;
+  status: LeadStatus;
+  prioritaet: LeadPrioritaet;
+  tags: string[];
+  notizen: string | null;
+  naechste_aktion: string | null;
+  letzter_kontakt: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type LeadInsert = Omit<Lead, 'id' | 'created_at' | 'updated_at'>;
+export type LeadUpdate = Partial<LeadInsert>;
+
+export interface LeadKommentar {
+  id: string;
+  lead_id: string;
+  company: string;
+  text: string;
+  created_at: string;
+}
+
+export interface LeadDatei {
+  id: string;
+  lead_id: string;
+  company: string;
+  dateiname: string;
+  dateipfad: string;
+  dateityp: string | null;
+  dateigroesse: number | null;
+  created_at: string;
+}

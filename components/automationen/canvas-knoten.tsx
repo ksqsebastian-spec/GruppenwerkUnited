@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Copy, Check, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Copy, Check, Pencil, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { getAppTypKonfiguration } from '@/lib/automationen/app-typen';
@@ -13,7 +13,11 @@ export interface CanvasKnotenData {
   onEdit: (id: string) => void;
   onAddChild: (parentId: string) => void;
   onDelete: (id: string) => void;
+  onToggleCollapse: (id: string) => void;
   istGewaehlt: boolean;
+  hasChildren: boolean;
+  isCollapsed: boolean;
+  hiddenChildCount: number;
 }
 
 interface CanvasKnotenProps {
@@ -68,12 +72,11 @@ function KopierenPille({
   );
 }
 
-/**
- * n8n-style Node: horizontale Karte mit Icon links, Titel + App-Typ rechts.
- * Aktionsleiste per CSS group-hover – kein JS-State-Gap-Problem.
- */
 export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
-  const { knoten, onEdit, onAddChild, onDelete, istGewaehlt } = data;
+  const {
+    knoten, onEdit, onAddChild, onDelete, onToggleCollapse,
+    istGewaehlt, hasChildren, isCollapsed, hiddenChildCount,
+  } = data;
   const istBlattknoten = knoten.prompt_template !== null;
   const config = getAppTypKonfiguration(knoten.app_type);
   const Logo = config.Logo;
@@ -83,11 +86,9 @@ export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.15, ease: 'easeOut' }}
-      // pb-9 verlängert die Hover-Zone nach unten – Aktionsleiste liegt
-      // innerhalb dieser Zone, sodass kein Hover-Gap entstehen kann.
       className="group relative flex flex-col items-center cursor-default pb-9"
     >
-      {/* n8n-style horizontale Karte */}
+      {/* Karte */}
       <div
         className={cn(
           'relative flex items-center gap-3 w-64 px-3 py-2.5 rounded-xl bg-white',
@@ -101,15 +102,16 @@ export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
             : undefined,
         }}
       >
+        {/* Handles für vertikales Layout (TB) */}
         <Handle
           type="target"
-          position={Position.Left}
-          style={{ top: '50%', left: -5, visibility: 'hidden' }}
+          position={Position.Top}
+          style={{ top: -4, left: '50%', transform: 'translateX(-50%)', visibility: 'hidden' }}
         />
         <Handle
           type="source"
-          position={Position.Right}
-          style={{ top: '50%', right: -5, visibility: 'hidden' }}
+          position={Position.Bottom}
+          style={{ bottom: -4, left: '50%', transform: 'translateX(-50%)', visibility: 'hidden' }}
         />
 
         <div
@@ -127,16 +129,38 @@ export function CanvasKnoten({ data }: CanvasKnotenProps): React.JSX.Element {
             {config.bezeichnung}
           </p>
         </div>
+
+        {/* Kollabieren-Toggle – nur sichtbar wenn Kinder vorhanden */}
+        {hasChildren && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleCollapse(knoten.id); }}
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border bg-card shadow-sm hover:bg-muted transition-colors"
+            title={isCollapsed ? 'Aufklappen' : 'Zuklappen'}
+          >
+            {isCollapsed
+              ? <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+              : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+            }
+          </button>
+        )}
       </div>
 
-      {istBlattknoten && knoten.prompt_template && (
+      {istBlattknoten && knoten.prompt_template && !isCollapsed && (
         <KopierenPille
           promptText={knoten.prompt_template}
           usesDatenkodierung={knoten.use_datenkodierung}
         />
       )}
 
-      {/* Aktionsleiste – innerhalb pb-9-Zone, via CSS group-hover eingeblendet */}
+      {/* Badge für verborgene Nachfahren */}
+      {isCollapsed && hiddenChildCount > 0 && (
+        <div className="mt-1.5 flex items-center gap-1 rounded-full border border-border bg-muted px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+          <ChevronRight className="h-2.5 w-2.5" />
+          {hiddenChildCount} verborgen
+        </div>
+      )}
+
+      {/* Aktionsleiste – via CSS group-hover eingeblendet */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-1 z-10 whitespace-nowrap invisible group-hover:visible">
         <button
           onClick={(e) => { e.stopPropagation(); onEdit(knoten.id); }}

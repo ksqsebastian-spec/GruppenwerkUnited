@@ -43,9 +43,9 @@ export function FuhrparkSubnav(): React.JSX.Element {
   };
 
   return (
-    <div className="border-b bg-card">
+    <div className="border-b border-[#e5e5e5] bg-white">
       <div className="px-4 sm:px-6 lg:px-8">
-        <nav className="flex items-center gap-x-0.5 overflow-x-auto">
+        <nav className="flex items-center gap-x-0.5 overflow-x-auto py-2">
           {fuhrparkNavItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href, item.exact);
@@ -59,16 +59,16 @@ export function FuhrparkSubnav(): React.JSX.Element {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'relative flex items-center gap-1.5 px-3 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors',
+                  'relative flex items-center gap-1.5 transition-colors',
                   active
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                    ? 'bg-[#e5e5e5] text-[#000000] rounded-full px-3 py-1.5 text-sm font-medium whitespace-nowrap'
+                    : 'text-[#737373] hover:text-[#000000] hover:bg-[#f5f5f5] rounded-full px-3 py-1.5 text-sm font-medium whitespace-nowrap'
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {item.name}
                 {badge !== undefined && badge > 0 && (
-                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-medium text-white">
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[#000000] px-1 text-xs font-medium text-white">
                     {badge > 99 ? '99+' : badge}
                   </span>
                 )}

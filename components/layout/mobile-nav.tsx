@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   X,
@@ -103,7 +104,7 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps): React.JSX.Ele
           </div>
 
           {/* Navigation */}
-          <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-card px-6 pb-4">
+          <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
             {/* Logo */}
             <div className="flex h-16 shrink-0 items-center">
               <Link
@@ -111,25 +112,23 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps): React.JSX.Ele
                 className="flex items-center gap-2"
                 onClick={() => onOpenChange(false)}
               >
-                <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                  <Wrench className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <span className="font-semibold text-lg">Werkbank</span>
+                <Image src="/logos/ollama-icon.webp" width={28} height={28} alt="Gruppenwerk" className="rounded-lg" />
+                <span className="font-semibold text-lg text-[#000000]">Werkbank</span>
               </Link>
             </div>
 
             {/* Zurück zur Übersicht (nur innerhalb eines Moduls) */}
             {isInsideModule && (
-              <div className="border-b pb-4">
+              <div className="border-b border-[#e5e5e5] pb-4">
                 <Link
                   href="/"
                   onClick={() => onOpenChange(false)}
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-2 text-sm text-[#737373] hover:text-[#000000] transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Zur Übersicht
                 </Link>
-                <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-[#737373]">
                   {currentModule.name}
                 </p>
               </div>
@@ -153,23 +152,23 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps): React.JSX.Ele
                         href={item.href}
                         onClick={() => onOpenChange(false)}
                         className={cn(
-                          'group flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 transition-colors',
+                          'group flex gap-x-3 rounded-full p-2 text-sm font-medium leading-6 transition-colors',
                           active
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-foreground/80 hover:bg-muted hover:text-foreground'
+                            ? 'bg-[#e5e5e5] text-[#000000]'
+                            : 'text-[#525252] hover:bg-[#f5f5f5] hover:text-[#000000]'
                         )}
                       >
                         <Icon
                           className={cn(
                             'h-5 w-5 shrink-0',
                             active
-                              ? 'text-primary'
-                              : 'text-muted-foreground group-hover:text-muted-foreground'
+                              ? 'text-[#000000]'
+                              : 'text-[#737373] group-hover:text-[#525252]'
                           )}
                         />
                         <span className="flex-1">{item.name}</span>
                         {showBadge && badgeCount && (
-                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-medium text-white">
+                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#000000] px-1.5 text-xs font-medium text-white">
                             {badgeCount > 99 ? '99+' : badgeCount}
                           </span>
                         )}

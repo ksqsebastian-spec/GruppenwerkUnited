@@ -8,6 +8,7 @@ import {
   Star,
   Wrench,
   Zap,
+  TableProperties,
 } from 'lucide-react';
 
 /**
@@ -24,4 +25,5 @@ export const MODULE_ICONS: Record<string, React.ElementType> = {
   Star,
   Wrench,
   Zap,
+  TableProperties,
 };

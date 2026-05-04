@@ -61,19 +61,19 @@ module.exports = {
         },
         // ─── Anthropic / Claude Designsystem – benannte Tokens ──────────────
         // Direktzugriff: bg-parchment, text-olive-gray, border-cream, etc.
-        parchment:      '#f5f4ed',
-        ivory:          '#faf9f5',
-        terracotta:     '#c96442',
-        coral:          '#d97757',
-        'warm-sand':    '#e8e6dc',
-        'charcoal-warm':'#4d4c48',
-        'olive-gray':   '#5e5d59',
-        'stone-gray':   '#87867f',
-        'border-cream': '#f0eee6',
-        'dark-warm':    '#3d3d3a',
-        'dark-surface': '#30302e',
-        'near-black':   '#141413',
-        'warm-silver':  '#b0aea5',
+        parchment:       '#ffffff',
+        ivory:           '#fafafa',
+        terracotta:      '#000000',
+        coral:           '#262626',
+        'warm-sand':     '#e5e5e5',
+        'charcoal-warm': '#262626',
+        'olive-gray':    '#525252',
+        'stone-gray':    '#737373',
+        'border-cream':  '#e5e5e5',
+        'dark-warm':     '#262626',
+        'dark-surface':  '#000000',
+        'near-black':    '#000000',
+        'warm-silver':   '#a3a3a3',
         // ─── ROI-Modul Farben ────────────────────────────────────────────────
         surface: {
           DEFAULT: "var(--roi-surface, #faf9f5)",
@@ -118,13 +118,13 @@ module.exports = {
         '4xl': "calc(var(--radius) * 4)", // 32px
       },
       boxShadow: {
-        // Ring-basiertes Shadow-System (Anthropic-Signatur)
-        'ring-warm':   '0px 0px 0px 1px #d1cfc5',
-        'ring-subtle': '0px 0px 0px 1px #dedc01',
-        'ring-deep':   '0px 0px 0px 1px #c2c0b6',
-        'ring-dark':   '0px 0px 0px 1px #30302e',
-        // Whisper Shadow – kaum sichtbares Heben
-        'whisper':     'rgba(0,0,0,0.05) 0px 4px 24px',
+        // Ring-basiertes Shadow-System (Ollama – kein Schatten, nur Borders)
+        'ring-warm':   '0px 0px 0px 1px #e5e5e5',
+        'ring-subtle': '0px 0px 0px 1px #e5e5e5',
+        'ring-deep':   '0px 0px 0px 1px #d4d4d4',
+        'ring-dark':   '0px 0px 0px 1px #000000',
+        // Kein Schatten
+        'whisper':     'none',
       },
       keyframes: {
         "accordion-down": {
