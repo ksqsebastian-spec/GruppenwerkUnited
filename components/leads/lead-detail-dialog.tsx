@@ -30,6 +30,7 @@ export function LeadDetailDialog({ lead, onClose }: LeadDetailDialogProps): Reac
       setForm({
         status: lead.status,
         prioritaet: lead.prioritaet,
+        telefon: lead.telefon ?? '',
         notizen: lead.notizen ?? '',
         naechste_aktion: lead.naechste_aktion ?? '',
         letzter_kontakt: lead.letzter_kontakt ?? '',
@@ -166,6 +167,17 @@ export function LeadDetailDialog({ lead, onClose }: LeadDetailDialogProps): Reac
                     ))}
                   </select>
                 </div>
+              </div>
+
+              {/* Telefon */}
+              <div>
+                <label className="text-xs font-semibold text-[#737373] uppercase tracking-wider block mb-1.5">Telefon</label>
+                <Input
+                  value={form.telefon ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, telefon: e.target.value || null }))}
+                  placeholder="+49 40 123456"
+                  className="h-9 rounded-lg border-[#e5e5e5] text-sm"
+                />
               </div>
 
               {/* Nächste Aktion */}

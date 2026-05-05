@@ -131,6 +131,9 @@ export function LeadsTabelle({ leads, onLeadClick }: LeadsTabelleProps): React.J
               <th className="px-4 py-3 text-left hidden lg:table-cell">
                 <span className="text-xs font-semibold text-[#737373] uppercase tracking-wider">E-Mail</span>
               </th>
+              <th className="px-4 py-3 text-left hidden lg:table-cell">
+                <span className="text-xs font-semibold text-[#737373] uppercase tracking-wider">Telefon</span>
+              </th>
               <th className="px-4 py-3 text-left">
                 <SortHeader label="Status" sortKey="status" aktiv={sortKey} richtung={richtung} onClick={handleSort} />
               </th>
@@ -187,6 +190,20 @@ export function LeadsTabelle({ leads, onLeadClick }: LeadsTabelleProps): React.J
                         className="text-[#2563eb] hover:underline text-xs"
                       >
                         {lead.email}
+                      </a>
+                    ) : (
+                      <span className="text-[#a3a3a3]">—</span>
+                    )}
+                  </td>
+                  {/* Telefon */}
+                  <td className="px-4 py-3 hidden lg:table-cell">
+                    {lead.telefon ? (
+                      <a
+                        href={`tel:${lead.telefon}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-[#525252] hover:underline text-xs whitespace-nowrap"
+                      >
+                        {lead.telefon}
                       </a>
                     ) : (
                       <span className="text-[#a3a3a3]">—</span>
