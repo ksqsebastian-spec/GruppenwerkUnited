@@ -16,16 +16,36 @@ import type { Lead } from '@/types';
 
 export default function LeadsPage(): React.JSX.Element {
   const [filter, setFilter] = useState<LeadsFilter>({});
+  const [suchtext, setSuchtext] = useState('');
   const [ausgewaehlterLead, setAusgewaehlterLead] = useState<Lead | null>(null);
   const [erstellenOffen, setErstellenOffen] = useState(false);
   const [importOffen, setImportOffen] = useState(false);
 
-  const { data: leads = [], isLoading, error } = useLeads(filter);
+  // Nur Status/Priorität/Branche gehen ans API — Suche läuft client-side
+  const { data: leads = [], isLoading, error } = useLeads({
+    status: filter.status,
+    prioritaet: filter.prioritaet,
+    branche: filter.branche,
+  });
+
+  const gefilterteLeads = useMemo(() => {
+    if (!suchtext.trim()) return leads;
+    const q = suchtext.toLowerCase();
+    return leads.filter((l) =>
+      [l.vorname, l.nachname, l.firma, l.email, l.position]
+        .some((v) => v?.toLowerCase().includes(q))
+    );
+  }, [leads, suchtext]);
 
   const branchen = useMemo(() => {
     const set = new Set(leads.map((l) => l.branche).filter(Boolean) as string[]);
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'de'));
   }, [leads]);
+
+  const handleFilterChange = (f: LeadsFilter): void => {
+    setSuchtext(f.search ?? '');
+    setFilter(f);
+  };
 
   if (isLoading) {
     return (
@@ -79,9 +99,9 @@ export default function LeadsPage(): React.JSX.Element {
         </div>
       </div>
 
-      <LeadFilterBar filter={filter} onChange={setFilter} branchen={branchen} />
+      <LeadFilterBar filter={{ ...filter, search: suchtext }} onChange={handleFilterChange} branchen={branchen} />
 
-      <LeadsTabelle leads={leads} onLeadClick={setAusgewaehlterLead} />
+      <LeadsTabelle leads={gefilterteLeads} onLeadClick={setAusgewaehlterLead} />
 
       <LeadDetailDialog
         lead={ausgewaehlterLead}
