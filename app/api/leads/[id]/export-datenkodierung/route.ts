@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireSession } from '@/lib/auth/api';
-import { createAdminClient } from '@/lib/supabase/admin';
+import sql from '@/lib/db';
 import { generateCode } from '@/lib/datenkodierung/code-generator';
 
 export async function POST(
@@ -10,16 +10,12 @@ export async function POST(
   const session = await requireSession();
   if (session instanceof NextResponse) return session;
 
-  const supabase = createAdminClient();
+  const leads = await sql`
+    SELECT * FROM leads WHERE id = ${params.id} AND company = ${session.companyId} LIMIT 1
+  `;
+  const lead = leads[0];
 
-  const { data: lead, error: leadError } = await supabase
-    .from('leads')
-    .select('*')
-    .eq('id', params.id)
-    .eq('company', session.companyId)
-    .single();
-
-  if (leadError || !lead) {
+  if (!lead) {
     return NextResponse.json({ error: 'Lead nicht gefunden' }, { status: 404 });
   }
 
@@ -43,15 +39,17 @@ export async function POST(
 
   for (let attempt = 0; attempt < 3; attempt++) {
     const code = generateCode();
-    const { data, error } = await supabase
-      .from('datenkodierungen')
-      .insert({ code, name, adresse, notizen: lead.notizen ?? null, tags, company: session.companyId })
-      .select('id, code')
-      .single();
-
-    if (!error) return NextResponse.json({ code: data.code, id: data.id });
-    if (error.code !== '23505') {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    try {
+      const rows = await sql`
+        INSERT INTO datenkodierungen ${sql({ code, name, adresse, notizen: lead.notizen ?? null, tags, company: session.companyId } as Record<string, unknown>)}
+        RETURNING id, code
+      `;
+      if (rows[0]) return NextResponse.json({ code: rows[0].code, id: rows[0].id });
+    } catch (err: unknown) {
+      const pg = err as { code?: string };
+      if (pg.code !== '23505') {
+        return NextResponse.json({ error: 'Export fehlgeschlagen' }, { status: 500 });
+      }
     }
   }
 
