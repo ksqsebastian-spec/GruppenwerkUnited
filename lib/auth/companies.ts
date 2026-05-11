@@ -27,28 +27,28 @@ export const COMPANY_CONFIGS: CompanyConfig[] = [
   {
     id: 'seehafer',
     name: 'Seehafer Elemente',
-    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob'],
+    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob', 'leads', 'automationen'],
     isAdmin: false,
     passwordEnvKey: 'SEEHAFER_PASSWORD',
   },
   {
     id: 'brink',
     name: 'Tischlerei Brink',
-    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob'],
+    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob', 'leads', 'automationen'],
     isAdmin: false,
     passwordEnvKey: 'BRINK_PASSWORD',
   },
   {
     id: 'hantke',
     name: 'Malerei Hantke',
-    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob'],
+    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob', 'leads', 'automationen'],
     isAdmin: false,
     passwordEnvKey: 'HANTKE_PASSWORD',
   },
   {
     id: 'gruppenwerk',
     name: 'Gruppenwerk',
-    modules: ['vob', 'fuhrpark'],
+    modules: ['vob', 'fuhrpark', 'leads', 'automationen'],
     isAdmin: false,
     passwordEnvKey: 'GRUPPENWERK_PASSWORD',
   },
@@ -62,7 +62,7 @@ export const COMPANY_CONFIGS: CompanyConfig[] = [
   {
     id: 'mehlig',
     name: 'Tischlerei Mehlig',
-    modules: ['affiliate', 'recruiting', 'roi', 'vob', 'fuhrpark'],
+    modules: ['affiliate', 'recruiting', 'roi', 'vob', 'fuhrpark', 'leads', 'automationen'],
     isAdmin: false,
     passwordEnvKey: 'MEHLIG_PASSWORD',
   },
@@ -76,6 +76,8 @@ export const ROUTE_TO_MODULE: Record<string, string> = {
   '/roi': 'roi',
   '/vob': 'vob',
   '/datenkodierung': 'datenkodierung',
+  '/leads': 'leads',
+  '/automationen': 'automationen',
 };
 
 /**
