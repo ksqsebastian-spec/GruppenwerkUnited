@@ -30,7 +30,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAutoSave } from '@/hooks/use-auto-save';
 import { useCompanies } from '@/hooks/use-companies';
 import { useCreateVehicle, useUpdateVehicle } from '@/hooks/use-vehicles';
-import { syncLeasingAppointment, syncLeasingCost } from '@/lib/database/vehicles';
 import { vehicleSchema, type VehicleFormData } from '@/lib/validations/vehicle';
 import type { Vehicle } from '@/types';
 
@@ -123,20 +122,6 @@ export function VehicleForm({ vehicle }: VehicleFormProps): React.JSX.Element {
         const newVehicle = await createMutation.mutateAsync(data);
         vehicleId = newVehicle.id;
       }
-
-      // Leasing-Rückgabe-Termin synchronisieren
-      await syncLeasingAppointment(
-        vehicleId,
-        data.leasing_end_date ?? null,
-        data.is_leased ?? false
-      );
-
-      // Leasing-Kosten für aktuellen Monat erstellen
-      await syncLeasingCost(
-        vehicleId,
-        data.leasing_rate,
-        data.is_leased ?? false
-      );
 
       router.push(`/fuhrpark/vehicles/${vehicleId}`);
     } catch (error) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchVehicles, createVehicle } from '@/lib/database/vehicles';
+import { fetchVehicles, createVehicle, syncLeasingAppointment, syncLeasingCost } from '@/lib/database/vehicles';
 import type { VehicleFilters } from '@/types';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -28,6 +28,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
   try {
     const row = await createVehicle(body as Parameters<typeof createVehicle>[0]);
+    const b = body as Record<string, unknown>;
+    await Promise.all([
+      syncLeasingAppointment(row.id, (b.leasing_end_date as string | null) ?? null, !!(b.is_leased)),
+      syncLeasingCost(row.id, b.leasing_rate as number | null | undefined, !!(b.is_leased)),
+    ]);
     return NextResponse.json(row, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Fahrzeug konnte nicht angelegt werden' }, { status: 500 });
