@@ -1,9 +1,4 @@
-/**
- * Vollständige Daten-Export-Logik für alle Module.
- * Läuft ausschließlich serverseitig (admin client erforderlich).
- */
-
-import { createAdminClient } from '@/lib/supabase/admin';
+import sql from '@/lib/db';
 import type { SessionData } from '@/lib/auth/session';
 
 export interface ExportMeta {
@@ -52,237 +47,94 @@ export interface ExportPayload {
   automationen?: unknown[];
 }
 
-/**
- * Löst die Fuhrpark-UUID für eine Firma auf (Name → UUID).
- */
-async function resolveFuhrparkCompanyId(
-  supabase: ReturnType<typeof createAdminClient>,
-  companyName: string
-): Promise<string | null> {
-  const { data } = await supabase
-    .from('companies')
-    .select('id')
-    .eq('name', companyName)
-    .maybeSingle();
-  return data?.id ?? null;
+async function resolveFuhrparkCompanyId(companyName: string): Promise<string | null> {
+  const rows = await sql`SELECT id FROM companies WHERE name = ${companyName} LIMIT 1`;
+  return (rows[0]?.id as string) ?? null;
 }
 
-async function exportFuhrpark(
-  supabase: ReturnType<typeof createAdminClient>,
-  companyId: string
-): Promise<FuhrparkExport> {
-  const [
-    { data: fahrzeuge },
-    { data: fahrer },
-    { data: schaeden },
-    { data: kosten },
-    { data: dokumente },
-    { data: lcMitarbeiter },
-    { data: lcKontrollen },
-    { data: uvvUnterweisungen },
-  ] = await Promise.all([
-    supabase
-      .from('vehicles')
-      .select('*')
-      .eq('company_id', companyId)
-      .order('license_plate'),
-    supabase
-      .from('drivers')
-      .select('*')
-      .eq('company_id', companyId)
-      .order('last_name'),
-    supabase
-      .from('damages')
-      .select('*, damage_type:damage_types(id, name)')
-      .eq('company_id', companyId)
-      .order('date', { ascending: false }),
-    supabase
-      .from('costs')
-      .select('*, cost_type:cost_types(id, name)')
-      .eq('company_id', companyId)
-      .order('date', { ascending: false }),
-    supabase
-      .from('documents')
-      .select('id, name, entity_type, file_path, file_size, mime_type, notes, uploaded_at, document_type:document_types(id, name)')
-      .eq('company_id', companyId)
-      .order('uploaded_at', { ascending: false }),
-    supabase
-      .from('license_check_employees')
-      .select('*')
-      .eq('company_id', companyId)
-      .order('last_name'),
-    supabase
-      .from('license_checks')
-      .select('*, checked_by:license_check_inspectors(id, name)')
-      .order('check_date', { ascending: false }),
-    supabase
-      .from('uvv_checks')
-      .select('*, instructed_by:uvv_instructors(id, name)')
-      .order('check_date', { ascending: false }),
-  ]);
+async function exportFuhrpark(companyId: string): Promise<FuhrparkExport> {
+  const [fahrzeuge, fahrer, schaeden, kosten, dokumente, lcMitarbeiter, lcKontrollen, uvvUnterweisungen] =
+    await Promise.all([
+      sql`SELECT * FROM vehicles WHERE company_id = ${companyId} ORDER BY license_plate`,
+      sql`SELECT * FROM drivers WHERE company_id = ${companyId} ORDER BY last_name`,
+      sql`SELECT d.*, dt.id as damage_type_id, dt.name as damage_type_name FROM damages d LEFT JOIN damage_types dt ON dt.id = d.damage_type_id WHERE d.company_id = ${companyId} ORDER BY d.date DESC`,
+      sql`SELECT c.*, ct.id as cost_type_id, ct.name as cost_type_name FROM costs c LEFT JOIN cost_types ct ON ct.id = c.cost_type_id WHERE c.company_id = ${companyId} ORDER BY c.date DESC`,
+      sql`SELECT d.id, d.name, d.entity_type, d.file_path, d.file_size, d.mime_type, d.notes, d.uploaded_at, dt.id as document_type_id, dt.name as document_type_name FROM documents d LEFT JOIN document_types dt ON dt.id = d.document_type_id WHERE d.company_id = ${companyId} ORDER BY d.uploaded_at DESC`,
+      sql`SELECT * FROM license_check_employees WHERE company_id = ${companyId} ORDER BY last_name`,
+      sql`SELECT lc.*, li.id as inspector_id, li.name as inspector_name FROM license_checks lc LEFT JOIN license_check_inspectors li ON li.id = lc.checked_by_id ORDER BY lc.check_date DESC`,
+      sql`SELECT uc.*, ui.id as instructor_id, ui.name as instructor_name FROM uvv_checks uc LEFT JOIN uvv_instructors ui ON ui.id = uc.instructed_by_id ORDER BY uc.check_date DESC`,
+    ]);
 
-  // Fahrzeug-Fahrer-Zuordnungen und Termine per Fahrzeuge-IDs laden
-  const vehicleIds = (fahrzeuge ?? []).map((v: Record<string, unknown>) => v.id as string);
-  const driverIds = (fahrer ?? []).map((d: Record<string, unknown>) => d.id as string);
+  const vehicleIds = fahrzeuge.map((v) => v.id as string);
+  const employeeIds = lcMitarbeiter.map((e) => e.id as string);
+  const driverIds = fahrer.map((d) => d.id as string);
 
   let zuordnungen: unknown[] = [];
   let termine: unknown[] = [];
 
   if (vehicleIds.length > 0) {
-    const [{ data: z }, { data: t }] = await Promise.all([
-      supabase
-        .from('vehicle_drivers')
-        .select('*, driver:drivers(id, first_name, last_name)')
-        .in('vehicle_id', vehicleIds),
-      supabase
-        .from('appointments')
-        .select('*, appointment_type:appointment_types(id, name, color)')
-        .in('vehicle_id', vehicleIds)
-        .order('due_date'),
+    [zuordnungen, termine] = await Promise.all([
+      sql`SELECT vd.*, d.id as driver_id, d.first_name, d.last_name FROM vehicle_drivers vd LEFT JOIN drivers d ON d.id = vd.driver_id WHERE vd.vehicle_id = ANY(${vehicleIds})`,
+      sql`SELECT a.*, at.id as type_id, at.name as type_name, at.color FROM appointments a LEFT JOIN appointment_types at ON at.id = a.appointment_type_id WHERE a.vehicle_id = ANY(${vehicleIds}) ORDER BY a.due_date`,
     ]);
-    zuordnungen = z ?? [];
-    termine = t ?? [];
   }
 
-  // LC-Kontrollen auf Fahrer dieser Firma filtern
-  const lcKontrollenGefiltert = (lcKontrollen ?? []).filter((k: Record<string, unknown>) =>
-    (k.driver_id && driverIds.includes(k.driver_id as string)) ||
-    (k.employee_id && (lcMitarbeiter ?? []).some((e: Record<string, unknown>) => e.id === k.employee_id))
+  const lcKontrollenGefiltert = (lcKontrollen as Record<string, unknown>[]).filter(
+    (k) => k.employee_id && employeeIds.includes(k.employee_id as string)
   );
 
-  // UVV-Unterweisungen auf Fahrer dieser Firma filtern
-  const uvvGefiltert = (uvvUnterweisungen ?? []).filter((u: Record<string, unknown>) =>
-    u.driver_id && driverIds.includes(u.driver_id as string)
+  const uvvGefiltert = (uvvUnterweisungen as Record<string, unknown>[]).filter(
+    (u) => u.driver_id && driverIds.includes(u.driver_id as string)
   );
 
   return {
-    fahrzeuge: fahrzeuge ?? [],
-    fahrer: fahrer ?? [],
+    fahrzeuge,
+    fahrer,
     fahrzeug_fahrer_zuordnungen: zuordnungen,
-    termine: termine,
-    schaeden: schaeden ?? [],
-    kosten: kosten ?? [],
-    dokumente_metadaten: dokumente ?? [],
-    fuehrerscheinkontrolle_mitarbeiter: lcMitarbeiter ?? [],
+    termine,
+    schaeden,
+    kosten,
+    dokumente_metadaten: dokumente,
+    fuehrerscheinkontrolle_mitarbeiter: lcMitarbeiter,
     fuehrerscheinkontrolle_kontrollen: lcKontrollenGefiltert,
     uvv_unterweisungen: uvvGefiltert,
   };
 }
 
-async function exportRecruiting(
-  supabase: ReturnType<typeof createAdminClient>,
-  companyId: string
-): Promise<RecruitingExport> {
-  const [{ data: stellen }, { data: empfehlungen }] = await Promise.all([
-    supabase
-      .from('stellen')
-      .select('*')
-      .eq('company', companyId)
-      .order('title'),
-    supabase
-      .from('empfehlungen')
-      .select('*, stelle:stelle_id(id, title)')
-      .not('stelle_id', 'is', null)
-      .is('handwerker_id', null)
-      .eq('company', companyId)
-      .order('created_at', { ascending: false }),
+async function exportRecruiting(companyId: string): Promise<RecruitingExport> {
+  const [stellen, empfehlungen] = await Promise.all([
+    sql`SELECT * FROM stellen WHERE company = ${companyId} ORDER BY title`,
+    sql`SELECT e.*, s.id as stelle_id_ref, s.title as stelle_title FROM empfehlungen e LEFT JOIN stellen s ON s.id = e.stelle_id WHERE e.stelle_id IS NOT NULL AND e.handwerker_id IS NULL AND e.company = ${companyId} ORDER BY e.created_at DESC`,
   ]);
-
-  return {
-    stellen: stellen ?? [],
-    empfehlungen: empfehlungen ?? [],
-  };
+  return { stellen, empfehlungen };
 }
 
-async function exportAffiliate(
-  supabase: ReturnType<typeof createAdminClient>,
-  companyId: string
-): Promise<AffiliateExport> {
-  const [{ data: handwerker }, { data: empfehlungen }] = await Promise.all([
-    supabase
-      .from('handwerker')
-      .select('*')
-      .eq('company', companyId)
-      .order('name'),
-    supabase
-      .from('empfehlungen')
-      .select('*, handwerker:handwerker_id(id, name, email)')
-      .not('handwerker_id', 'is', null)
-      .is('stelle_id', null)
-      .eq('company', companyId)
-      .order('created_at', { ascending: false }),
+async function exportAffiliate(companyId: string): Promise<AffiliateExport> {
+  const [handwerker, empfehlungen] = await Promise.all([
+    sql`SELECT * FROM handwerker WHERE company = ${companyId} ORDER BY name`,
+    sql`SELECT e.*, h.id as hw_id, h.name as hw_name, h.email as hw_email FROM empfehlungen e LEFT JOIN handwerker h ON h.id = e.handwerker_id WHERE e.handwerker_id IS NOT NULL AND e.stelle_id IS NULL AND e.company = ${companyId} ORDER BY e.created_at DESC`,
   ]);
-
-  return {
-    handwerker: handwerker ?? [],
-    empfehlungen: empfehlungen ?? [],
-  };
+  return { handwerker, empfehlungen };
 }
 
-async function exportRoi(
-  supabase: ReturnType<typeof createAdminClient>,
-  companyId: string
-): Promise<RoiExport> {
-  const [{ data: jobs }, { data: configRows }, { data: ausgaben }] = await Promise.all([
-    supabase
-      .schema('roi')
-      .from('jobs')
-      .select('*')
-      .eq('company_id', companyId)
-      .order('datum', { ascending: false }),
-    supabase
-      .schema('roi')
-      .from('config')
-      .select('*')
-      .eq('company_id', companyId)
-      .limit(1),
-    supabase
-      .schema('roi')
-      .from('purchases')
-      .select('*')
-      .eq('company_id', companyId)
-      .order('purchased_at', { ascending: false }),
+async function exportRoi(companyId: string): Promise<RoiExport> {
+  const [jobs, configRows, ausgaben] = await Promise.all([
+    sql`SELECT * FROM roi.jobs WHERE company_id = ${companyId} ORDER BY datum DESC`,
+    sql`SELECT * FROM roi.config WHERE company_id = ${companyId} LIMIT 1`,
+    sql`SELECT * FROM roi.purchases WHERE company_id = ${companyId} ORDER BY purchased_at DESC`,
   ]);
-
-  return {
-    jobs: jobs ?? [],
-    konfiguration: configRows?.[0] ?? null,
-    ausgaben: ausgaben ?? [],
-  };
+  return { jobs, konfiguration: configRows[0] ?? null, ausgaben };
 }
 
-async function exportDatenkodierung(
-  supabase: ReturnType<typeof createAdminClient>,
-  companyId: string
-): Promise<unknown[]> {
-  const { data } = await supabase
-    .from('datenkodierungen')
-    .select('*')
-    .eq('company', companyId)
-    .order('created_at', { ascending: false });
-
-  return data ?? [];
+async function exportDatenkodierung(companyId: string): Promise<unknown[]> {
+  return sql`SELECT * FROM datenkodierungen WHERE company = ${companyId} ORDER BY created_at DESC`;
 }
 
-async function exportAutomationen(
-  supabase: ReturnType<typeof createAdminClient>,
-  companyId: string
-): Promise<unknown[]> {
-  const { data } = await supabase
-    .from('automation_nodes')
-    .select('*')
-    .eq('company', companyId)
-    .order('position', { ascending: true });
-
-  return data ?? [];
+async function exportAutomationen(companyId: string): Promise<unknown[]> {
+  return sql`SELECT * FROM automation_nodes WHERE company = ${companyId} ORDER BY position ASC`;
 }
 
-/**
- * Erstellt den vollständigen Export-Payload für einen Account.
- * Exportiert nur Module auf die der Account Zugriff hat.
- */
 export async function buildExportPayload(session: SessionData): Promise<ExportPayload> {
-  const supabase = createAdminClient();
   const { companyId, companyName, isAdmin } = session;
 
   const allowedModules: string[] = isAdmin
@@ -305,49 +157,37 @@ export async function buildExportPayload(session: SessionData): Promise<ExportPa
 
   if (allowedModules.includes('fuhrpark')) {
     tasks.push(
-      resolveFuhrparkCompanyId(supabase, companyName).then(async (uuid) => {
-        if (uuid) {
-          payload.fuhrpark = await exportFuhrpark(supabase, uuid);
-        } else {
-          payload.fuhrpark = {
-            fahrzeuge: [], fahrer: [], fahrzeug_fahrer_zuordnungen: [],
-            termine: [], schaeden: [], kosten: [], dokumente_metadaten: [],
-            fuehrerscheinkontrolle_mitarbeiter: [], fuehrerscheinkontrolle_kontrollen: [],
-            uvv_unterweisungen: [],
-          };
-        }
+      resolveFuhrparkCompanyId(companyName).then(async (uuid) => {
+        payload.fuhrpark = uuid
+          ? await exportFuhrpark(uuid)
+          : {
+              fahrzeuge: [], fahrer: [], fahrzeug_fahrer_zuordnungen: [],
+              termine: [], schaeden: [], kosten: [], dokumente_metadaten: [],
+              fuehrerscheinkontrolle_mitarbeiter: [], fuehrerscheinkontrolle_kontrollen: [],
+              uvv_unterweisungen: [],
+            };
       })
     );
   }
 
   if (allowedModules.includes('recruiting')) {
-    tasks.push(
-      exportRecruiting(supabase, companyId).then((data) => { payload.recruiting = data; })
-    );
+    tasks.push(exportRecruiting(companyId).then((data) => { payload.recruiting = data; }));
   }
 
   if (allowedModules.includes('affiliate')) {
-    tasks.push(
-      exportAffiliate(supabase, companyId).then((data) => { payload.affiliate = data; })
-    );
+    tasks.push(exportAffiliate(companyId).then((data) => { payload.affiliate = data; }));
   }
 
   if (allowedModules.includes('roi')) {
-    tasks.push(
-      exportRoi(supabase, companyId).then((data) => { payload.roi = data; })
-    );
+    tasks.push(exportRoi(companyId).then((data) => { payload.roi = data; }));
   }
 
   if (allowedModules.includes('datenkodierung')) {
-    tasks.push(
-      exportDatenkodierung(supabase, companyId).then((data) => { payload.datenkodierung = data; })
-    );
+    tasks.push(exportDatenkodierung(companyId).then((data) => { payload.datenkodierung = data; }));
   }
 
   if (allowedModules.includes('automationen')) {
-    tasks.push(
-      exportAutomationen(supabase, companyId).then((data) => { payload.automationen = data; })
-    );
+    tasks.push(exportAutomationen(companyId).then((data) => { payload.automationen = data; }));
   }
 
   await Promise.all(tasks);
