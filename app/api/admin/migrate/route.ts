@@ -277,12 +277,17 @@ export async function POST(): Promise<NextResponse> {
     )`;
 
     await sql`CREATE TABLE IF NOT EXISTS datenkodierungen (
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      adresse TEXT,
+      notizen TEXT,
       tags TEXT[] NOT NULL DEFAULT '{}',
+      company TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_datenkodierungen_company ON datenkodierungen (company)`;
 
     await sql`
       CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -334,6 +339,75 @@ export async function POST(): Promise<NextResponse> {
     await sql`CREATE TABLE IF NOT EXISTS vob.vob_scans (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), scan_date DATE NOT NULL, calendar_week INTEGER NOT NULL, year INTEGER NOT NULL, total_listings INTEGER, matched_count INTEGER, new_listings INTEGER NOT NULL DEFAULT 0, report_url TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), UNIQUE (calendar_week, year))`;
     await sql`CREATE TABLE IF NOT EXISTS vob.vob_tenders (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), title TEXT NOT NULL, authority TEXT, deadline TEXT, deadline_date DATE, category TEXT, url TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','expired','archived')), requested BOOLEAN NOT NULL DEFAULT FALSE, scan_id UUID REFERENCES vob.vob_scans(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
     await sql`CREATE TABLE IF NOT EXISTS vob.vob_matches (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), tender_id UUID NOT NULL REFERENCES vob.vob_tenders(id) ON DELETE CASCADE, company_id UUID NOT NULL REFERENCES vob.companies(id) ON DELETE CASCADE, company_slug TEXT NOT NULL, relevance TEXT, reason TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), UNIQUE (tender_id, company_id))`;
+
+    await sql`CREATE TABLE IF NOT EXISTS automation_nodes (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      company TEXT NOT NULL DEFAULT '',
+      parent_id UUID REFERENCES automation_nodes(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      description TEXT,
+      app_type TEXT NOT NULL DEFAULT 'generic',
+      prompt_template TEXT,
+      gdrive_path TEXT,
+      position_x FLOAT NOT NULL DEFAULT 0,
+      position_y FLOAT NOT NULL DEFAULT 0,
+      position INTEGER NOT NULL DEFAULT 0,
+      use_datenkodierung BOOLEAN NOT NULL DEFAULT false,
+      is_active BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_automation_nodes_company ON automation_nodes (company)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_automation_nodes_parent ON automation_nodes (parent_id)`;
+
+    await sql`CREATE TABLE IF NOT EXISTS leads (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      company TEXT NOT NULL DEFAULT '',
+      vorname TEXT NOT NULL DEFAULT '',
+      nachname TEXT NOT NULL DEFAULT '',
+      email TEXT,
+      telefon TEXT,
+      firma TEXT,
+      position TEXT,
+      linkedin_url TEXT,
+      stadt TEXT,
+      land TEXT,
+      branche TEXT,
+      status TEXT NOT NULL DEFAULT 'neu',
+      prioritaet TEXT NOT NULL DEFAULT 'mittel',
+      tags TEXT[] NOT NULL DEFAULT '{}',
+      notizen TEXT,
+      naechste_aktion TEXT,
+      letzter_kontakt DATE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (company, email)
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_leads_company ON leads (company)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_leads_status ON leads (company, status)`;
+
+    await sql`CREATE TABLE IF NOT EXISTS lead_kommentare (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      lead_id UUID NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+      company TEXT NOT NULL DEFAULT '',
+      text TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_lead_kommentare_lead ON lead_kommentare (lead_id)`;
+
+    await sql`CREATE TABLE IF NOT EXISTS lead_dateien (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      lead_id UUID NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+      company TEXT NOT NULL DEFAULT '',
+      dateiname TEXT NOT NULL,
+      dateipfad TEXT NOT NULL,
+      dateityp TEXT,
+      dateigroesse INTEGER,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_lead_dateien_lead ON lead_dateien (lead_id)`;
+
+    await sql`ALTER TABLE vob.vob_tenders ADD COLUMN IF NOT EXISTS unique_url TEXT`;
 
     await sql`INSERT INTO appointment_types (id,name,default_interval_months,color) VALUES ('11111111-1111-1111-1111-111111111001','TÜV',24,'#ef4444'),('11111111-1111-1111-1111-111111111002','Service/Wartung',12,'#3b82f6'),('11111111-1111-1111-1111-111111111003','Ölwechsel',12,'#f59e0b'),('11111111-1111-1111-1111-111111111004','Reifenwechsel',6,'#10b981'),('11111111-1111-1111-1111-111111111005','Inspektion',12,'#8b5cf6'),('11111111-1111-1111-1111-111111111006','Bremsenprüfung',12,'#ec4899'),('11111111-1111-1111-1111-111111111007','UVV-Prüfung',12,'#06b6d4'),('11111111-1111-1111-1111-111111111008','Leasing-Rückgabe',NULL,'#6b7280') ON CONFLICT (name) DO NOTHING`;
     await sql`INSERT INTO damage_types (id,name) VALUES ('22222222-2222-2222-2222-222222222001','Kollision/Unfall'),('22222222-2222-2222-2222-222222222002','Parkschaden'),('22222222-2222-2222-2222-222222222003','Vandalismus'),('22222222-2222-2222-2222-222222222004','Wetterschaden'),('22222222-2222-2222-2222-222222222005','Glasschaden'),('22222222-2222-2222-2222-222222222006','Mechanischer Schaden'),('22222222-2222-2222-2222-222222222007','Reifenschaden'),('22222222-2222-2222-2222-222222222008','Innenraumschaden') ON CONFLICT (name) DO NOTHING`;
