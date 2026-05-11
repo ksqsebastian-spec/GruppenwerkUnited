@@ -15,10 +15,10 @@ export async function getDashboardData(): Promise<{
   ]);
 
   return {
-    companies: companies as Company[],
+    companies: companies as unknown as Company[],
     latestScan: scans[0] ? (scans[0] as VobScan) : null,
-    allMatches: allMatches as DashboardRow[],
-    trends: trends as CompanyTrend[],
+    allMatches: allMatches as unknown as DashboardRow[],
+    trends: trends as unknown as CompanyTrend[],
   };
 }
 
@@ -29,7 +29,7 @@ export async function getCompanyTenders(slug: string, status?: string): Promise<
       AND (${status ?? null} IS NULL OR status = ${status ?? null})
     ORDER BY deadline_date ASC
   `;
-  return rows as DashboardRow[];
+  return rows as unknown as DashboardRow[];
 }
 
 export async function getCompanyStats(slug: string): Promise<CompanyWeeklyStat[]> {
@@ -39,7 +39,7 @@ export async function getCompanyStats(slug: string): Promise<CompanyWeeklyStat[]
     ORDER BY year DESC, calendar_week DESC
     LIMIT 52
   `;
-  return rows as CompanyWeeklyStat[];
+  return rows as unknown as CompanyWeeklyStat[];
 }
 
 export async function getCompany(slug: string): Promise<Company | null> {
@@ -54,7 +54,7 @@ export async function getAllTenders(page = 1, pageSize = 50): Promise<{ tenders:
     sql`SELECT COUNT(*) AS count FROM vob.vob_dashboard`,
   ]);
   return {
-    tenders: tenders as DashboardRow[],
+    tenders: tenders as unknown as DashboardRow[],
     total: Number((countRows[0] as { count: string }).count),
   };
 }

@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       "Stelle", "Position", "Status", "Prämie", "Ausgezahlt am", "Erstellt am",
     ];
 
-    function escapeCsv(val: string | number | null | undefined): string {
+    function escapeCsv(val: unknown): string {
       if (val === null || val === undefined) return '';
       const str = String(val);
       const safe = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;

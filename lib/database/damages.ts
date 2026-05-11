@@ -21,7 +21,7 @@ export async function fetchDamages(filters?: DamageFilters): Promise<Damage[]> {
     GROUP BY d.id, v.id, dt.id
     ORDER BY d.date DESC
   `;
-  return rows as Damage[];
+  return rows as unknown as Damage[];
 }
 
 export async function fetchDamage(id: string): Promise<Damage | null> {

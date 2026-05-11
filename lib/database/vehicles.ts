@@ -31,7 +31,7 @@ export async function fetchVehicles(filters?: VehicleFilters): Promise<Vehicle[]
     GROUP BY v.id, c.id
     ORDER BY v.license_plate
   `;
-  return rows as Vehicle[];
+  return rows as unknown as Vehicle[];
 }
 
 export async function fetchVehicle(id: string): Promise<Vehicle | null> {

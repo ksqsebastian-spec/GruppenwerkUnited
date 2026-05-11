@@ -52,7 +52,7 @@ export async function fetchUvvInstructors(status?: 'active' | 'archived'): Promi
     WHERE (${status ?? null} IS NULL OR status = ${status ?? null})
     ORDER BY name
   `;
-  return rows as UvvInstructor[];
+  return rows as unknown as UvvInstructor[];
 }
 
 export async function createUvvInstructor(instructor: UvvInstructorInsert): Promise<UvvInstructor> {
@@ -97,8 +97,8 @@ export async function fetchDriversWithUvvStatus(filters?: UvvDriverFilters): Pro
     ORDER BY d.last_name
   `;
 
-  const drivers = (rows as DriverWithUvvStatus[]).map((driver) => {
-    const checks = (driver.uvv_checks as UvvCheck[]) || [];
+  const drivers = (rows as unknown as DriverWithUvvStatus[]).map((driver) => {
+    const checks = (driver.uvv_checks as unknown as UvvCheck[]) || [];
     const latestCheck = checks[0] || null;
     const nextUvvDue = latestCheck?.next_check_due || null;
     return {
@@ -136,7 +136,7 @@ export async function fetchDriverWithUvvStatus(id: string): Promise<DriverWithUv
 
   if (!rows[0]) return null;
   const driver = rows[0] as DriverWithUvvStatus;
-  const checks = (driver.uvv_checks as UvvCheck[]) || [];
+  const checks = (driver.uvv_checks as unknown as UvvCheck[]) || [];
   const latestCheck = checks[0] || null;
   const nextUvvDue = latestCheck?.next_check_due || null;
   return {
@@ -162,7 +162,7 @@ export async function fetchUvvChecks(driverId: string): Promise<UvvCheck[]> {
     GROUP BY uc.id, ui.id
     ORDER BY uc.check_date DESC
   `;
-  return rows as UvvCheck[];
+  return rows as unknown as UvvCheck[];
 }
 
 export async function createUvvCheck(check: UvvCheckInsert): Promise<UvvCheck> {

@@ -94,7 +94,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       continue;
     }
 
-    const matches = suggestCompanies(t.category ?? null, t.title, companies as Company[]);
+    const matches = suggestCompanies(t.category ?? null, t.title, companies as unknown as Company[]);
     if (!matches.length) continue;
 
     const matchRows = matches.map((m) => ({

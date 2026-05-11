@@ -129,6 +129,7 @@ export function CheckDialog({
     // 1. Kontrolle erstellen
     const newCheck = await createCheck.mutateAsync({
       employee_id: employee.id,
+      driver_id: null,
       check_date: today,
       checked_by_id: data.checked_by_id,
       license_verified: data.license_verified,

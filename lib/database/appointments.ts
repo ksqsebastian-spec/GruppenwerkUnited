@@ -31,7 +31,7 @@ export async function fetchAppointments(filters?: AppointmentFilters): Promise<A
       AND (${filters?.dueAfter?.toISOString() ?? null} IS NULL OR a.due_date >= ${filters?.dueAfter?.toISOString() ?? null})
     ORDER BY a.due_date
   `;
-  return rows as Appointment[];
+  return rows as unknown as Appointment[];
 }
 
 export async function fetchUpcomingAppointments(): Promise<UpcomingAppointments> {
@@ -52,7 +52,7 @@ export async function fetchUpcomingAppointments(): Promise<UpcomingAppointments>
     WHERE a.status != 'completed'
       AND a.due_date <= ${in30Days.toISOString()}
     ORDER BY a.due_date
-  ` as Appointment[];
+  ` as unknown as Appointment[];
 
   return {
     overdue: rows.filter((a) => new Date(a.due_date) < today),

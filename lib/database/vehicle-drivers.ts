@@ -11,7 +11,7 @@ export async function fetchVehicleDrivers(vehicleId: string): Promise<VehicleDri
     WHERE vd.vehicle_id = ${vehicleId}
     ORDER BY vd.is_primary DESC
   `;
-  return rows as VehicleDriver[];
+  return rows as unknown as VehicleDriver[];
 }
 
 export async function fetchDriverVehicles(driverId: string): Promise<VehicleDriver[]> {
@@ -23,7 +23,7 @@ export async function fetchDriverVehicles(driverId: string): Promise<VehicleDriv
     WHERE vd.driver_id = ${driverId}
     ORDER BY vd.is_primary DESC
   `;
-  return rows as VehicleDriver[];
+  return rows as unknown as VehicleDriver[];
 }
 
 export async function assignDriverToVehicle(data: VehicleDriverInsert): Promise<VehicleDriver> {

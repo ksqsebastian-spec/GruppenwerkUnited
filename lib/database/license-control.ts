@@ -54,7 +54,7 @@ export async function fetchLicenseInspectors(status?: 'active' | 'archived'): Pr
     WHERE (${status ?? null} IS NULL OR status = ${status ?? null})
     ORDER BY name
   `;
-  return rows as LicenseCheckInspector[];
+  return rows as unknown as LicenseCheckInspector[];
 }
 
 export async function createLicenseInspector(inspector: LicenseCheckInspectorInsert): Promise<LicenseCheckInspector> {
@@ -101,8 +101,8 @@ export async function fetchLicenseEmployees(filters?: LicenseCheckEmployeeFilter
     ORDER BY e.last_name
   `;
 
-  const employees = (rows as LicenseCheckEmployee[]).map((employee) => {
-    const checks = (employee.license_checks as LicenseCheck[]) || [];
+  const employees = (rows as unknown as LicenseCheckEmployee[]).map((employee) => {
+    const checks = (employee.license_checks as unknown as LicenseCheck[]) || [];
     const latestCheck = checks[0] || null;
     const nextCheckDue = latestCheck?.next_check_due || null;
     return {
@@ -140,7 +140,7 @@ export async function fetchLicenseEmployee(id: string): Promise<LicenseCheckEmpl
 
   if (!rows[0]) return null;
   const employee = rows[0] as LicenseCheckEmployee;
-  const checks = (employee.license_checks as LicenseCheck[]) || [];
+  const checks = (employee.license_checks as unknown as LicenseCheck[]) || [];
   const latestCheck = checks[0] || null;
   const nextCheckDue = latestCheck?.next_check_due || null;
   return {
@@ -186,7 +186,7 @@ export async function fetchLicenseChecks(employeeId: string): Promise<LicenseChe
     GROUP BY lc.id, li.id
     ORDER BY lc.check_date DESC
   `;
-  return rows as LicenseCheck[];
+  return rows as unknown as LicenseCheck[];
 }
 
 export async function createLicenseCheck(check: LicenseCheckInsert): Promise<LicenseCheck> {
