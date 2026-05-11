@@ -22,7 +22,7 @@ export async function fetchLeads(companyId: string, filter: LeadFilter = {}): Pr
       ))
     ORDER BY created_at DESC
   `;
-  return rows as Lead[];
+  return rows as unknown as Lead[];
 }
 
 export async function fetchLead(id: string, companyId: string): Promise<Lead | null> {
@@ -72,7 +72,7 @@ export async function fetchKommentare(leadId: string): Promise<LeadKommentar[]> 
   const rows = await sql`
     SELECT * FROM lead_kommentare WHERE lead_id = ${leadId} ORDER BY created_at ASC
   `;
-  return rows as LeadKommentar[];
+  return rows as unknown as LeadKommentar[];
 }
 
 export async function createKommentar(leadId: string, companyId: string, text: string): Promise<LeadKommentar> {
@@ -94,7 +94,7 @@ export async function fetchDateien(leadId: string): Promise<LeadDatei[]> {
   const rows = await sql`
     SELECT * FROM lead_dateien WHERE lead_id = ${leadId} ORDER BY created_at DESC
   `;
-  return rows as LeadDatei[];
+  return rows as unknown as LeadDatei[];
 }
 
 export async function createDateiEintrag(

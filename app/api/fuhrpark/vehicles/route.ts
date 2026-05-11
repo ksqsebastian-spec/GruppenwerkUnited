@@ -9,7 +9,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const fuelType = searchParams.get('fuelType') ?? undefined;
   const search = searchParams.get('search') ?? undefined;
 
-  const filters: VehicleFilters = { companyId, status, fuelType: fuelType as VehicleFilters['fuelType'], search };
+  const filters: VehicleFilters = { companyId, status: status as VehicleFilters['status'], fuelType: fuelType as VehicleFilters['fuelType'], search };
 
   try {
     const rows = await fetchVehicles(filters);

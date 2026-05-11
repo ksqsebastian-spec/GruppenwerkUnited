@@ -23,6 +23,14 @@ export async function updateCompany(id: string, updates: CompanyUpdate): Promise
   return rows[0] as Company;
 }
 
+export async function getOrCreateFuhrparkCompany(name: string): Promise<string> {
+  const rows = await sql`SELECT id FROM companies WHERE name = ${name} LIMIT 1`;
+  if (rows[0]) return (rows[0] as { id: string }).id;
+  const inserted = await sql`INSERT INTO companies (name) VALUES (${name}) RETURNING id`;
+  if (!inserted[0]) throw new Error('Firma konnte nicht angelegt werden');
+  return (inserted[0] as { id: string }).id;
+}
+
 export async function deleteCompany(id: string): Promise<void> {
   try {
     await sql`DELETE FROM companies WHERE id = ${id}`;

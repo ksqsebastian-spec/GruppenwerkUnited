@@ -127,11 +127,11 @@ async function exportRoi(companyId: string): Promise<RoiExport> {
 }
 
 async function exportDatenkodierung(companyId: string): Promise<unknown[]> {
-  return sql`SELECT * FROM datenkodierungen WHERE company = ${companyId} ORDER BY created_at DESC`;
+  return [...await sql`SELECT * FROM datenkodierungen WHERE company = ${companyId} ORDER BY created_at DESC`];
 }
 
 async function exportAutomationen(companyId: string): Promise<unknown[]> {
-  return sql`SELECT * FROM automation_nodes WHERE company = ${companyId} ORDER BY position ASC`;
+  return [...await sql`SELECT * FROM automation_nodes WHERE company = ${companyId} ORDER BY position ASC`];
 }
 
 export async function buildExportPayload(session: SessionData): Promise<ExportPayload> {

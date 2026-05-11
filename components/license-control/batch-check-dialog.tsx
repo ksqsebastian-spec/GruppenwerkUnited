@@ -109,6 +109,7 @@ export function BatchCheckDialog(): React.JSX.Element {
     await createBatchCheck.mutateAsync({
       employeeIds: selectedIds,
       checkData: {
+        driver_id: null,
         check_date: today,
         checked_by_id: data.checked_by_id,
         license_verified: data.license_verified,

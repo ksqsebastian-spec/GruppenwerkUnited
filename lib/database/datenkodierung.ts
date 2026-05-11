@@ -16,7 +16,7 @@ export async function fetchDatenkodierungen(companyId: string, search?: string, 
       AND (${tagTerm} IS NULL OR tags @> ARRAY[${tagTerm}]::text[])
     ORDER BY created_at DESC
   `;
-  return rows as Datenkodierung[];
+  return rows as unknown as Datenkodierung[];
 }
 
 export async function createDatenkodierung(companyId: string, input: DatenkodierungInsert): Promise<Datenkodierung> {

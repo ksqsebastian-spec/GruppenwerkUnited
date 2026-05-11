@@ -22,7 +22,7 @@ export async function fetchDrivers(filters?: { companyId?: string; status?: 'act
     GROUP BY d.id, c.id
     ORDER BY d.last_name
   `;
-  return rows as Driver[];
+  return rows as unknown as Driver[];
 }
 
 export async function fetchDriver(id: string): Promise<Driver | null> {

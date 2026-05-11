@@ -26,7 +26,7 @@ export async function GET(
 
     return NextResponse.json({
       company: companyRows[0] as Company,
-      tenders: tenderRows as DashboardRow[],
+      tenders: tenderRows as unknown as DashboardRow[],
     });
   } catch (err) {
     console.error('Fehler beim Laden der Ausschreibungen für Export:', err);

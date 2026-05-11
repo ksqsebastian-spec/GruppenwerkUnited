@@ -640,6 +640,7 @@ export interface DriverWithUvvStatus extends Driver {
   latest_uvv_check?: UvvCheck | null;
   uvv_status?: UvvCheckStatus;
   next_uvv_due?: string | null;
+  uvv_checks?: unknown;
 }
 
 // ============================================================================

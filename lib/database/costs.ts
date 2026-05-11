@@ -35,7 +35,7 @@ export async function fetchCosts(filters?: CostFilters): Promise<Cost[]> {
       AND (${filters?.dateTo?.toISOString().split('T')[0] ?? null} IS NULL OR c.date <= ${filters?.dateTo?.toISOString().split('T')[0] ?? null}::date)
     ORDER BY c.date DESC
   `;
-  return rows as Cost[];
+  return rows as unknown as Cost[];
 }
 
 export async function fetchCostsThisMonth(): Promise<number> {
