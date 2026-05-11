@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchVehicle, updateVehicle, archiveVehicle, deleteVehicle } from '@/lib/database/vehicles';
+import { fetchVehicle, updateVehicle, archiveVehicle, deleteVehicle, syncLeasingAppointment, syncLeasingCost } from '@/lib/database/vehicles';
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
   const { id } = await params;
@@ -27,6 +27,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ success: true });
     }
     const row = await updateVehicle(id, b as Parameters<typeof updateVehicle>[1]);
+    await Promise.all([
+      syncLeasingAppointment(id, (b.leasing_end_date as string | null) ?? null, !!(b.is_leased)),
+      syncLeasingCost(id, b.leasing_rate as number | null | undefined, !!(b.is_leased)),
+    ]);
     return NextResponse.json(row);
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Fahrzeug konnte nicht aktualisiert werden' }, { status: 500 });

@@ -194,14 +194,14 @@ export function DriverUvvTable({
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => {
-                              // PDF generieren
+                              // PDF generieren – Einstellungen über API laden (kein direkter DB-Zugriff im Client)
                               const { generateUvvInstructionPdf } =
                                 require('@/lib/pdf/uvv-instruction');
-                              const { fetchUvvSettings } =
-                                require('@/lib/database/uvv-control');
-                              fetchUvvSettings().then((settings: any) => {
-                                generateUvvInstructionPdf({ driver, settings });
-                              });
+                              fetch('/api/uvv-control/settings')
+                                .then((r) => r.json())
+                                .then((settings) => {
+                                  generateUvvInstructionPdf({ driver, settings });
+                                });
                             }}
                           >
                             <FileText className="mr-2 h-4 w-4" />
