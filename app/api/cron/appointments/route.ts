@@ -1,93 +1,50 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import sql from '@/lib/db';
 
-/**
- * Cron-Job für Terminbenachrichtigungen
- * Prüft überfällige und bald fällige Termine
- *
- * Aufruf: Täglich um 8:00 Uhr via Vercel Cron oder externem Scheduler
- * URL: /api/cron/appointments
- *
- * Benötigt CRON_SECRET zur Authentifizierung
- */
 export async function GET(request: Request): Promise<NextResponse> {
-  // Cron-Secret prüfen
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
 
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json(
-      { error: 'Nicht autorisiert' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   }
 
   try {
-    // Supabase Service-Client (Server-seitig mit Admin-Rechten)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Supabase-Konfiguration fehlt');
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Termine die überfällig sind (due_date < heute)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const todayIso = today.toISOString();
 
-    // Überfällige Termine auf "overdue" setzen
-    const { data: overdueAppointments, error: overdueError } = await supabase
-      .from('appointments')
-      .update({ status: 'overdue' })
-      .eq('status', 'pending')
-      .lt('due_date', today.toISOString())
-      .select();
+    const overdue = await sql`
+      UPDATE appointments
+      SET status = 'overdue'
+      WHERE status = 'pending' AND due_date < ${todayIso}
+      RETURNING id, due_date, vehicle_id
+    `;
 
-    if (overdueError) {
-      console.error('Fehler beim Aktualisieren überfälliger Termine:', overdueError);
-    }
-
-    // Termine in den nächsten 14 Tagen finden (für Benachrichtigungen)
     const fourteenDaysFromNow = new Date(today);
     fourteenDaysFromNow.setDate(fourteenDaysFromNow.getDate() + 14);
 
-    const { data: upcomingAppointments, error: upcomingError } = await supabase
-      .from('appointments')
-      .select(`
-        *,
-        vehicle:vehicles(license_plate, brand, model)
-      `)
-      .eq('status', 'pending')
-      .gte('due_date', today.toISOString())
-      .lte('due_date', fourteenDaysFromNow.toISOString());
-
-    if (upcomingError) {
-      console.error('Fehler beim Laden bevorstehender Termine:', upcomingError);
-    }
-
-    // Hier könnte man E-Mail-Benachrichtigungen versenden
-    // oder Webhook an externes System senden
-
-    // Beispiel für Logging
+    const upcoming = await sql`
+      SELECT a.*, json_build_object('license_plate', v.license_plate, 'brand', v.brand, 'model', v.model) AS vehicle
+      FROM appointments a
+      LEFT JOIN vehicles v ON v.id = a.vehicle_id
+      WHERE a.status = 'pending'
+        AND a.due_date >= ${todayIso}
+        AND a.due_date <= ${fourteenDaysFromNow.toISOString()}
+    `;
 
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
-      overdueCount: overdueAppointments?.length ?? 0,
-      upcomingCount: upcomingAppointments?.length ?? 0,
-      overdueAppointments: overdueAppointments?.map((apt) => ({
-        id: apt.id,
-        due_date: apt.due_date,
-        vehicle_id: apt.vehicle_id,
-      })),
+      overdueCount: overdue.length,
+      upcomingCount: upcoming.length,
+      overdueAppointments: overdue.map((a) => {
+        const r = a as { id: string; due_date: string; vehicle_id: string };
+        return { id: r.id, due_date: r.due_date, vehicle_id: r.vehicle_id };
+      }),
     });
   } catch (error) {
     console.error('Cron-Job Fehler:', error);
-    return NextResponse.json(
-      { error: 'Interner Serverfehler' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

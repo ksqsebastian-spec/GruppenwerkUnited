@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
+import { sql } from "@/lib/modules/recruiting/db";
 
 // GET /api/recruiting/referrals/[id] — einzelne Empfehlung abrufen
 export async function GET(
@@ -11,28 +11,19 @@ export async function GET(
   if (authResult instanceof NextResponse) return authResult;
 
   const { id } = await params;
-  const adminClient = createAdminClient();
+  const companyFilter = !authResult.isAdmin ? authResult.companyId : null;
 
-  let query = adminClient
-    .from("empfehlungen")
-    .select("*")
-    .eq("id", id)
-    // Nur Recruiting-Empfehlungen (stelle_id IS NOT NULL)
-    .not("stelle_id", "is", null);
+  const rows = await sql`
+    SELECT * FROM empfehlungen
+    WHERE id = ${id}
+      AND stelle_id IS NOT NULL
+      AND (${companyFilter}::text IS NULL OR company = ${companyFilter}::text)
+    LIMIT 1
+  `;
 
-  // SICHERHEIT: Nicht-Admins dürfen nur Empfehlungen ihrer Firma abrufen
-  if (!authResult.isAdmin) {
-    query = query.eq("company", authResult.companyId);
+  if (!rows[0]) {
+    return NextResponse.json({ error: "Empfehlung nicht gefunden" }, { status: 404 });
   }
 
-  const { data, error } = await query.single();
-
-  if (error || !data) {
-    return NextResponse.json(
-      { error: "Empfehlung nicht gefunden" },
-      { status: 404 }
-    );
-  }
-
-  return NextResponse.json(data);
+  return NextResponse.json(rows[0]);
 }

@@ -45,12 +45,12 @@ import {
   useCreateLicenseCheck,
 } from '@/hooks/use-license-control';
 import { useUploadDocument, useDocumentTypes } from '@/hooks/use-documents';
-import type { DriverWithLicenseStatus } from '@/types';
+import type { LicenseCheckEmployee } from '@/types';
 
 interface CheckDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  driver: DriverWithLicenseStatus;
+  employee: LicenseCheckEmployee;
 }
 
 /**
@@ -59,7 +59,7 @@ interface CheckDialogProps {
 export function CheckDialog({
   open,
   onOpenChange,
-  driver,
+  employee,
 }: CheckDialogProps): React.JSX.Element {
   const { data: inspectors = [] } = useLicenseInspectors('active');
   const { data: settings } = useLicenseSettings();
@@ -128,8 +128,7 @@ export function CheckDialog({
 
     // 1. Kontrolle erstellen
     const newCheck = await createCheck.mutateAsync({
-      driver_id: driver.id,
-      employee_id: null,
+      employee_id: employee.id,
       check_date: today,
       checked_by_id: data.checked_by_id,
       license_verified: data.license_verified,
@@ -143,7 +142,7 @@ export function CheckDialog({
         entityType: 'license_check',
         entityId: newCheck.id,
         document_type_id: licenseDocType.id,
-        name: `Führerschein ${driver.first_name} ${driver.last_name} - ${today}`,
+        name: `Führerschein ${employee.first_name} ${employee.last_name} - ${today}`,
         notes: `Kontrolle vom ${format(new Date(), 'dd.MM.yyyy')}`,
         file: selectedFile,
       });
@@ -160,7 +159,7 @@ export function CheckDialog({
         <DialogHeader>
           <DialogTitle>Führerscheinkontrolle durchführen</DialogTitle>
           <DialogDescription>
-            Kontrolle für {driver.first_name} {driver.last_name}
+            Kontrolle für {employee.first_name} {employee.last_name}
           </DialogDescription>
         </DialogHeader>
 

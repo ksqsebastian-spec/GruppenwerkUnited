@@ -64,15 +64,6 @@ test.describe('API Sicherheit – Cron Authentifizierung', () => {
   });
 });
 
-test.describe('API Sicherheit – Webhook Authentifizierung', () => {
-  test('Webhook ohne Signatur gibt 401 zurück', async ({ request }) => {
-    const response = await request.post('/api/webhooks/supabase', {
-      data: { type: 'INSERT', table: 'test', record: {}, schema: 'public' },
-    });
-    // 500 wenn SUPABASE_WEBHOOK_SECRET nicht gesetzt, 401 wenn gesetzt aber Signatur fehlt
-    expect([401, 500]).toContain(response.status());
-  });
-});
 
 test.describe('API Sicherheit – Input-Validierung', () => {
   test('Recruiting referrals POST mit leerem Body gibt 400 zurück', async ({ request }) => {

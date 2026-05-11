@@ -30,8 +30,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAutoSave } from '@/hooks/use-auto-save';
 import { useCompanies } from '@/hooks/use-companies';
 import { useCreateVehicle, useUpdateVehicle } from '@/hooks/use-vehicles';
-import { useFuhrparkCompanyId } from '@/hooks/use-fuhrpark-company';
-import { useAuth } from '@/components/providers/auth-provider';
 import { syncLeasingAppointment, syncLeasingCost } from '@/lib/database/vehicles';
 import { vehicleSchema, type VehicleFormData } from '@/lib/validations/vehicle';
 import type { Vehicle } from '@/types';
@@ -60,8 +58,6 @@ export function VehicleForm({ vehicle }: VehicleFormProps): React.JSX.Element {
   const router = useRouter();
   const isEditing = !!vehicle;
 
-  const { company } = useAuth();
-  const { companyId: fuhrparkCompanyId } = useFuhrparkCompanyId();
   const { data: companies } = useCompanies();
   const createMutation = useCreateVehicle();
   const updateMutation = useUpdateVehicle();
@@ -106,13 +102,6 @@ export function VehicleForm({ vehicle }: VehicleFormProps): React.JSX.Element {
     },
   });
 
-  // Firmen-ID für Nicht-Admins automatisch setzen
-  useEffect(() => {
-    if (fuhrparkCompanyId && !company?.isAdmin && !isEditing) {
-      form.setValue('company_id', fuhrparkCompanyId);
-    }
-  }, [fuhrparkCompanyId, company?.isAdmin, isEditing, form]);
-
   // Bei erfolgreichem Submit Auto-Save löschen
   useEffect(() => {
     if (createMutation.isSuccess || updateMutation.isSuccess) {
@@ -156,8 +145,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps): React.JSX.Element {
     }
   };
 
-  const isLoading = createMutation.isPending || updateMutation.isPending ||
-    (!company?.isAdmin && !fuhrparkCompanyId);
+  const isLoading = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Form {...form}>
@@ -182,7 +170,6 @@ export function VehicleForm({ vehicle }: VehicleFormProps): React.JSX.Element {
               )}
             />
 
-            {company?.isAdmin && (
             <FormField
               control={form.control}
               name="company_id"
@@ -204,9 +191,9 @@ export function VehicleForm({ vehicle }: VehicleFormProps): React.JSX.Element {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {companies.map((co) => (
-                          <SelectItem key={co.id} value={co.id}>
-                            {co.name}
+                        {companies.map((company) => (
+                          <SelectItem key={company.id} value={company.id}>
+                            {company.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -216,7 +203,6 @@ export function VehicleForm({ vehicle }: VehicleFormProps): React.JSX.Element {
                 </FormItem>
               )}
             />
-            )}
 
             <FormField
               control={form.control}

@@ -1,56 +1,64 @@
 'use client';
 
-import { Users } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, Users } from 'lucide-react';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { EmployeeTable, BatchCheckDialog } from '@/components/license-control';
-import { useDriversWithLicenseStatus } from '@/hooks/use-license-control';
+import { useLicenseEmployees } from '@/hooks/use-license-control';
 
 /**
- * Führerscheinkontrolle - Fahrerliste
+ * Führerscheinkontrolle - Mitarbeiterliste
  */
 export default function LicenseEmployeesPage(): React.JSX.Element {
-  const { data: drivers, isLoading, error, refetch } = useDriversWithLicenseStatus();
+  const { data: employees, isLoading, error, refetch } = useLicenseEmployees();
 
   return (
     <>
       <div className="space-y-6">
         <PageHeader
-          title="Fahrer"
-          description="Alle Fahrer für die Führerscheinkontrolle"
+          title="Mitarbeiter"
+          description="Alle Mitarbeiter für die Führerscheinkontrolle"
           backHref="/fuhrpark/license-control"
         >
           <div className="flex items-center gap-2">
             <BatchCheckDialog />
+            <Button asChild>
+              <Link href="/fuhrpark/license-control/employees/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Neuer Mitarbeiter
+              </Link>
+            </Button>
           </div>
         </PageHeader>
 
+        {/* Inhalt */}
         {isLoading ? (
-          <LoadingSpinner text="Fahrer werden geladen..." />
+          <LoadingSpinner text="Mitarbeiter werden geladen..." />
         ) : error ? (
           <ErrorState
-            message="Fahrer konnten nicht geladen werden"
+            message="Mitarbeiter konnten nicht geladen werden"
             onRetry={refetch}
           />
-        ) : !drivers || drivers.length === 0 ? (
+        ) : !employees || employees.length === 0 ? (
           <EmptyState
             icon={<Users className="h-12 w-12 text-muted-foreground" />}
-            title="Keine Fahrer gefunden"
-            description="Lege Fahrer in der zentralen Fahrerverwaltung an."
+            title="Keine Mitarbeiter gefunden"
+            description="Lege deinen ersten Mitarbeiter an, um mit der Führerscheinkontrolle zu beginnen."
             action={
               <Button asChild>
-                <Link href="/fuhrpark/fahrer/new">
-                  Fahrer anlegen
+                <Link href="/fuhrpark/license-control/employees/new">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Ersten Mitarbeiter anlegen
                 </Link>
               </Button>
             }
           />
         ) : (
-          <EmployeeTable employees={drivers} />
+          <EmployeeTable employees={employees} />
         )}
       </div>
     </>

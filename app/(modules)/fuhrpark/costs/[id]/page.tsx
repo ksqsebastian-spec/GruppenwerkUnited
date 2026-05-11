@@ -23,7 +23,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCost, useDeleteCost } from '@/hooks/use-costs';
-import { supabase } from '@/lib/supabase/client';
 
 /**
  * Formatiert einen Euro-Betrag
@@ -64,19 +63,9 @@ export default function CostDetailPage(): React.JSX.Element {
   /**
    * Öffnet den Beleg in einem neuen Tab
    */
-  const handleOpenReceipt = async (): Promise<void> => {
+  const handleOpenReceipt = (): void => {
     if (!cost?.receipt_path) return;
-
-    const { data, error } = await supabase.storage
-      .from('documents')
-      .createSignedUrl(cost.receipt_path, 3600);
-
-    if (error) {
-      console.error('Fehler beim Erstellen der URL:', error);
-      return;
-    }
-
-    window.open(data.signedUrl, '_blank');
+    window.open(cost.receipt_path, '_blank');
   };
 
   if (isLoading) {

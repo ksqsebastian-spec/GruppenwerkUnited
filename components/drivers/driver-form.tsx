@@ -28,8 +28,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAutoSave } from '@/hooks/use-auto-save';
 import { useCompanies } from '@/hooks/use-companies';
 import { useCreateDriver, useUpdateDriver } from '@/hooks/use-drivers';
-import { useFuhrparkCompanyId } from '@/hooks/use-fuhrpark-company';
-import { useAuth } from '@/components/providers/auth-provider';
 import { driverSchema, type DriverFormData } from '@/lib/validations/driver';
 import type { Driver } from '@/types';
 
@@ -68,8 +66,6 @@ export function DriverForm({ driver }: DriverFormProps): React.JSX.Element {
   const router = useRouter();
   const isEditing = !!driver;
 
-  const { company } = useAuth();
-  const { companyId: fuhrparkCompanyId } = useFuhrparkCompanyId();
   const { data: companies } = useCompanies();
   const createMutation = useCreateDriver();
   const updateMutation = useUpdateDriver();
@@ -99,13 +95,6 @@ export function DriverForm({ driver }: DriverFormProps): React.JSX.Element {
     },
   });
 
-  // Firmen-ID für Nicht-Admins automatisch setzen
-  useEffect(() => {
-    if (fuhrparkCompanyId && !company?.isAdmin && !isEditing) {
-      form.setValue('company_id', fuhrparkCompanyId);
-    }
-  }, [fuhrparkCompanyId, company?.isAdmin, isEditing, form]);
-
   // Bei erfolgreichem Submit Auto-Save löschen
   useEffect(() => {
     if (createMutation.isSuccess || updateMutation.isSuccess) {
@@ -126,8 +115,7 @@ export function DriverForm({ driver }: DriverFormProps): React.JSX.Element {
     }
   };
 
-  const isLoading = createMutation.isPending || updateMutation.isPending ||
-    (!company?.isAdmin && !fuhrparkCompanyId);
+  const isLoading = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Form {...form}>
@@ -199,7 +187,6 @@ export function DriverForm({ driver }: DriverFormProps): React.JSX.Element {
               )}
             />
 
-            {company?.isAdmin && (
             <FormField
               control={form.control}
               name="company_id"
@@ -213,9 +200,9 @@ export function DriverForm({ driver }: DriverFormProps): React.JSX.Element {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {companies?.map((co) => (
-                        <SelectItem key={co.id} value={co.id}>
-                          {co.name}
+                      {companies?.map((company) => (
+                        <SelectItem key={company.id} value={company.id}>
+                          {company.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -224,7 +211,6 @@ export function DriverForm({ driver }: DriverFormProps): React.JSX.Element {
                 </FormItem>
               )}
             />
-            )}
           </CardContent>
         </Card>
 

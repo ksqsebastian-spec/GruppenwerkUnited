@@ -1,59 +1,35 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
-import type { Company, DashboardRow } from '@/lib/modules/vob/types'
+import { NextRequest, NextResponse } from 'next/server';
+import sql from '@/lib/db';
+import type { Company, DashboardRow } from '@/lib/modules/vob/types';
 
-/**
- * GET /api/export/[slug]
- * Gibt Unternehmensdaten und zugehörige Ausschreibungen für den PDF-Export zurück.
- */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<NextResponse> {
-  const { slug } = await params
+  const { slug } = await params;
 
   if (!slug || slug.trim() === '') {
-    return NextResponse.json(
-      { error: 'Slug ist erforderlich' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'Slug ist erforderlich' }, { status: 400 });
   }
 
-  const supabase = createAdminClient()
-
-  // Unternehmen laden
-  const { data: companyData, error: companyError } = await supabase
-    .schema('vob')
-    .from('companies')
-    .select('*')
-    .eq('slug', slug)
-    .single()
-
-  if (companyError || !companyData) {
-    return NextResponse.json(
-      { error: 'Unternehmen nicht gefunden' },
-      { status: 404 }
-    )
+  const companyRows = await sql`SELECT * FROM vob.companies WHERE slug = ${slug} LIMIT 1`;
+  if (!companyRows[0]) {
+    return NextResponse.json({ error: 'Unternehmen nicht gefunden' }, { status: 404 });
   }
 
-  // Ausschreibungen für dieses Unternehmen aus dem Dashboard-View laden
-  const { data: tenderData, error: tenderError } = await supabase
-    .schema('vob')
-    .from('vob_dashboard')
-    .select('*')
-    .eq('company_slug', slug)
-    .order('deadline_date', { ascending: true })
+  try {
+    const tenderRows = await sql`
+      SELECT * FROM vob.vob_dashboard
+      WHERE company_slug = ${slug}
+      ORDER BY deadline_date ASC
+    `;
 
-  if (tenderError) {
-    console.error('Fehler beim Laden der Ausschreibungen für Export:', tenderError)
-    return NextResponse.json(
-      { error: 'Ausschreibungen konnten nicht geladen werden' },
-      { status: 500 }
-    )
+    return NextResponse.json({
+      company: companyRows[0] as Company,
+      tenders: tenderRows as DashboardRow[],
+    });
+  } catch (err) {
+    console.error('Fehler beim Laden der Ausschreibungen für Export:', err);
+    return NextResponse.json({ error: 'Ausschreibungen konnten nicht geladen werden' }, { status: 500 });
   }
-
-  return NextResponse.json({
-    company: companyData as Company,
-    tenders: (tenderData ?? []) as DashboardRow[],
-  })
 }

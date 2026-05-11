@@ -1,185 +1,95 @@
-import { supabase } from '@/lib/supabase/client';
+import sql from '@/lib/db';
 import type { Cost, CostInsert, CostUpdate, CostFilters, CostType } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
-/**
- * Lädt einen einzelnen Kosteneintrag
- */
 export async function fetchCost(id: string): Promise<Cost> {
-  const { data, error } = await supabase
-    .from('costs')
-    .select(`
-      *,
-      vehicle:vehicles(id, license_plate, brand, model),
-      cost_type:cost_types(id, name, icon)
-    `)
-    .eq('id', id)
-    .single();
-
-  if (error) {
-    console.error('Fehler beim Laden des Kosteneintrags:', error);
-    throw new Error(ERROR_MESSAGES.COST_NOT_FOUND);
-  }
-
-  return data;
+  const rows = await sql`
+    SELECT c.*,
+      json_build_object('id', v.id, 'license_plate', v.license_plate, 'brand', v.brand, 'model', v.model) AS vehicle,
+      json_build_object('id', ct.id, 'name', ct.name, 'icon', ct.icon) AS cost_type
+    FROM costs c
+    JOIN vehicles v ON v.id = c.vehicle_id
+    JOIN cost_types ct ON ct.id = c.cost_type_id
+    WHERE c.id = ${id}
+  `;
+  if (!rows[0]) throw new Error(ERROR_MESSAGES.COST_NOT_FOUND);
+  return rows[0] as Cost;
 }
 
-/**
- * Lädt alle Kostentypen aus der Datenbank
- */
 export async function fetchCostTypes(): Promise<CostType[]> {
-  const { data, error } = await supabase
-    .from('cost_types')
-    .select('*')
-    .order('name');
-
-  if (error) {
-    console.error('Fehler beim Laden der Kostentypen:', error);
-    throw new Error('Kostentypen konnten nicht geladen werden');
-  }
-
-  return (data ?? []) as CostType[];
+  return sql`SELECT * FROM cost_types ORDER BY name` as Promise<CostType[]>;
 }
 
-/**
- * Lädt alle Kosten mit optionalen Filtern
- */
 export async function fetchCosts(filters?: CostFilters): Promise<Cost[]> {
-  let query = supabase
-    .from('costs')
-    .select(`
-      *,
-      vehicle:vehicles(id, license_plate, brand, model),
-      cost_type:cost_types(id, name, icon)
-    `)
-    .order('date', { ascending: false });
-
-  if (filters?.vehicleId) {
-    query = query.eq('vehicle_id', filters.vehicleId);
-  }
-
-  if (filters?.costTypeId) {
-    query = query.eq('cost_type_id', filters.costTypeId);
-  }
-
-  if (filters?.dateFrom) {
-    query = query.gte('date', filters.dateFrom.toISOString().split('T')[0]);
-  }
-
-  if (filters?.dateTo) {
-    query = query.lte('date', filters.dateTo.toISOString().split('T')[0]);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error('Fehler beim Laden der Kosten:', error);
-    throw new Error(ERROR_MESSAGES.COST_LOAD_FAILED);
-  }
-
-  return data ?? [];
+  const rows = await sql`
+    SELECT c.*,
+      json_build_object('id', v.id, 'license_plate', v.license_plate, 'brand', v.brand, 'model', v.model) AS vehicle,
+      json_build_object('id', ct.id, 'name', ct.name, 'icon', ct.icon) AS cost_type
+    FROM costs c
+    JOIN vehicles v ON v.id = c.vehicle_id
+    JOIN cost_types ct ON ct.id = c.cost_type_id
+    WHERE TRUE
+      AND (${filters?.vehicleId ?? null}::uuid IS NULL OR c.vehicle_id = ${filters?.vehicleId ?? null}::uuid)
+      AND (${filters?.costTypeId ?? null}::uuid IS NULL OR c.cost_type_id = ${filters?.costTypeId ?? null}::uuid)
+      AND (${filters?.dateFrom?.toISOString().split('T')[0] ?? null} IS NULL OR c.date >= ${filters?.dateFrom?.toISOString().split('T')[0] ?? null}::date)
+      AND (${filters?.dateTo?.toISOString().split('T')[0] ?? null} IS NULL OR c.date <= ${filters?.dateTo?.toISOString().split('T')[0] ?? null}::date)
+    ORDER BY c.date DESC
+  `;
+  return rows as Cost[];
 }
 
-/**
- * Berechnet die Kosten für den aktuellen Monat
- */
 export async function fetchCostsThisMonth(): Promise<number> {
   const now = new Date();
-  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
-  const { data, error } = await supabase
-    .from('costs')
-    .select('amount')
-    .gte('date', firstDayOfMonth.toISOString().split('T')[0])
-    .lte('date', lastDayOfMonth.toISOString().split('T')[0]);
-
-  if (error) {
-    console.error('Fehler beim Laden der Monatskosten:', error);
-    return 0;
-  }
-
-  return (data ?? []).reduce((sum, cost) => sum + (cost.amount || 0), 0);
+  const rows = await sql`
+    SELECT COALESCE(SUM(amount), 0) AS total
+    FROM costs
+    WHERE date >= ${firstDay}::date AND date <= ${lastDay}::date
+  `;
+  return Number((rows[0] as { total: string }).total);
 }
 
-/**
- * Erstellt einen neuen Kosteneintrag
- */
 export async function createCost(cost: CostInsert): Promise<Cost> {
-  const { data, error } = await supabase
-    .from('costs')
-    .insert(cost)
-    .select()
-    .single();
+  const rows = await sql`
+    INSERT INTO costs ${sql(cost as Record<string, unknown>)}
+    RETURNING *
+  `;
+  if (!rows[0]) throw new Error(ERROR_MESSAGES.COST_CREATE_FAILED);
 
-  if (error) {
-    console.error('Fehler beim Erstellen der Kosten:', error);
-    throw new Error(ERROR_MESSAGES.COST_CREATE_FAILED);
-  }
-
-  // Wenn Kilometerstand angegeben, in Historie speichern
   if (cost.mileage_at_cost) {
-    await supabase.from('mileage_logs').insert({
-      vehicle_id: cost.vehicle_id,
-      mileage: cost.mileage_at_cost,
-      source: 'cost_entry',
-    });
-
-    // Fahrzeug-Kilometerstand aktualisieren
-    await supabase
-      .from('vehicles')
-      .update({ mileage: cost.mileage_at_cost })
-      .eq('id', cost.vehicle_id);
+    await sql`
+      INSERT INTO mileage_logs (vehicle_id, mileage, source)
+      VALUES (${cost.vehicle_id}, ${cost.mileage_at_cost}, 'cost_entry')
+    `;
+    await sql`
+      UPDATE vehicles SET mileage = ${cost.mileage_at_cost} WHERE id = ${cost.vehicle_id}
+    `;
   }
 
-  return data;
+  return rows[0] as Cost;
 }
 
-/**
- * Aktualisiert einen Kosteneintrag
- */
 export async function updateCost(id: string, cost: CostUpdate): Promise<Cost> {
-  const { data, error } = await supabase
-    .from('costs')
-    .update(cost)
-    .eq('id', id)
-    .select()
-    .single();
+  const rows = await sql`
+    UPDATE costs SET ${sql(cost as Record<string, unknown>)} WHERE id = ${id} RETURNING *
+  `;
+  if (!rows[0]) throw new Error(ERROR_MESSAGES.COST_UPDATE_FAILED);
 
-  if (error) {
-    console.error('Fehler beim Aktualisieren der Kosten:', error);
-    throw new Error(ERROR_MESSAGES.COST_UPDATE_FAILED);
-  }
-
-  // Wenn Kilometerstand angegeben, in Historie speichern
   if (cost.mileage_at_cost && cost.vehicle_id) {
-    await supabase.from('mileage_logs').insert({
-      vehicle_id: cost.vehicle_id,
-      mileage: cost.mileage_at_cost,
-      source: 'cost_entry',
-    });
-
-    // Fahrzeug-Kilometerstand aktualisieren
-    await supabase
-      .from('vehicles')
-      .update({ mileage: cost.mileage_at_cost })
-      .eq('id', cost.vehicle_id);
+    await sql`
+      INSERT INTO mileage_logs (vehicle_id, mileage, source)
+      VALUES (${cost.vehicle_id}, ${cost.mileage_at_cost}, 'cost_entry')
+    `;
+    await sql`
+      UPDATE vehicles SET mileage = ${cost.mileage_at_cost} WHERE id = ${cost.vehicle_id}
+    `;
   }
 
-  return data;
+  return rows[0] as Cost;
 }
 
-/**
- * Löscht einen Kosteneintrag
- */
 export async function deleteCost(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('costs')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    console.error('Fehler beim Löschen der Kosten:', error);
-    throw new Error(ERROR_MESSAGES.COST_DELETE_FAILED);
-  }
+  await sql`DELETE FROM costs WHERE id = ${id}`;
 }

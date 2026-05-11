@@ -1,7 +1,7 @@
 import { requireAuth } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCompleteSchema } from "@/lib/modules/affiliate/validators";
-import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
+import { sql } from "@/lib/modules/affiliate/db";
 import { berechneProvision } from "@/lib/modules/affiliate/utils";
 import { logAudit } from "@/lib/modules/affiliate/audit";
 
@@ -19,82 +19,59 @@ export async function POST(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "Ungültiger Request-Body" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Ungültiger Request-Body" }, { status: 400 });
   }
 
   const parsed = empfehlungCompleteSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validierungsfehler", details: parsed.error.format() },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Validierungsfehler", details: parsed.error.format() }, { status: 400 });
   }
 
-  const adminClient = createAdminClient();
+  const companyFilter = !authResult.isAdmin ? authResult.companyId : null;
 
-  // Empfehlung laden (muss 'offen' sein, Nicht-Admins nur ihre Firma, nur Affiliate)
-  let fetchQuery = adminClient
-    .from("empfehlungen")
-    .select("*, handwerker:handwerker_id(provision_prozent)")
-    .eq("id", id)
-    .eq("status", "offen")
-    // Nur Affiliate-Empfehlungen (handwerker_id IS NOT NULL)
-    .not("handwerker_id", "is", null);
+  const rows = await sql`
+    SELECT e.*, h.provision_prozent AS handwerker_provision_prozent
+    FROM empfehlungen e
+    LEFT JOIN handwerker h ON h.id = e.handwerker_id
+    WHERE e.id = ${id}
+      AND e.status = 'offen'
+      AND e.handwerker_id IS NOT NULL
+      AND (${companyFilter}::text IS NULL OR e.company = ${companyFilter}::text)
+    LIMIT 1
+  `;
 
-  if (!authResult.isAdmin) {
-    fetchQuery = fetchQuery.eq("company", authResult.companyId);
-  }
-
-  const { data: empfehlung, error: fetchError } = await fetchQuery.single();
-
-  if (fetchError || !empfehlung) {
+  if (!rows[0]) {
     return NextResponse.json(
       { error: "Empfehlung nicht gefunden oder bereits erledigt" },
       { status: 404 }
     );
   }
 
-  const provisionProzent =
-    (empfehlung.handwerker as { provision_prozent: number })?.provision_prozent ?? 5;
-  const provisionBetrag = berechneProvision(
-    parsed.data.rechnungsbetrag,
-    provisionProzent
-  );
+  const empfehlung = rows[0] as { handwerker_provision_prozent: number };
+  const provisionProzent = empfehlung.handwerker_provision_prozent ?? 5;
+  const provisionBetrag = berechneProvision(parsed.data.rechnungsbetrag, provisionProzent);
 
-  // Update status
-  const { data: updated, error: updateError } = await adminClient
-    .from("empfehlungen")
-    .update({
-      status: "erledigt",
-      rechnungsbetrag: parsed.data.rechnungsbetrag,
-      provision_betrag: provisionBetrag,
-    })
-    .eq("id", id)
-    .select()
-    .single();
+  const updated = await sql`
+    UPDATE empfehlungen
+    SET status = 'erledigt',
+        rechnungsbetrag = ${parsed.data.rechnungsbetrag},
+        provision_betrag = ${provisionBetrag}
+    WHERE id = ${id}
+    RETURNING *
+  `;
 
-  if (updateError) {
-    return NextResponse.json(
-      { error: "Status konnte nicht aktualisiert werden" },
-      { status: 500 }
-    );
+  if (!updated[0]) {
+    return NextResponse.json({ error: "Status konnte nicht aktualisiert werden" }, { status: 500 });
   }
 
-  // Audit log
   await logAudit({
     userId: authResult.user.id,
     action: "empfehlung.completed",
     targetType: "empfehlung",
     targetId: id,
-    details: {
-      rechnungsbetrag: parsed.data.rechnungsbetrag,
-      provision_betrag: provisionBetrag,
-    },
+    details: { rechnungsbetrag: parsed.data.rechnungsbetrag, provision_betrag: provisionBetrag },
     ipAddress: request.headers.get("x-forwarded-for"),
   });
 
-  return NextResponse.json(updated);
+  return NextResponse.json(updated[0]);
 }

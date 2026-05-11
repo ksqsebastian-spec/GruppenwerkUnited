@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase/client';
 
 /**
  * Exportierbare Datentypen
@@ -87,36 +86,24 @@ export function DataExport(): React.JSX.Element {
     const timestamp = new Date().toISOString().split('T')[0];
 
     try {
+      const urlMap: Record<string, string> = {
+        vehicles: '/api/fuhrpark/vehicles',
+        drivers: '/api/fuhrpark/drivers',
+        appointments: '/api/fuhrpark/appointments',
+        damages: '/api/fuhrpark/damages',
+        costs: '/api/fuhrpark/costs',
+      };
+
       for (const type of selectedTypes) {
-        let query;
+        const url = urlMap[type];
+        if (!url) continue;
 
-        switch (type) {
-          case 'vehicles':
-            query = supabase.from('vehicles').select('*');
-            break;
-          case 'drivers':
-            query = supabase.from('drivers').select('*');
-            break;
-          case 'appointments':
-            query = supabase.from('appointments').select('*');
-            break;
-          case 'damages':
-            query = supabase.from('damages').select('*');
-            break;
-          case 'costs':
-            query = supabase.from('costs').select('*');
-            break;
-          default:
-            continue;
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-          console.error(`Fehler beim Export von ${type}:`, error);
+        const res = await fetch(url);
+        if (!res.ok) {
           toast.error(`Fehler beim Export von ${type}`);
           continue;
         }
+        const data = await res.json() as Record<string, unknown>[];
 
         if (data && data.length > 0) {
           const csv = convertToCSV(data);

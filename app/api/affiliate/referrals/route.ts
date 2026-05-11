@@ -2,7 +2,11 @@ import { requireAuth } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCreateSchema, paginationSchema } from "@/lib/modules/affiliate/validators";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/modules/affiliate/rate-limit";
-import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
+import { sql } from "@/lib/modules/affiliate/db";
+
+function generateRefCode(): string {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
 
 // GET /api/affiliate/referrals — Empfehlungen auflisten
 export async function GET(request: NextRequest) {
@@ -20,62 +24,52 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get("status");
   const offset = (page - 1) * pageSize;
 
-  const adminClient = createAdminClient();
+  const validStatus = status && ["offen", "erledigt", "ausgezahlt"].includes(status) ? status : null;
+  const companyFilter = !authResult.isAdmin ? authResult.companyId : null;
 
-  let query = adminClient
-    .from("empfehlungen")
-    .select("*", { count: "exact" })
-    // Nur Affiliate-Empfehlungen (handwerker_id IS NOT NULL, stelle_id IS NULL)
-    .not("handwerker_id", "is", null)
-    .is("stelle_id", null)
-    .order("created_at", { ascending: false })
-    .range(offset, offset + pageSize - 1);
+  try {
+    const [rows, countRows] = await Promise.all([
+      sql`
+        SELECT * FROM empfehlungen
+        WHERE handwerker_id IS NOT NULL
+          AND stelle_id IS NULL
+          AND (${validStatus}::text IS NULL OR status = ${validStatus}::text)
+          AND (${companyFilter}::text IS NULL OR company = ${companyFilter}::text)
+        ORDER BY created_at DESC
+        LIMIT ${pageSize} OFFSET ${offset}
+      `,
+      sql`
+        SELECT COUNT(*) AS count FROM empfehlungen
+        WHERE handwerker_id IS NOT NULL
+          AND stelle_id IS NULL
+          AND (${validStatus}::text IS NULL OR status = ${validStatus}::text)
+          AND (${companyFilter}::text IS NULL OR company = ${companyFilter}::text)
+      `,
+    ]);
 
-  // SICHERHEIT: Nicht-Admins dürfen nur Empfehlungen ihrer Firma sehen
-  if (!authResult.isAdmin) {
-    query = query.eq("company", authResult.companyId);
+    const total = Number((countRows[0] as { count: string }).count);
+    return NextResponse.json({
+      data: rows,
+      total,
+      page,
+      pageSize,
+      hasMore: total > offset + pageSize,
+    });
+  } catch {
+    return NextResponse.json({ error: "Daten konnten nicht geladen werden" }, { status: 500 });
   }
-
-  if (status && ["offen", "erledigt", "ausgezahlt"].includes(status)) {
-    query = query.eq("status", status);
-  }
-
-  const { data, count, error } = await query;
-
-  if (error) {
-    return NextResponse.json(
-      { error: "Daten konnten nicht geladen werden"},
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({
-    data: data || [],
-    total: count || 0,
-    page,
-    pageSize,
-    hasMore: (count || 0) > offset + pageSize,
-  });
 }
 
 // POST /api/referrals — create new empfehlung
 export async function POST(request: NextRequest) {
-  // Rate limit by IP
   const ip = request.headers.get("x-forwarded-for") || "unknown";
-  const rateCheck = checkRateLimit(
-    `referral-create:${ip}`,
-    RATE_LIMITS.referralCreate
-  );
+  const rateCheck = checkRateLimit(`referral-create:${ip}`, RATE_LIMITS.referralCreate);
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: "Zu viele Anfragen. Bitte warte eine Stunde." },
       {
         status: 429,
-        headers: {
-          "Retry-After": String(
-            Math.ceil((rateCheck.resetAt - Date.now()) / 1000)
-          ),
-        },
+        headers: { "Retry-After": String(Math.ceil((rateCheck.resetAt - Date.now()) / 1000)) },
       }
     );
   }
@@ -84,66 +78,32 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "Ungültiger Request-Body" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Ungültiger Request-Body" }, { status: 400 });
   }
 
   const parsed = empfehlungCreateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: "Validierungsfehler",
-        details: parsed.error.format(),
-      },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Validierungsfehler", details: parsed.error.format() }, { status: 400 });
   }
 
-  const adminClient = createAdminClient();
-
-  // Generate ref_code if not provided
-  let refCode = parsed.data.ref_code;
-  if (!refCode) {
-    const { data: generated } = await adminClient.rpc("generate_ref_code");
-    refCode = generated as string;
-  }
-
-  // Firma aus dem Handwerker ableiten (für korrekte Datentrennung)
   const handwerkerId = (parsed.data as Record<string, unknown>).handwerker_id as string | undefined;
   let company = '';
   if (handwerkerId) {
-    const { data: hw } = await adminClient
-      .from("handwerker")
-      .select("company")
-      .eq("id", handwerkerId)
-      .single();
-    company = hw?.company ?? '';
+    const rows = await sql`SELECT company FROM handwerker WHERE id = ${handwerkerId} LIMIT 1`;
+    company = (rows[0] as { company: string } | undefined)?.company ?? '';
   }
 
-  const { data, error } = await adminClient
-    .from("empfehlungen")
-    .insert({
-      ...parsed.data,
-      ref_code: refCode,
-      company,
-    })
-    .select()
-    .single();
+  const refCode = parsed.data.ref_code || generateRefCode();
+  const insertData = { ...parsed.data, ref_code: refCode, company };
 
-  if (error) {
-    if (error.code === "23505") {
-      return NextResponse.json(
-        { error: "Ref-Code bereits vergeben" },
-        { status: 409 }
-      );
+  try {
+    const [row] = await sql`INSERT INTO empfehlungen ${sql(insertData)} RETURNING *`;
+    return NextResponse.json(row, { status: 201 });
+  } catch (e: unknown) {
+    const err = e as { code?: string };
+    if (err?.code === '23505') {
+      return NextResponse.json({ error: "Ref-Code bereits vergeben" }, { status: 409 });
     }
-    return NextResponse.json(
-      { error: "Empfehlung konnte nicht erstellt werden"},
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Empfehlung konnte nicht erstellt werden" }, { status: 500 });
   }
-
-  return NextResponse.json(data, { status: 201 });
 }

@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Upload, X, FileText } from 'lucide-react';
-import { getCostTypeIcon } from '@/lib/cost-type-icons';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,11 +31,9 @@ import { useAutoSave } from '@/hooks/use-auto-save';
 import { useVehicles } from '@/hooks/use-vehicles';
 import { useCreateCost, useCostTypes } from '@/hooks/use-costs';
 import { costSchema, type CostFormData } from '@/lib/validations/cost';
-import { supabase } from '@/lib/supabase/client';
 
-/** Erlaubte Dateitypen für Belege */
 const ALLOWED_FILE_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 /**
  * Formular zum Erfassen von Kosten
@@ -118,40 +115,10 @@ export function CostForm(): React.JSX.Element {
     }
   };
 
-  /**
-   * Lädt Beleg hoch und gibt den Pfad zurück
-   */
-  const uploadReceipt = async (file: File, vehicleId: string): Promise<string> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `receipts/${vehicleId}/${Date.now()}.${fileExt}`;
-
-    const { error } = await supabase.storage
-      .from('documents')
-      .upload(fileName, file);
-
-    if (error) {
-      console.error('Fehler beim Hochladen des Belegs:', error);
-      throw new Error('Beleg konnte nicht hochgeladen werden');
-    }
-
-    return fileName;
-  };
-
   const onSubmit = async (data: CostFormData): Promise<void> => {
     try {
       setIsUploading(true);
-      let receiptPath: string | undefined;
-
-      // Beleg hochladen falls vorhanden
-      if (receiptFile) {
-        receiptPath = await uploadReceipt(receiptFile, data.vehicle_id);
-      }
-
-      // Kosten mit Beleg-Pfad erstellen
-      await createMutation.mutateAsync({
-        ...data,
-        receipt_path: receiptPath,
-      });
+      await createMutation.mutateAsync({ ...data, receipt_path: undefined });
 
       router.push('/fuhrpark/costs');
     } catch (error) {
@@ -209,17 +176,11 @@ export function CostForm(): React.JSX.Element {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {costTypes?.map((type) => {
-                        const IconComponent = getCostTypeIcon(type.icon);
-                        return (
-                          <SelectItem key={type.id} value={type.id}>
-                            <span className="flex items-center gap-2">
-                              <IconComponent className="h-4 w-4 text-muted-foreground shrink-0" />
-                              {type.name}
-                            </span>
-                          </SelectItem>
-                        );
-                      })}
+                      {costTypes?.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.icon ? `${type.icon} ` : ''}{type.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

@@ -90,24 +90,6 @@ export const MODULES: ModuleConfig[] = [
     category: 'tool',
     status: 'active',
   },
-  {
-    id: 'automationen',
-    name: 'Automatisierungen',
-    description: 'KI-Workflow-Übersicht und Prompt-Bibliothek für Claude-Automatisierungen',
-    route: '/automationen',
-    icon: 'Zap',
-    category: 'company',
-    status: 'active',
-  },
-  {
-    id: 'leads',
-    name: 'B2B',
-    description: 'Lead-CRM mit Farbkodierung, Sortierung und Aktivitäten-Feed',
-    route: '/leads',
-    icon: 'TableProperties',
-    category: 'company',
-    status: 'active',
-  },
 ];
 
 /**

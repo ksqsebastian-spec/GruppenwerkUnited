@@ -1,36 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import sql from '@/lib/db';
 import { requireSession } from '@/lib/auth/api';
 
 export async function GET(): Promise<NextResponse> {
   const session = await requireSession();
   if (session instanceof NextResponse) return session;
 
-  const supabase = createAdminClient();
-
-  const { data, error } = await supabase
-    .schema('roi')
-    .from('purchases')
-    .select('*')
-    .eq('company_id', session.companyId)
-    .order('purchased_at', { ascending: false });
-
-  if (error) {
-    console.error('Fehler beim Laden der Einkäufe:', error);
-    return NextResponse.json(
-      { error: 'Einkäufe konnten nicht geladen werden' },
-      { status: 500 }
-    );
+  try {
+    const rows = await sql`
+      SELECT * FROM roi.purchases
+      WHERE company_id = ${session.companyId}
+      ORDER BY purchased_at DESC
+    `;
+    return NextResponse.json(rows);
+  } catch (err) {
+    console.error('Fehler beim Laden der Einkäufe:', err);
+    return NextResponse.json({ error: 'Einkäufe konnten nicht geladen werden' }, { status: 500 });
   }
-
-  return NextResponse.json(data ?? []);
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const session = await requireSession();
   if (session instanceof NextResponse) return session;
-
-  const supabase = createAdminClient();
 
   let body: Record<string, string | number | null>[];
   try {
@@ -45,48 +36,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const rowsWithCompany = body.map((row) => ({ ...row, company_id: session.companyId }));
 
-  const { data, error } = await supabase
-    .schema('roi')
-    .from('purchases')
-    .insert(rowsWithCompany)
-    .select();
-
-  if (error) {
-    console.error('Fehler beim Speichern der Einkäufe:', error);
-    return NextResponse.json(
-      { error: 'Einkäufe konnten nicht gespeichert werden' },
-      { status: 500 }
-    );
+  try {
+    const inserted = await sql`INSERT INTO roi.purchases ${sql(rowsWithCompany)} RETURNING *`;
+    return NextResponse.json(inserted, { status: 201 });
+  } catch (err) {
+    console.error('Fehler beim Speichern der Einkäufe:', err);
+    return NextResponse.json({ error: 'Einkäufe konnten nicht gespeichert werden' }, { status: 500 });
   }
-
-  return NextResponse.json(data, { status: 201 });
 }
 
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
   const session = await requireSession();
   if (session instanceof NextResponse) return session;
 
-  const supabase = createAdminClient();
-
   const id = request.nextUrl.searchParams.get('id');
-  if (!id) {
-    return NextResponse.json({ error: 'Fehlende ID' }, { status: 400 });
+  if (!id) return NextResponse.json({ error: 'Fehlende ID' }, { status: 400 });
+
+  try {
+    await sql`DELETE FROM roi.purchases WHERE id = ${id} AND company_id = ${session.companyId}`;
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Fehler beim Löschen des Einkaufs:', err);
+    return NextResponse.json({ error: 'Einkauf konnte nicht gelöscht werden' }, { status: 500 });
   }
-
-  const { error } = await supabase
-    .schema('roi')
-    .from('purchases')
-    .delete()
-    .eq('id', id)
-    .eq('company_id', session.companyId);
-
-  if (error) {
-    console.error('Fehler beim Löschen des Einkaufs:', error);
-    return NextResponse.json(
-      { error: 'Einkauf konnte nicht gelöscht werden' },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ success: true });
 }

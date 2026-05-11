@@ -27,21 +27,21 @@ export const COMPANY_CONFIGS: CompanyConfig[] = [
   {
     id: 'seehafer',
     name: 'Seehafer Elemente',
-    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob', 'fuhrpark', 'automationen', 'leads'],
+    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob'],
     isAdmin: false,
     passwordEnvKey: 'SEEHAFER_PASSWORD',
   },
   {
     id: 'brink',
     name: 'Tischlerei Brink',
-    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob', 'fuhrpark'],
+    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob'],
     isAdmin: false,
     passwordEnvKey: 'BRINK_PASSWORD',
   },
   {
     id: 'hantke',
     name: 'Malerei Hantke',
-    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob', 'fuhrpark'],
+    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob'],
     isAdmin: false,
     passwordEnvKey: 'HANTKE_PASSWORD',
   },
@@ -76,8 +76,6 @@ export const ROUTE_TO_MODULE: Record<string, string> = {
   '/roi': 'roi',
   '/vob': 'vob',
   '/datenkodierung': 'datenkodierung',
-  '/automationen': 'automationen',
-  '/leads': 'leads',
 };
 
 /**
@@ -106,25 +104,17 @@ export function matchCompanyByPasswordEnv(password: string): CompanyConfig | nul
  */
 export async function matchCompanyByPasswordDb(password: string): Promise<CompanyConfig | null> {
   try {
-    const { createAdminClient } = await import('@/lib/supabase/admin');
-    const admin = createAdminClient();
-    const { data, error } = await admin
-      .from('app_settings')
-      .select('value')
-      .eq('key', 'passwords')
-      .single();
+    const { default: sql } = await import('@/lib/db');
+    const rows = await sql`SELECT value FROM app_settings WHERE key = 'passwords' LIMIT 1`;
+    if (!rows[0]) return null;
 
-    if (error || !data) return null;
-
-    // Passwörter aus DB gegen alle Firmen-Configs prüfen
-    const dbPasswords = data.value as Record<string, string>;
+    const dbPasswords = (rows[0] as { value: Record<string, string> }).value;
     for (const company of COMPANY_CONFIGS) {
       const dbPassword = dbPasswords[company.passwordEnvKey];
       if (dbPassword && password === dbPassword) {
         return company;
       }
     }
-    // Fallback: APP_PASSWORD aus DB → Admin-Zugang
     const appPassword = dbPasswords['APP_PASSWORD'];
     if (appPassword && password === appPassword) {
       return COMPANY_CONFIGS.find((c) => c.isAdmin) ?? null;

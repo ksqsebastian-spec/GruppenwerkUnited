@@ -1,161 +1,112 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase/client';
-import {
-  fetchAppointment,
-  fetchAppointments,
-  fetchUpcomingAppointments,
-  createAppointment,
-  updateAppointment,
-  completeAppointment,
-  deleteAppointment,
-} from '@/lib/database/appointments';
 import { useAuth } from '@/components/providers/auth-provider';
-import type { AppointmentInsert, AppointmentUpdate, AppointmentFilters, AppointmentType } from '@/types';
+import type { AppointmentInsert, AppointmentUpdate, AppointmentFilters, AppointmentType, Appointment, UpcomingAppointments } from '@/types';
 import { QUERY_STALE_TIMES } from '@/lib/constants';
 
-/**
- * Lädt alle Termintypen aus der Datenbank
- */
-async function fetchAppointmentTypes(): Promise<AppointmentType[]> {
-  const { data, error } = await supabase
-    .from('appointment_types')
-    .select('*')
-    .order('name');
-
-  if (error) {
-    console.error('Fehler beim Laden der Termintypen:', error);
-    throw new Error('Termintypen konnten nicht geladen werden');
+async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(url, options);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(err.error ?? 'Fehler bei der Anfrage');
   }
-
-  return (data ?? []) as AppointmentType[];
+  return res.json() as Promise<T>;
 }
 
-/**
- * Hook für alle Termintypen
- */
 export function useAppointmentTypes() {
   const { user } = useAuth();
-
   return useQuery({
     queryKey: ['appointment-types'],
-    queryFn: fetchAppointmentTypes,
-    staleTime: 30 * 60 * 1000, // 30 Minuten
+    queryFn: () => apiFetch<AppointmentType[]>('/api/fuhrpark/appointment-types'),
+    staleTime: 30 * 60 * 1000,
     enabled: !!user,
   });
 }
 
-/**
- * Hook für einen einzelnen Termin
- */
 export function useAppointment(id: string | undefined) {
   const { user } = useAuth();
-
   return useQuery({
     queryKey: ['appointment', id],
-    queryFn: () => fetchAppointment(id!),
+    queryFn: () => apiFetch<Appointment>(`/api/fuhrpark/appointments/${id}`),
     enabled: !!id && !!user,
     staleTime: QUERY_STALE_TIMES.appointments,
   });
 }
 
-/**
- * Hook für alle Termine mit optionalen Filtern
- */
 export function useAppointments(filters?: AppointmentFilters) {
   const { user } = useAuth();
+  const params = new URLSearchParams();
+  if (filters?.vehicleId) params.set('vehicleId', filters.vehicleId);
+  if (filters?.status) params.set('status', filters.status);
+  if (filters?.dueBefore) params.set('dueBefore', filters.dueBefore.toISOString());
+  if (filters?.dueAfter) params.set('dueAfter', filters.dueAfter.toISOString());
 
   return useQuery({
     queryKey: ['appointments', filters],
-    queryFn: () => fetchAppointments(filters),
+    queryFn: () => apiFetch<Appointment[]>(`/api/fuhrpark/appointments?${params}`),
     staleTime: QUERY_STALE_TIMES.appointments,
     enabled: !!user,
   });
 }
 
-/**
- * Hook für überfällige und bald fällige Termine (Dashboard)
- */
 export function useUpcomingAppointments() {
   const { user } = useAuth();
-
   return useQuery({
     queryKey: ['appointments', 'upcoming'],
-    queryFn: fetchUpcomingAppointments,
+    queryFn: () => apiFetch<UpcomingAppointments>('/api/fuhrpark/appointments/upcoming'),
     staleTime: QUERY_STALE_TIMES.appointments,
     enabled: !!user,
   });
 }
 
-/**
- * Hook zum Erstellen eines Termins
- */
 export function useCreateAppointment() {
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: (data: AppointmentInsert) => createAppointment(data),
+    mutationFn: (data: AppointmentInsert) =>
+      apiFetch<Appointment>('/api/fuhrpark/appointments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
       toast.success('Termin erfolgreich angelegt');
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
+    onError: (error: Error) => toast.error(error.message),
   });
 }
 
-/**
- * Hook zum Aktualisieren eines Termins
- */
 export function useUpdateAppointment() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: AppointmentUpdate }) =>
-      updateAppointment(id, data),
+      apiFetch<Appointment>(`/api/fuhrpark/appointments/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
       toast.success('Termin erfolgreich aktualisiert');
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
+    onError: (error: Error) => toast.error(error.message),
   });
 }
 
-/**
- * Hook zum Abschließen eines Termins
- */
 export function useCompleteAppointment() {
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: (id: string) => completeAppointment(id),
+    mutationFn: (id: string) =>
+      apiFetch<{ success: boolean }>(`/api/fuhrpark/appointments/${id}/complete`, { method: 'POST' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
       toast.success('Termin als erledigt markiert');
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
+    onError: (error: Error) => toast.error(error.message),
   });
 }
 
-/**
- * Hook zum Löschen eines Termins
- */
 export function useDeleteAppointment() {
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: (id: string) => deleteAppointment(id),
+    mutationFn: (id: string) =>
+      apiFetch<{ success: boolean }>(`/api/fuhrpark/appointments/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
       toast.success('Termin erfolgreich gelöscht');
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
+    onError: (error: Error) => toast.error(error.message),
   });
 }

@@ -7,29 +7,12 @@ import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ErrorState } from '@/components/shared/error-state';
 import { AppointmentForm } from '@/components/appointments';
-import { supabase } from '@/lib/supabase/client';
 import type { Appointment } from '@/types';
 
-/**
- * Lädt einen einzelnen Termin
- */
 async function fetchAppointment(id: string): Promise<Appointment> {
-  const { data, error } = await supabase
-    .from('appointments')
-    .select(`
-      *,
-      vehicle:vehicles(*),
-      appointment_type:appointment_types(*)
-    `)
-    .eq('id', id)
-    .single();
-
-  if (error) {
-    console.error('Fehler beim Laden des Termins:', error);
-    throw new Error('Termin konnte nicht geladen werden');
-  }
-
-  return data as Appointment;
+  const res = await fetch(`/api/fuhrpark/appointments/${id}`);
+  if (!res.ok) throw new Error('Termin konnte nicht geladen werden');
+  return res.json() as Promise<Appointment>;
 }
 
 /**

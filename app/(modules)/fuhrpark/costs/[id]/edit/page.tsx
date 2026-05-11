@@ -33,11 +33,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useVehicles } from '@/hooks/use-vehicles';
 import { useCost, useCostTypes, useUpdateCost } from '@/hooks/use-costs';
 import { costSchema, type CostFormData } from '@/lib/validations/cost';
-import { supabase } from '@/lib/supabase/client';
 
-/** Erlaubte Dateitypen für Belege */
 const ALLOWED_FILE_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 /**
  * Seite zum Bearbeiten eines Kosteneintrags
@@ -121,44 +119,13 @@ export default function EditCostPage(): React.JSX.Element {
     }
   };
 
-  /**
-   * Lädt Beleg hoch und gibt den Pfad zurück
-   */
-  const uploadReceipt = async (file: File, vehicleId: string): Promise<string> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `receipts/${vehicleId}/${Date.now()}.${fileExt}`;
-
-    const { error } = await supabase.storage
-      .from('documents')
-      .upload(fileName, file);
-
-    if (error) {
-      console.error('Fehler beim Hochladen des Belegs:', error);
-      throw new Error('Beleg konnte nicht hochgeladen werden');
-    }
-
-    return fileName;
-  };
-
   const onSubmit = async (data: CostFormData): Promise<void> => {
     try {
       setIsUploading(true);
-      let receiptPath: string | null | undefined = existingReceipt;
-
-      // Neuen Beleg hochladen falls vorhanden
-      if (receiptFile) {
-        receiptPath = await uploadReceipt(receiptFile, data.vehicle_id);
-      }
-
-      // Kosten aktualisieren
       await updateMutation.mutateAsync({
         id: costId,
-        data: {
-          ...data,
-          receipt_path: receiptPath,
-        },
+        data: { ...data, receipt_path: existingReceipt },
       });
-
       router.push(`/fuhrpark/costs/${costId}`);
     } catch (error) {
       console.error('Fehler beim Speichern:', error);

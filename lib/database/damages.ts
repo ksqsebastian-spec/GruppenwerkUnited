@@ -1,145 +1,79 @@
-import { supabase } from '@/lib/supabase/client';
+import sql from '@/lib/db';
 import type { Damage, DamageInsert, DamageUpdate, DamageFilters, DamageStatus } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
-/**
- * Lädt alle Schäden mit optionalen Filtern
- */
 export async function fetchDamages(filters?: DamageFilters): Promise<Damage[]> {
-  let query = supabase
-    .from('damages')
-    .select(`
-      *,
-      vehicle:vehicles(id, license_plate, brand, model),
-      damage_type:damage_types(id, name),
-      damage_images(id, file_path, uploaded_at)
-    `)
-    .order('date', { ascending: false });
-
-  if (filters?.vehicleId) {
-    query = query.eq('vehicle_id', filters.vehicleId);
-  }
-
-  if (filters?.status) {
-    query = query.eq('status', filters.status);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error('Fehler beim Laden der Schäden:', error);
-    throw new Error(ERROR_MESSAGES.DAMAGE_LOAD_FAILED);
-  }
-
-  return data ?? [];
+  const rows = await sql`
+    SELECT d.*,
+      json_build_object('id', v.id, 'license_plate', v.license_plate, 'brand', v.brand, 'model', v.model) AS vehicle,
+      json_build_object('id', dt.id, 'name', dt.name) AS damage_type,
+      COALESCE(
+        json_agg(json_build_object('id', di.id, 'file_path', di.file_path, 'uploaded_at', di.uploaded_at))
+        FILTER (WHERE di.id IS NOT NULL), '[]'
+      ) AS damage_images
+    FROM damages d
+    JOIN vehicles v ON v.id = d.vehicle_id
+    JOIN damage_types dt ON dt.id = d.damage_type_id
+    LEFT JOIN damage_images di ON di.damage_id = d.id
+    WHERE TRUE
+      AND (${filters?.vehicleId ?? null}::uuid IS NULL OR d.vehicle_id = ${filters?.vehicleId ?? null}::uuid)
+      AND (${filters?.status ?? null} IS NULL OR d.status = ${filters?.status ?? null})
+    GROUP BY d.id, v.id, dt.id
+    ORDER BY d.date DESC
+  `;
+  return rows as Damage[];
 }
 
-/**
- * Lädt einen einzelnen Schaden
- */
 export async function fetchDamage(id: string): Promise<Damage | null> {
-  const { data, error } = await supabase
-    .from('damages')
-    .select(`
-      *,
-      vehicle:vehicles(id, license_plate, brand, model),
-      damage_type:damage_types(id, name),
-      damage_images(id, file_path, uploaded_at)
-    `)
-    .eq('id', id)
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') {
-      return null;
-    }
-    console.error('Fehler beim Laden des Schadens:', error);
-    throw new Error(ERROR_MESSAGES.DAMAGE_NOT_FOUND);
-  }
-
-  return data;
+  const rows = await sql`
+    SELECT d.*,
+      json_build_object('id', v.id, 'license_plate', v.license_plate, 'brand', v.brand, 'model', v.model) AS vehicle,
+      json_build_object('id', dt.id, 'name', dt.name) AS damage_type,
+      COALESCE(
+        json_agg(json_build_object('id', di.id, 'file_path', di.file_path, 'uploaded_at', di.uploaded_at))
+        FILTER (WHERE di.id IS NOT NULL), '[]'
+      ) AS damage_images
+    FROM damages d
+    JOIN vehicles v ON v.id = d.vehicle_id
+    JOIN damage_types dt ON dt.id = d.damage_type_id
+    LEFT JOIN damage_images di ON di.damage_id = d.id
+    WHERE d.id = ${id}
+    GROUP BY d.id, v.id, dt.id
+  `;
+  return rows[0] ? (rows[0] as Damage) : null;
 }
 
-/**
- * Zählt offene Schäden
- */
 export async function countOpenDamages(): Promise<number> {
-  const { count, error } = await supabase
-    .from('damages')
-    .select('*', { count: 'exact', head: true })
-    .neq('status', 'completed');
-
-  if (error) {
-    console.error('Fehler beim Zählen der Schäden:', error);
-    return 0;
-  }
-
-  return count ?? 0;
+  const rows = await sql`SELECT COUNT(*) AS count FROM damages WHERE status != 'completed'`;
+  return Number((rows[0] as { count: string }).count);
 }
 
-/**
- * Erstellt einen neuen Schaden
- */
 export async function createDamage(damage: DamageInsert): Promise<Damage> {
-  const { data, error } = await supabase
-    .from('damages')
-    .insert(damage)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Fehler beim Erstellen des Schadens:', error);
-    throw new Error(ERROR_MESSAGES.DAMAGE_CREATE_FAILED);
-  }
-
-  return data;
+  const rows = await sql`
+    INSERT INTO damages ${sql(damage as Record<string, unknown>)}
+    RETURNING *
+  `;
+  if (!rows[0]) throw new Error(ERROR_MESSAGES.DAMAGE_CREATE_FAILED);
+  return rows[0] as Damage;
 }
 
-/**
- * Aktualisiert einen Schaden
- */
 export async function updateDamage(id: string, updates: DamageUpdate): Promise<Damage> {
-  const { data, error } = await supabase
-    .from('damages')
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Fehler beim Aktualisieren des Schadens:', error);
-    throw new Error(ERROR_MESSAGES.DAMAGE_UPDATE_FAILED);
-  }
-
-  return data;
+  const rows = await sql`
+    UPDATE damages
+    SET ${sql({ ...updates, updated_at: new Date().toISOString() } as Record<string, unknown>)}
+    WHERE id = ${id}
+    RETURNING *
+  `;
+  if (!rows[0]) throw new Error(ERROR_MESSAGES.DAMAGE_UPDATE_FAILED);
+  return rows[0] as Damage;
 }
 
-/**
- * Aktualisiert den Status eines Schadens
- */
 export async function updateDamageStatus(id: string, status: DamageStatus): Promise<void> {
-  const { error } = await supabase
-    .from('damages')
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq('id', id);
-
-  if (error) {
-    console.error('Fehler beim Aktualisieren des Schadensstatus:', error);
-    throw new Error(ERROR_MESSAGES.DAMAGE_STATUS_UPDATE_FAILED);
-  }
+  await sql`
+    UPDATE damages SET status = ${status}, updated_at = ${new Date().toISOString()} WHERE id = ${id}
+  `;
 }
 
-/**
- * Löscht einen Schaden
- */
 export async function deleteDamage(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('damages')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    console.error('Fehler beim Löschen des Schadens:', error);
-    throw new Error(ERROR_MESSAGES.DAMAGE_DELETE_FAILED);
-  }
+  await sql`DELETE FROM damages WHERE id = ${id}`;
 }

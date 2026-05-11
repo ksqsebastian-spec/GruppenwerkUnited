@@ -1,8 +1,7 @@
-import { requireAuth } from '@/lib/modules/affiliate/auth';
-import { validateOrigin } from '@/lib/modules/affiliate/auth';
+import { requireAuth, validateOrigin } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { handwerkerCreateSchema, handwerkerUpdateSchema, paginationSchema } from "@/lib/modules/affiliate/validators";
-import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
+import { sql } from "@/lib/modules/affiliate/db";
 import { logAudit } from "@/lib/modules/affiliate/audit";
 
 // GET /api/affiliate/handwerker — list handwerker or empfehlungen (admin)
@@ -11,9 +10,7 @@ export async function GET(request: NextRequest) {
   if (authResult instanceof NextResponse) return authResult;
   const { searchParams } = request.nextUrl;
   const view = searchParams.get("view");
-  const adminClient = createAdminClient();
 
-  // View: all empfehlungen with handwerker info (for admin dashboard / payouts)
   if (view === "empfehlungen") {
     const pagination = paginationSchema.safeParse({
       page: searchParams.get("page"),
@@ -25,73 +22,65 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const search = searchParams.get("search");
 
-    let query = adminClient
-      .from("empfehlungen")
-      .select("*, handwerker:handwerker_id(id, name, email, telefon, provision_prozent)", {
-        count: "exact",
-      })
-      // Nur Affiliate-Empfehlungen (handwerker_id IS NOT NULL, stelle_id IS NULL)
-      .not("handwerker_id", "is", null)
-      .is("stelle_id", null)
-      .order("created_at", { ascending: false })
-      .range(offset, offset + pageSize - 1);
+    const validStatus = status && ["offen", "erledigt", "ausgezahlt"].includes(status) ? status : null;
+    const companyFilter = !authResult.isAdmin ? authResult.companyId : null;
+    const searchTerm = search ? `%${search.replace(/[%_\\]/g, '\\$&')}%` : null;
 
-    // Nicht-Admins sehen nur Empfehlungen ihrer Firma
-    if (!authResult.isAdmin) {
-      query = query.eq("company", authResult.companyId);
+    try {
+      const [rows, countRows] = await Promise.all([
+        sql`
+          SELECT
+            e.*,
+            json_build_object('id', h.id, 'name', h.name, 'email', h.email, 'telefon', h.telefon, 'provision_prozent', h.provision_prozent) AS handwerker
+          FROM empfehlungen e
+          LEFT JOIN handwerker h ON h.id = e.handwerker_id
+          WHERE e.handwerker_id IS NOT NULL
+            AND e.stelle_id IS NULL
+            AND (${validStatus}::text IS NULL OR e.status = ${validStatus}::text)
+            AND (${companyFilter}::text IS NULL OR e.company = ${companyFilter}::text)
+            AND (
+              ${searchTerm}::text IS NULL
+              OR e.kunde_name ILIKE ${searchTerm}::text
+              OR e.empfehler_name ILIKE ${searchTerm}::text
+              OR e.ref_code ILIKE ${searchTerm}::text
+            )
+          ORDER BY e.created_at DESC
+          LIMIT ${pageSize} OFFSET ${offset}
+        `,
+        sql`
+          SELECT COUNT(*) AS count FROM empfehlungen e
+          WHERE e.handwerker_id IS NOT NULL
+            AND e.stelle_id IS NULL
+            AND (${validStatus}::text IS NULL OR e.status = ${validStatus}::text)
+            AND (${companyFilter}::text IS NULL OR e.company = ${companyFilter}::text)
+            AND (
+              ${searchTerm}::text IS NULL
+              OR e.kunde_name ILIKE ${searchTerm}::text
+              OR e.empfehler_name ILIKE ${searchTerm}::text
+              OR e.ref_code ILIKE ${searchTerm}::text
+            )
+        `,
+      ]);
+
+      const total = Number((countRows[0] as { count: string }).count);
+      return NextResponse.json({ data: rows, total, page, pageSize });
+    } catch {
+      return NextResponse.json({ error: "Daten konnten nicht geladen werden" }, { status: 500 });
     }
-
-    if (status && ["offen", "erledigt", "ausgezahlt"].includes(status)) {
-      query = query.eq("status", status);
-    }
-
-    if (search) {
-      // Sicherheit: Sonderzeichen escapen, die PostgREST-Filter manipulieren könnten
-      const sanitized = search.replace(/[%_\\.,()]/g, '');
-      if (sanitized.length > 0) {
-        query = query.or(
-          `kunde_name.ilike.%${sanitized}%,empfehler_name.ilike.%${sanitized}%,ref_code.ilike.%${sanitized}%`
-        );
-      }
-    }
-
-    const { data, count, error } = await query;
-
-    if (error) {
-      return NextResponse.json(
-        { error: "Daten konnten nicht geladen werden"},
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      data: data || [],
-      total: count || 0,
-      page,
-      pageSize,
-    });
   }
 
-  // Default: Handwerker auflisten (Nicht-Admins nur eigene Firma)
-  let handwerkerQuery = adminClient
-    .from("handwerker")
-    .select("*")
-    .order("name");
+  const companyFilter = !authResult.isAdmin ? authResult.companyId : null;
 
-  if (!authResult.isAdmin) {
-    handwerkerQuery = handwerkerQuery.eq("company", authResult.companyId);
+  try {
+    const rows = await sql`
+      SELECT * FROM handwerker
+      WHERE (${companyFilter}::text IS NULL OR company = ${companyFilter}::text)
+      ORDER BY name
+    `;
+    return NextResponse.json({ data: rows });
+  } catch {
+    return NextResponse.json({ error: "Handwerker konnten nicht geladen werden" }, { status: 500 });
   }
-
-  const { data, error } = await handwerkerQuery;
-
-  if (error) {
-    return NextResponse.json(
-      { error: "Handwerker konnten nicht geladen werden"},
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ data: data || [] });
 }
 
 // POST /api/affiliate/handwerker — create new handwerker
@@ -99,113 +88,49 @@ export async function POST(request: NextRequest) {
   const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
+
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "Ungültiger Request-Body — JSON konnte nicht gelesen werden." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Ungültiger Request-Body — JSON konnte nicht gelesen werden." }, { status: 400 });
   }
 
   const parsed = handwerkerCreateSchema.safeParse(body);
   if (!parsed.success) {
-    const fieldErrors = parsed.error.issues.map(
-      (issue) => `${issue.path.join(".")}: ${issue.message}`
-    );
-    return NextResponse.json(
-      { error: "Validierungsfehler", detail: fieldErrors.join("; ") },
-      { status: 400 }
-    );
+    const fieldErrors = parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
+    return NextResponse.json({ error: "Validierungsfehler", detail: fieldErrors.join("; ") }, { status: 400 });
   }
 
-  const adminClient = createAdminClient();
+  const existing = await sql`SELECT id FROM handwerker WHERE email = ${parsed.data.email} LIMIT 1`;
+  if (existing[0]) {
+    return NextResponse.json({ error: "E-Mail-Adresse bereits als Handwerker registriert" }, { status: 409 });
+  }
 
-  // Optionaler Supabase-Auth-Benutzer für Magic-Link-Login
-  // Fehler werden ignoriert — auth_user_id ist nullable und für den Kern-Workflow nicht notwendig
-  let authUserId: string | null = null;
-  const { data: authUser, error: authError } =
-    await adminClient.auth.admin.createUser({
-      email: parsed.data.email,
-      email_confirm: true,
-      app_metadata: { is_admin: false },
+  try {
+    const [row] = await sql`
+      INSERT INTO handwerker (auth_user_id, name, email, telefon, provision_prozent, company)
+      VALUES (NULL, ${parsed.data.name}, ${parsed.data.email}, ${parsed.data.telefon || null}, ${parsed.data.provision_prozent}, ${authResult.companyId})
+      RETURNING *
+    `;
+
+    await logAudit({
+      userId: authResult.user.id,
+      action: "handwerker.created",
+      targetType: "handwerker",
+      targetId: (row as { id: string }).id,
+      details: { name: parsed.data.name, email: parsed.data.email },
+      ipAddress: request.headers.get("x-forwarded-for"),
     });
 
-  if (!authError && authUser?.user?.id) {
-    authUserId = authUser.user.id;
-  } else if (authError) {
-    // Doppelte E-Mail in Auth → bestehenden User suchen
-    if (authError.message?.toLowerCase().includes("already")) {
-      const { data: existing } = await adminClient.auth.admin.listUsers();
-      const found = existing?.users?.find((u) => u.email === parsed.data.email);
-      if (found) authUserId = found.id;
+    return NextResponse.json(row, { status: 201 });
+  } catch (e: unknown) {
+    const err = e as { code?: string };
+    if (err?.code === '23505') {
+      return NextResponse.json({ error: "E-Mail-Adresse bereits als Handwerker registriert" }, { status: 409 });
     }
-    // Alle anderen Auth-Fehler werden geloggt, aber nicht abgebrochen
-    if (!authUserId) {
-      console.error('Handwerker Auth-User konnte nicht erstellt werden (nicht kritisch):', authError.message);
-    }
+    return NextResponse.json({ error: "Handwerker konnte nicht gespeichert werden" }, { status: 500 });
   }
-
-  // Prüfen ob E-Mail bereits als Handwerker existiert
-  const { data: existing } = await adminClient
-    .from("handwerker")
-    .select("id")
-    .eq("email", parsed.data.email)
-    .maybeSingle();
-
-  if (existing) {
-    // Auth-User aufräumen falls gerade neu erstellt
-    if (authUserId) {
-      await adminClient.auth.admin.deleteUser(authUserId).catch(() => {});
-    }
-    return NextResponse.json(
-      { error: "E-Mail-Adresse bereits als Handwerker registriert" },
-      { status: 409 }
-    );
-  }
-
-  // Handwerker-Datensatz anlegen
-  const { data, error } = await adminClient
-    .from("handwerker")
-    .insert({
-      auth_user_id: authUserId,
-      name: parsed.data.name,
-      email: parsed.data.email,
-      telefon: parsed.data.telefon || null,
-      provision_prozent: parsed.data.provision_prozent,
-      company: authResult.companyId,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    // Auth-User aufräumen falls DB-Insert scheitert
-    if (authUserId) {
-      await adminClient.auth.admin.deleteUser(authUserId).catch(() => {});
-    }
-    if (error.code === "23505") {
-      return NextResponse.json(
-        { error: "E-Mail-Adresse bereits als Handwerker registriert" },
-        { status: 409 }
-      );
-    }
-    return NextResponse.json(
-      { error: "Handwerker konnte nicht gespeichert werden" },
-      { status: 500 }
-    );
-  }
-
-  await logAudit({
-    userId: authResult.user.id,
-    action: "handwerker.created",
-    targetType: "handwerker",
-    targetId: data.id,
-    details: { name: parsed.data.name, email: parsed.data.email },
-    ipAddress: request.headers.get("x-forwarded-for"),
-  });
-
-  return NextResponse.json(data, { status: 201 });
 }
 
 // PATCH /api/affiliate/handwerker — update handwerker
@@ -213,55 +138,35 @@ export async function PATCH(request: NextRequest) {
   const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
+
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "Ungültiger Request-Body" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Ungültiger Request-Body" }, { status: 400 });
   }
 
   const { id, ...updateData } = body as { id: string } & Record<string, unknown>;
-  if (!id) {
-    return NextResponse.json({ error: "ID erforderlich" }, { status: 400 });
-  }
+  if (!id) return NextResponse.json({ error: "ID erforderlich" }, { status: 400 });
 
   const parsed = handwerkerUpdateSchema.safeParse(updateData);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validierungsfehler", details: parsed.error.format() },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Validierungsfehler", details: parsed.error.format() }, { status: 400 });
   }
 
-  const adminClient = createAdminClient();
+  const [before] = await sql`SELECT * FROM handwerker WHERE id = ${id} LIMIT 1`;
+  const companyFilter = !authResult.isAdmin ? authResult.companyId : null;
 
-  // Get current values for audit trail
-  const { data: before } = await adminClient
-    .from("handwerker")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const updated = await sql`
+    UPDATE handwerker
+    SET ${sql(parsed.data)}
+    WHERE id = ${id}
+      AND (${companyFilter}::text IS NULL OR company = ${companyFilter}::text)
+    RETURNING *
+  `;
 
-  let updateQuery = adminClient
-    .from("handwerker")
-    .update(parsed.data)
-    .eq("id", id);
-
-  // Nicht-Admins dürfen nur Handwerker ihrer Firma bearbeiten
-  if (!authResult.isAdmin) {
-    updateQuery = updateQuery.eq("company", authResult.companyId);
-  }
-
-  const { data, error } = await updateQuery.select().single();
-
-  if (error || !data) {
-    return NextResponse.json(
-      { error: "Handwerker konnte nicht aktualisiert werden" },
-      { status: 500 }
-    );
+  if (!updated[0]) {
+    return NextResponse.json({ error: "Handwerker konnte nicht aktualisiert werden" }, { status: 500 });
   }
 
   await logAudit({
@@ -269,14 +174,11 @@ export async function PATCH(request: NextRequest) {
     action: "handwerker.updated",
     targetType: "handwerker",
     targetId: id,
-    details: {
-      before: before || {},
-      after: parsed.data,
-    },
+    details: { before: before || {}, after: parsed.data },
     ipAddress: request.headers.get("x-forwarded-for"),
   });
 
-  return NextResponse.json(data);
+  return NextResponse.json(updated[0]);
 }
 
 // DELETE /api/affiliate/handwerker — delete handwerker
@@ -284,50 +186,29 @@ export async function DELETE(request: NextRequest) {
   const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
   if (!validateOrigin(request)) return NextResponse.json({ error: "Ungültiger Ursprung" }, { status: 403 });
+
   const { searchParams } = request.nextUrl;
   const id = searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "ID erforderlich" }, { status: 400 });
 
-  if (!id) {
-    return NextResponse.json({ error: "ID erforderlich" }, { status: 400 });
+  const companyFilter = !authResult.isAdmin ? authResult.companyId : null;
+
+  const rows = await sql`
+    SELECT name FROM handwerker
+    WHERE id = ${id}
+      AND (${companyFilter}::text IS NULL OR company = ${companyFilter}::text)
+    LIMIT 1
+  `;
+
+  if (!rows[0]) {
+    return NextResponse.json({ error: "Handwerker nicht gefunden" }, { status: 404 });
   }
 
-  const adminClient = createAdminClient();
+  const hw = rows[0] as { name: string };
 
-  // Handwerker laden — Nicht-Admins nur ihre Firma
-  let fetchQuery = adminClient
-    .from("handwerker")
-    .select("auth_user_id, name")
-    .eq("id", id);
-
-  if (!authResult.isAdmin) {
-    fetchQuery = fetchQuery.eq("company", authResult.companyId);
-  }
-
-  const { data: hw, error: fetchError } = await fetchQuery.single();
-
-  if (fetchError || !hw) {
-    return NextResponse.json(
-      { error: "Handwerker nicht gefunden" },
-      { status: 404 }
-    );
-  }
-
-  // Delete handwerker record
-  const { error } = await adminClient
-    .from("handwerker")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return NextResponse.json(
-      { error: "Handwerker konnte nicht gelöscht werden"},
-      { status: 500 }
-    );
-  }
-
-  // Clean up auth user
-  if (hw.auth_user_id) {
-    await adminClient.auth.admin.deleteUser(hw.auth_user_id);
+  const deleted = await sql`DELETE FROM handwerker WHERE id = ${id} RETURNING id`;
+  if (!deleted[0]) {
+    return NextResponse.json({ error: "Handwerker konnte nicht gelöscht werden" }, { status: 500 });
   }
 
   await logAudit({

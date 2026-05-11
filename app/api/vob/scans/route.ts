@@ -1,28 +1,12 @@
-import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { NextResponse } from 'next/server';
+import sql from '@/lib/db';
 
-/**
- * GET /api/vob/scans
- * Gibt alle VOB-Scans in absteigender Reihenfolge zurück.
- */
 export async function GET(): Promise<NextResponse> {
   try {
-    const supabase = createAdminClient()
-
-    const { data, error } = await supabase
-      .schema('vob')
-      .from('vob_scans')
-      .select('*')
-      .order('scan_date', { ascending: false })
-
-    if (error) {
-      console.error('Fehler beim Laden der Scans:', error)
-      return NextResponse.json({ error: 'Scans konnten nicht geladen werden' }, { status: 500 })
-    }
-
-    return NextResponse.json({ scans: data ?? [] })
+    const rows = await sql`SELECT * FROM vob.vob_scans ORDER BY scan_date DESC`;
+    return NextResponse.json({ scans: rows });
   } catch (err) {
-    console.error('Unerwarteter Fehler beim Laden der Scans:', err)
-    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 })
+    console.error('Unerwarteter Fehler beim Laden der Scans:', err);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

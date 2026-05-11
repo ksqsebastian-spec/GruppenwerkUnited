@@ -8,27 +8,25 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        // Schwarz – primäres Badge im Ollama Design System
+        // Terracotta – primäres Badge
         default:
-          'border-transparent bg-[#000000] text-white hover:bg-[#262626]',
-        // Helles Grau – neutrales Badge
+          'border-transparent bg-primary text-primary-foreground hover:bg-primary/80',
+        // Warm Sand – neutrales Badge
         secondary:
-          'border-transparent bg-[#e5e5e5] text-[#262626] hover:bg-[#d4d4d4]',
-        // Destructive – Rot für Fehler
+          'border-transparent bg-warm-sand text-charcoal-warm hover:bg-[#dddbd0]',
+        // Error Crimson
         destructive:
           'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
         // Outline – nur Rand, kein Fill
         outline:
-          'border-[#e5e5e5] text-[#262626] bg-transparent',
-        // Erfolg – Grauskaliert (kein Grün im Ollama System)
+          'border-border-cream text-foreground bg-transparent',
+        // Status-Varianten mit warmen Tönen
         success:
-          'border-transparent bg-[#e5e5e5] text-[#262626] hover:bg-[#d4d4d4]',
-        // Warnung – Grauskaliert
+          'border-transparent bg-green-100 text-green-800 hover:bg-green-200',
         warning:
-          'border-transparent bg-[#e5e5e5] text-[#525252] hover:bg-[#d4d4d4]',
-        // Gefahr – Roter Text auf hellem Grau
+          'border-transparent bg-amber-100 text-amber-800 hover:bg-amber-200',
         danger:
-          'border-transparent bg-[#f5f5f5] text-destructive hover:bg-[#e5e5e5]',
+          'border-transparent bg-red-100 text-red-800 hover:bg-red-200',
       },
     },
     defaultVariants: {
