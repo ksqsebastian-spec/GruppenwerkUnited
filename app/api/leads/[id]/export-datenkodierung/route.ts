@@ -5,13 +5,14 @@ import { generateCode } from '@/lib/datenkodierung/code-generator';
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   const session = await requireSession();
   if (session instanceof NextResponse) return session;
 
+  const { id } = await params;
   const leads = await sql`
-    SELECT * FROM leads WHERE id = ${params.id} AND company = ${session.companyId} LIMIT 1
+    SELECT * FROM leads WHERE id = ${id} AND company = ${session.companyId} LIMIT 1
   `;
   const lead = leads[0];
 
