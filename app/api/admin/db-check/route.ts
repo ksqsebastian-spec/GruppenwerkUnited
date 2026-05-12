@@ -7,7 +7,7 @@ export async function GET(): Promise<NextResponse> {
   for (const table of ['datenkodierungen', 'leads', 'lead_kommentare', 'lead_dateien']) {
     try {
       const rows = await sql.unsafe(`SELECT COUNT(*) AS n FROM ${table}`);
-      results[table] = { ok: true, count: (rows[0] as { n: string }).n };
+      results[table] = { ok: true, count: (rows[0] as unknown as { n: string }).n };
     } catch (err) {
       results[table] = { ok: false, error: err instanceof Error ? err.message : String(err) };
     }
