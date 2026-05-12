@@ -289,6 +289,22 @@ export async function POST(): Promise<NextResponse> {
     )`;
     await sql`CREATE INDEX IF NOT EXISTS idx_datenkodierungen_company ON datenkodierungen (company)`;
 
+    // Schemakorrektur: Alte Supabase-Tabellen hatten company_id UUID statt company TEXT
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS company TEXT NOT NULL DEFAULT ''`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS code TEXT`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS name TEXT`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS adresse TEXT`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS notizen TEXT`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'`;
+    // Unique-Constraint für code sicherstellen (IF NOT EXISTS nicht direkt unterstützt — via DO-Block)
+    await sql`DO $$ BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'datenkodierungen_code_key' AND conrelid = 'datenkodierungen'::regclass
+      ) THEN
+        ALTER TABLE datenkodierungen ADD CONSTRAINT datenkodierungen_code_key UNIQUE (code);
+      END IF;
+    END $$`;
+
     await sql`
       CREATE OR REPLACE FUNCTION update_updated_at_column()
       RETURNS TRIGGER AS $$
@@ -476,6 +492,17 @@ export async function POST(): Promise<NextResponse> {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`;
     await sql`CREATE INDEX IF NOT EXISTS idx_lead_dateien_lead ON lead_dateien (lead_id)`;
+
+    // Schemakorrektur: leads-Pflichtfelder sicherstellen falls Tabelle alt ist
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS vorname TEXT NOT NULL DEFAULT ''`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS nachname TEXT NOT NULL DEFAULT ''`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'neu'`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS prioritaet TEXT NOT NULL DEFAULT 'mittel'`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
+
+    // updated_at-Trigger für leads
+    await sql.unsafe(`DROP TRIGGER IF EXISTS update_leads_updated_at ON leads; CREATE TRIGGER update_leads_updated_at BEFORE UPDATE ON leads FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`);
 
     await sql`ALTER TABLE vob.vob_tenders ADD COLUMN IF NOT EXISTS unique_url TEXT`;
 

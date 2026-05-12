@@ -33,7 +33,10 @@ export function useLeads(filter: LeadsFilter = {}): ReturnType<typeof useQuery<L
     queryKey: [QK, company?.companyId, filter],
     queryFn: async () => {
       const res = await fetch('/api/leads' + buildParams(filter));
-      if (!res.ok) throw new Error('Leads konnten nicht geladen werden');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? 'Leads konnten nicht geladen werden');
+      }
       return res.json() as Promise<Lead[]>;
     },
     enabled: !!company?.companyId,
