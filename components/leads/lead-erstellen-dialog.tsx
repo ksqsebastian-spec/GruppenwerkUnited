@@ -210,7 +210,7 @@ export function LeadErstellenDialog({ onClose }: LeadErstellenDialogProps): Reac
           <Button
             onClick={handleSubmit}
             disabled={create.isPending || (!form.vorname && !form.firma)}
-            className="rounded-lg bg-[#000] text-white hover:bg-[#262626]"
+            className="rounded-lg"
           >
             {create.isPending ? 'Wird angelegt…' : 'Lead anlegen'}
           </Button>

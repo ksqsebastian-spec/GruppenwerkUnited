@@ -102,7 +102,7 @@ export default function LoginPage(): React.JSX.Element {
 
             <Button
               type="submit"
-              className="w-full rounded-full bg-[#000000] text-white hover:bg-[#262626] h-10"
+              className="w-full rounded-full h-10"
               disabled={isLoading}
             >
               {isLoading ? (

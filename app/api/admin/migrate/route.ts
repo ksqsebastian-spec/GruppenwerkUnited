@@ -289,22 +289,6 @@ export async function POST(): Promise<NextResponse> {
     )`;
     await sql`CREATE INDEX IF NOT EXISTS idx_datenkodierungen_company ON datenkodierungen (company)`;
 
-    // Schemakorrektur: Alte Supabase-Tabellen hatten company_id UUID statt company TEXT
-    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS company TEXT NOT NULL DEFAULT ''`;
-    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS code TEXT`;
-    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS name TEXT`;
-    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS adresse TEXT`;
-    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS notizen TEXT`;
-    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'`;
-    // Unique-Constraint für code sicherstellen (IF NOT EXISTS nicht direkt unterstützt — via DO-Block)
-    await sql`DO $$ BEGIN
-      IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'datenkodierungen_code_key' AND conrelid = 'datenkodierungen'::regclass
-      ) THEN
-        ALTER TABLE datenkodierungen ADD CONSTRAINT datenkodierungen_code_key UNIQUE (code);
-      END IF;
-    END $$`;
-
     await sql`
       CREATE OR REPLACE FUNCTION update_updated_at_column()
       RETURNS TRIGGER AS $$
@@ -493,16 +477,70 @@ export async function POST(): Promise<NextResponse> {
     )`;
     await sql`CREATE INDEX IF NOT EXISTS idx_lead_dateien_lead ON lead_dateien (lead_id)`;
 
-    // Schemakorrektur: leads-Pflichtfelder sicherstellen falls Tabelle alt ist
+    // Schemakorrektur: alle Spalten sicherstellen die fetchLeads/fetchDatenkodierungen benötigen
+    // leads – alle Spalten der WHERE-Klausel und des SELECT
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS company TEXT NOT NULL DEFAULT ''`;
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS vorname TEXT NOT NULL DEFAULT ''`;
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS nachname TEXT NOT NULL DEFAULT ''`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS email TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS telefon TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS firma TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS position TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS linkedin_url TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS stadt TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS land TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS branche TEXT`;
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'neu'`;
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS prioritaet TEXT NOT NULL DEFAULT 'mittel'`;
-    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS notizen TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS naechste_aktion TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS letzter_kontakt DATE`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
+    // tags-Spalte: bei falschem Typ neu anlegen
+    await sql`DO $$ BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='leads' AND column_name='tags'
+        AND data_type != 'ARRAY'
+      ) THEN
+        ALTER TABLE leads DROP COLUMN tags;
+      END IF;
+    END $$`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'`;
+
+    // datenkodierungen – alle Spalten der WHERE-Klausel sicherstellen
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS company TEXT NOT NULL DEFAULT ''`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS code TEXT`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS name TEXT`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS adresse TEXT`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS notizen TEXT`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
+    // tags-Spalte: bei falschem Typ (TEXT statt TEXT[]) neu anlegen
+    await sql`DO $$ BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='datenkodierungen' AND column_name='tags'
+        AND data_type != 'ARRAY'
+      ) THEN
+        ALTER TABLE datenkodierungen DROP COLUMN tags;
+      END IF;
+    END $$`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'`;
+    // Unique-Constraint für code sicherstellen
+    await sql`DO $$ BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'datenkodierungen_code_key' AND conrelid = 'datenkodierungen'::regclass
+      ) THEN
+        ALTER TABLE datenkodierungen ADD CONSTRAINT datenkodierungen_code_key UNIQUE (code);
+      END IF;
+    END $$`;
 
     // updated_at-Trigger für leads
     await sql.unsafe(`DROP TRIGGER IF EXISTS update_leads_updated_at ON leads; CREATE TRIGGER update_leads_updated_at BEFORE UPDATE ON leads FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`);
+    // updated_at-Trigger für datenkodierungen
+    await sql.unsafe(`DROP TRIGGER IF EXISTS update_datenkodierungen_updated_at ON datenkodierungen; CREATE TRIGGER update_datenkodierungen_updated_at BEFORE UPDATE ON datenkodierungen FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`);
 
     await sql`ALTER TABLE vob.vob_tenders ADD COLUMN IF NOT EXISTS unique_url TEXT`;
 

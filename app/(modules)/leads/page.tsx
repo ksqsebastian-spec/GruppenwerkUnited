@@ -46,7 +46,7 @@ export default function LeadsPage(): React.JSX.Element {
           title="B2B"
           description="Leads verwalten, qualifizieren und nachverfolgen"
         />
-        <ErrorState message="Leads konnten nicht geladen werden." />
+        <ErrorState message={error instanceof Error ? error.message : 'Leads konnten nicht geladen werden.'} />
       </div>
     );
   }
@@ -71,7 +71,7 @@ export default function LeadsPage(): React.JSX.Element {
           <Button
             size="sm"
             onClick={() => setErstellenOffen(true)}
-            className="h-9 rounded-lg bg-[#000] text-white hover:bg-[#262626] text-sm"
+            className="h-9 rounded-lg text-sm"
           >
             <Plus className="h-3.5 w-3.5 mr-1.5" />
             Neuer Lead
