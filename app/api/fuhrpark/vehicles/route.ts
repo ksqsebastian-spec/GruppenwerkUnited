@@ -14,7 +14,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const rows = await fetchVehicles(filters);
     return NextResponse.json(rows);
-  } catch {
+  } catch (err) {
+    console.error('[/api/fuhrpark/vehicles GET]', err);
     return NextResponse.json({ error: 'Fahrzeuge konnten nicht geladen werden' }, { status: 500 });
   }
 }

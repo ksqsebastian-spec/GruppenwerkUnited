@@ -10,13 +10,13 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Terracotta – primärer CTA, die einzige Chromfarbe im System
+        // Schwarz – primärer CTA
         default:
-          'bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-[#c96442_0px_0px_0px_0px,#c96442_0px_0px_0px_1px]',
+          'bg-primary text-primary-foreground hover:bg-primary/80 rounded-lg shadow-ring-dark',
 
-        // Warm Sand – der Arbeits-Button, warm und funktional
+        // Hellgrau – sekundärer Arbeits-Button
         secondary:
-          'bg-warm-sand text-charcoal-warm hover:bg-[#dddbd0] rounded-lg shadow-ring-warm',
+          'bg-secondary text-secondary-foreground hover:bg-[#ebebeb] rounded-lg shadow-ring-subtle',
 
         // Dark Charcoal – invertierte Variante auf hellem Untergrund
         dark:
@@ -26,15 +26,15 @@ const buttonVariants = cva(
         destructive:
           'bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg',
 
-        // Outline – Border Cream Rand, Parchment-Hintergrund
+        // Outline – dünner Rand, weißer Hintergrund
         outline:
-          'border border-border-cream bg-background text-foreground hover:bg-warm-sand hover:border-warm-sand rounded-lg',
+          'border border-border bg-background text-foreground hover:bg-secondary hover:border-input rounded-lg',
 
         // Ghost – kein Hintergrund, nur Hover-Fläche
         ghost:
-          'text-foreground hover:bg-warm-sand hover:text-charcoal-warm rounded-lg',
+          'text-foreground hover:bg-secondary rounded-lg',
 
-        // Link – Terracotta-Unterstreichung
+        // Link – Unterstreichung
         link:
           'text-primary underline-offset-4 hover:underline',
       },

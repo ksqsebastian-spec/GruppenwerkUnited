@@ -34,7 +34,7 @@ interface KodierungErstellenDialogProps {
 }
 
 function tagColor(tag: string): string {
-  const colors = ['#c96442', '#2563eb', '#16a34a', '#7C3AED', '#d97706', '#0891b2'];
+  const colors = ['#000000', '#2563eb', '#16a34a', '#7C3AED', '#d97706', '#0891b2'];
   let hash = 0;
   for (const c of tag) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff;
   return colors[hash % colors.length];

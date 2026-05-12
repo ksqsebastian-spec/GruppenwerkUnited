@@ -64,7 +64,7 @@ export function PromptKopierenButton({
       {usesDatenkodierung && (
         <Badge
           variant="outline"
-          className="h-6 text-[10px] px-1.5 border-[#c96442]/30 text-[#c96442] bg-[#c96442]/5"
+          className="h-6 text-[10px] px-1.5 border-primary/30 text-primary bg-primary/5"
           title="Dieser Prompt referenziert pseudonymisierte Daten (Datenkodierung)"
         >
           Datenkodierung
