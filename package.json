@@ -17,6 +17,8 @@
     "test:unit:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1045.0",
+    "@aws-sdk/s3-request-presigner": "^3.1045.0",
     "@dagrejs/dagre": "^3.0.0",
     "@hookform/resolvers": "^3.3.0",
     "@icons-pack/react-simple-icons": "^13.11.1",

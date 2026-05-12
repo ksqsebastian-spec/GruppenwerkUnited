@@ -30,10 +30,10 @@ function DateiGroesse(bytes: number | null): string {
 async function dateiDownload(datei: LeadDatei): Promise<void> {
   const res = await fetch(`/api/leads/${datei.lead_id}/dateien/${datei.id}`);
   if (!res.ok) return;
-  const { url, dateiname } = await res.json() as { url: string; dateiname: string };
+  const { url } = await res.json() as { url: string };
   const a = document.createElement('a');
   a.href = url;
-  a.download = dateiname;
+  a.download = datei.dateiname;
   a.target = '_blank';
   a.click();
 }
