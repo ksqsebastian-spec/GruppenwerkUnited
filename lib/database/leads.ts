@@ -66,7 +66,7 @@ export async function upsertLeads(companyId: string, rows: Omit<LeadInsert, 'com
   return result.length;
 }
 
-// ── Kommentare ────────────────────────────────────────────────────────────────
+// ── Kommentare ────────────────────────────────────────────────────────────────────────────
 
 export async function fetchKommentare(leadId: string): Promise<LeadKommentar[]> {
   const rows = await sql`
@@ -88,7 +88,7 @@ export async function deleteKommentar(id: string): Promise<void> {
   await sql`DELETE FROM lead_kommentare WHERE id = ${id}`;
 }
 
-// ── Dateianhänge ──────────────────────────────────────────────────────────────
+// ── Dateianbhänge ───────────────────────────────────────────────────────────────────────
 
 export async function fetchDateien(leadId: string): Promise<LeadDatei[]> {
   const rows = await sql`
