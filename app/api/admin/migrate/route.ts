@@ -410,6 +410,51 @@ export async function POST(): Promise<NextResponse> {
           OR (ws.calendar_week = 1 AND prev.year = ws.year - 1 AND prev.calendar_week = 52)
         )`;
 
+    await sql`INSERT INTO appointment_types (id,name,default_interval_months,color) VALUES
+      ('11111111-1111-1111-1111-111111111001','TÜV',24,'#ef4444'),
+      ('11111111-1111-1111-1111-111111111002','Service/Wartung',12,'#3b82f6'),
+      ('11111111-1111-1111-1111-111111111003','Ölwechsel',12,'#f59e0b'),
+      ('11111111-1111-1111-1111-111111111004','Reifenwechsel',6,'#10b981'),
+      ('11111111-1111-1111-1111-111111111005','Inspektion',12,'#8b5cf6'),
+      ('11111111-1111-1111-1111-111111111006','Bremsenprüfung',12,'#ec4899'),
+      ('11111111-1111-1111-1111-111111111007','UVV-Prüfung',12,'#06b6d4'),
+      ('11111111-1111-1111-1111-111111111008','Leasing-Rückgabe',NULL,'#6b7280')
+      ON CONFLICT (name) DO NOTHING`;
+    await sql`INSERT INTO damage_types (id,name) VALUES
+      ('22222222-2222-2222-2222-222222222001','Kollision/Unfall'),
+      ('22222222-2222-2222-2222-222222222002','Parkschaden'),
+      ('22222222-2222-2222-2222-222222222003','Vandalismus'),
+      ('22222222-2222-2222-2222-222222222004','Wetterschaden'),
+      ('22222222-2222-2222-2222-222222222005','Glasschaden'),
+      ('22222222-2222-2222-2222-222222222006','Mechanischer Schaden'),
+      ('22222222-2222-2222-2222-222222222007','Reifenschaden'),
+      ('22222222-2222-2222-2222-222222222008','Innenraumschaden')
+      ON CONFLICT (name) DO NOTHING`;
+    await sql`INSERT INTO cost_types (id,name,icon) VALUES
+      ('33333333-3333-3333-3333-333333333001','Tanken','⛽'),
+      ('33333333-3333-3333-3333-333333333002','Service/Wartung','🔧'),
+      ('33333333-3333-3333-3333-333333333003','Reparatur','🛠️'),
+      ('33333333-3333-3333-3333-333333333004','Versicherung','🛡️'),
+      ('33333333-3333-3333-3333-333333333005','KFZ-Steuer','📋'),
+      ('33333333-3333-3333-3333-333333333006','Leasing','📄'),
+      ('33333333-3333-3333-3333-333333333007','Parken','🅿️'),
+      ('33333333-3333-3333-3333-333333333008','Maut','🛣️'),
+      ('33333333-3333-3333-3333-333333333009','Fahrzeugwäsche','🚿')
+      ON CONFLICT (name) DO NOTHING`;
+    await sql`INSERT INTO document_types (id,name,description) VALUES
+      ('44444444-4444-4444-4444-444444444001','Fahrzeugschein','Zulassungsbescheinigung Teil I'),
+      ('44444444-4444-4444-4444-444444444002','Fahrzeugbrief','Zulassungsbescheinigung Teil II'),
+      ('44444444-4444-4444-4444-444444444003','Versicherungspolice','KFZ-Versicherungsdokumente'),
+      ('44444444-4444-4444-4444-444444444004','TÜV-Bericht','Hauptuntersuchung'),
+      ('44444444-4444-4444-4444-444444444005','Serviceheft','Wartungsnachweise'),
+      ('44444444-4444-4444-4444-444444444006','Rechnung','Rechnungen und Belege'),
+      ('44444444-4444-4444-4444-444444444007','Vertrag','Kauf- oder Leasingvertrag'),
+      ('44444444-4444-4444-4444-444444444008','Übergabeprotokoll','Fahrzeugübergabe')
+      ON CONFLICT (name) DO NOTHING`;
+    await sql`INSERT INTO license_check_settings (id,check_interval_months,warning_days_before) VALUES ('00000000-0000-0000-0000-000000000001',6,14) ON CONFLICT (id) DO NOTHING`;
+    await sql`INSERT INTO uvv_settings (id,check_interval_months,warning_days_before) VALUES ('00000000-0000-0000-0000-000000000002',12,30) ON CONFLICT (id) DO NOTHING`;
+    await sql`INSERT INTO app_settings (key,value) VALUES ('praemie_betrag_default','1000'::jsonb) ON CONFLICT (key) DO NOTHING`;
+
     await sql`CREATE TABLE IF NOT EXISTS automation_nodes (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       company TEXT NOT NULL DEFAULT '',
@@ -477,8 +522,6 @@ export async function POST(): Promise<NextResponse> {
     )`;
     await sql`CREATE INDEX IF NOT EXISTS idx_lead_dateien_lead ON lead_dateien (lead_id)`;
 
-    // Schemakorrektur: alle Spalten sicherstellen die fetchLeads/fetchDatenkodierungen benötigen
-    // leads – alle Spalten der WHERE-Klausel und des SELECT
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS company TEXT NOT NULL DEFAULT ''`;
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS vorname TEXT NOT NULL DEFAULT ''`;
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS nachname TEXT NOT NULL DEFAULT ''`;
@@ -497,7 +540,6 @@ export async function POST(): Promise<NextResponse> {
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS letzter_kontakt DATE`;
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
-    // tags-Spalte: bei falschem Typ neu anlegen
     await sql`DO $$ BEGIN
       IF EXISTS (
         SELECT 1 FROM information_schema.columns
@@ -509,7 +551,6 @@ export async function POST(): Promise<NextResponse> {
     END $$`;
     await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'`;
 
-    // datenkodierungen – alle Spalten der WHERE-Klausel sicherstellen
     await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS company TEXT NOT NULL DEFAULT ''`;
     await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS code TEXT`;
     await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS name TEXT`;
@@ -517,7 +558,6 @@ export async function POST(): Promise<NextResponse> {
     await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS notizen TEXT`;
     await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
     await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
-    // tags-Spalte: bei falschem Typ (TEXT statt TEXT[]) neu anlegen
     await sql`DO $$ BEGIN
       IF EXISTS (
         SELECT 1 FROM information_schema.columns
@@ -528,7 +568,6 @@ export async function POST(): Promise<NextResponse> {
       END IF;
     END $$`;
     await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'`;
-    // Unique-Constraint für code sicherstellen
     await sql`DO $$ BEGIN
       IF NOT EXISTS (
         SELECT 1 FROM pg_constraint WHERE conname = 'datenkodierungen_code_key' AND conrelid = 'datenkodierungen'::regclass
@@ -537,87 +576,8 @@ export async function POST(): Promise<NextResponse> {
       END IF;
     END $$`;
 
-    // updated_at-Trigger für leads
     await sql.unsafe(`DROP TRIGGER IF EXISTS update_leads_updated_at ON leads; CREATE TRIGGER update_leads_updated_at BEFORE UPDATE ON leads FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`);
-    // updated_at-Trigger für datenkodierungen
     await sql.unsafe(`DROP TRIGGER IF EXISTS update_datenkodierungen_updated_at ON datenkodierungen; CREATE TRIGGER update_datenkodierungen_updated_at BEFORE UPDATE ON datenkodierungen FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`);
-
-    await sql`ALTER TABLE vob.vob_tenders ADD COLUMN IF NOT EXISTS unique_url TEXT`;
-
-    await sql`CREATE OR REPLACE VIEW vob.vob_dashboard AS
-      SELECT
-        t.id AS tender_id,
-        t.title,
-        t.authority,
-        t.deadline,
-        t.deadline_date,
-        t.category,
-        t.url,
-        t.status,
-        t.requested,
-        t.created_at,
-        m.company_slug,
-        c.name AS company_name,
-        c.color AS company_color,
-        m.relevance,
-        m.reason,
-        s.calendar_week,
-        s.year,
-        s.scan_date,
-        s.report_url,
-        CASE
-          WHEN t.status != 'active' THEN 'expired'
-          WHEN t.deadline_date IS NULL THEN 'unknown'
-          WHEN t.deadline_date < CURRENT_DATE THEN 'expired'
-          WHEN t.deadline_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'urgent'
-          WHEN t.deadline_date <= CURRENT_DATE + INTERVAL '14 days' THEN 'soon'
-          ELSE 'normal'
-        END AS urgency
-      FROM vob.vob_tenders t
-      LEFT JOIN vob.vob_matches m ON m.tender_id = t.id
-      LEFT JOIN vob.companies c ON c.id = m.company_id
-      LEFT JOIN vob.vob_scans s ON s.id = t.scan_id`;
-
-    await sql`CREATE OR REPLACE VIEW vob.company_weekly_stats AS
-      SELECT
-        c.name AS company_name,
-        c.slug AS company_slug,
-        c.color,
-        s.calendar_week,
-        s.year,
-        s.scan_date,
-        COUNT(m.id)::int AS tender_count
-      FROM vob.companies c
-      JOIN vob.vob_matches m ON m.company_id = c.id
-      JOIN vob.vob_tenders t ON t.id = m.tender_id
-      JOIN vob.vob_scans s ON s.id = t.scan_id
-      GROUP BY c.id, c.name, c.slug, c.color, s.id, s.calendar_week, s.year, s.scan_date`;
-
-    await sql`CREATE OR REPLACE VIEW vob.company_trends AS
-      SELECT
-        ws.company_name,
-        ws.company_slug,
-        ws.color,
-        ws.calendar_week,
-        ws.year,
-        ws.scan_date,
-        ws.tender_count,
-        prev.tender_count AS prev_week_count,
-        ws.tender_count - COALESCE(prev.tender_count, 0) AS week_change
-      FROM vob.company_weekly_stats ws
-      LEFT JOIN vob.company_weekly_stats prev
-        ON prev.company_slug = ws.company_slug
-        AND (
-          (ws.calendar_week > 1 AND prev.year = ws.year AND prev.calendar_week = ws.calendar_week - 1)
-          OR (ws.calendar_week = 1 AND prev.year = ws.year - 1 AND prev.calendar_week = 52)
-        )`;
-    await sql`INSERT INTO appointment_types (id,name,default_interval_months,color) VALUES ('11111111-1111-1111-1111-111111111001','TÜV',24,'#ef4444'),('11111111-1111-1111-1111-111111111002','Service/Wartung',12,'#3b82f6'),('11111111-1111-1111-1111-111111111003','Ölwechsel',12,'#f59e0b'),('11111111-1111-1111-1111-111111111004','Reifenwechsel',6,'#10b981'),('11111111-1111-1111-1111-111111111005','Inspektion',12,'#8b5cf6'),('11111111-1111-1111-1111-111111111006','Bremsenprüfung',12,'#ec4899'),('11111111-1111-1111-1111-111111111007','UVV-Prüfung',12,'#06b6d4'),('11111111-1111-1111-1111-111111111008','Leasing-Rückgabe',NULL,'#6b7280') ON CONFLICT (name) DO NOTHING`;
-    await sql`INSERT INTO damage_types (id,name) VALUES ('22222222-2222-2222-2222-222222222001','Kollision/Unfall'),('22222222-2222-2222-2222-222222222002','Parkschaden'),('22222222-2222-2222-2222-222222222003','Vandalismus'),('22222222-2222-2222-2222-222222222004','Wetterschaden'),('22222222-2222-2222-2222-222222222005','Glasschaden'),('22222222-2222-2222-2222-222222222006','Mechanischer Schaden'),('22222222-2222-2222-2222-222222222007','Reifenschaden'),('22222222-2222-2222-2222-222222222008','Innenraumschaden') ON CONFLICT (name) DO NOTHING`;
-    await sql`INSERT INTO cost_types (id,name,icon) VALUES ('33333333-3333-3333-3333-333333333001','Tanken','⛽'),('33333333-3333-3333-3333-333333333002','Service/Wartung','🔧'),('33333333-3333-3333-3333-333333333003','Reparatur','🛠️'),('33333333-3333-3333-3333-333333333004','Versicherung','🛡️'),('33333333-3333-3333-3333-333333333005','KFZ-Steuer','📋'),('33333333-3333-3333-3333-333333333006','Leasing','📄'),('33333333-3333-3333-3333-333333333007','Parken','🅿️'),('33333333-3333-3333-3333-333333333008','Maut','🛣️'),('33333333-3333-3333-3333-333333333009','Fahrzeugwäsche','🚿') ON CONFLICT (name) DO NOTHING`;
-    await sql`INSERT INTO document_types (id,name,description) VALUES ('44444444-4444-4444-4444-444444444001','Fahrzeugschein','Zulassungsbescheinigung Teil I'),('44444444-4444-4444-4444-444444444002','Fahrzeugbrief','Zulassungsbescheinigung Teil II'),('44444444-4444-4444-4444-444444444003','Versicherungspolice','KFZ-Versicherungsdokumente'),('44444444-4444-4444-4444-444444444004','TÜV-Bericht','Hauptuntersuchung'),('44444444-4444-4444-4444-444444444005','Serviceheft','Wartungsnachweise'),('44444444-4444-4444-4444-444444444006','Rechnung','Rechnungen und Belege'),('44444444-4444-4444-4444-444444444007','Vertrag','Kauf- oder Leasingvertrag'),('44444444-4444-4444-4444-444444444008','Übergabeprotokoll','Fahrzeugübergabe') ON CONFLICT (name) DO NOTHING`;
-    await sql`INSERT INTO license_check_settings (id,check_interval_months,warning_days_before) VALUES ('00000000-0000-0000-0000-000000000001',6,14) ON CONFLICT (id) DO NOTHING`;
-    await sql`INSERT INTO uvv_settings (id,check_interval_months,warning_days_before) VALUES ('00000000-0000-0000-0000-000000000002',12,30) ON CONFLICT (id) DO NOTHING`;
-    await sql`INSERT INTO app_settings (key,value) VALUES ('praemie_betrag_default','1000'::jsonb) ON CONFLICT (key) DO NOTHING`;
 
     // ── Fuhrpark Demo-Firmen ──────────────────────────────────────────────────
     await sql`INSERT INTO companies (id,name) VALUES
@@ -630,16 +590,16 @@ export async function POST(): Promise<NextResponse> {
 
     // ── Fuhrpark Demo-Fahrzeuge ───────────────────────────────────────────────
     await sql`INSERT INTO vehicles (id,license_plate,brand,model,year,fuel_type,mileage,status,company_id,tuv_due_date,notes) VALUES
-      ('v1000000-0000-0000-0000-000000000001','HH-SE 1001','Mercedes-Benz','Sprinter 316 CDI',2021,'diesel',87450,'active','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','2025-11-15','Hauptfahrzeug Montagekolonne'),
-      ('v1000000-0000-0000-0000-000000000002','HH-SE 1002','Volkswagen','Crafter 35 2.0 TDI',2022,'diesel',54200,'active','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','2026-03-20','Materialfahrzeug'),
-      ('v1000000-0000-0000-0000-000000000003','HH-SE 1003','Ford','Transit Custom',2023,'diesel',28100,'active','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','2026-08-10','Kleinteile und Werkzeug'),
-      ('v2000000-0000-0000-0000-000000000001','BI-TB 2001','Mercedes-Benz','Vito 116 CDI',2020,'diesel',112300,'active','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','2025-09-05','Montagewagen Tischler'),
-      ('v2000000-0000-0000-0000-000000000002','BI-TB 2002','Volkswagen','Transporter T6',2021,'diesel',78600,'active','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','2026-01-22','Holztransport'),
-      ('v3000000-0000-0000-0000-000000000001','OB-MH 3001','Opel','Movano B',2022,'diesel',43800,'active','cccccccc-cccc-cccc-cccc-cccccccccccc','2026-05-30','Farbmaterialen'),
-      ('v3000000-0000-0000-0000-000000000002','OB-MH 3002','Renault','Trafic L2H1',2023,'diesel',19200,'active','cccccccc-cccc-cccc-cccc-cccccccccccc','2026-09-15','Gerüste und Leitern'),
-      ('v4000000-0000-0000-0000-000000000001','HH-GW 4001','Volkswagen','Caddy 2.0 TDI',2022,'diesel',61500,'active','dddddddd-dddd-dddd-dddd-dddddddddddd','2026-02-28','Bürofahrzeug GF'),
-      ('v5000000-0000-0000-0000-000000000001','HH-ME 5001','Mercedes-Benz','Sprinter 314 CDI',2021,'diesel',94100,'active','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee','2025-12-08','Montagekolonne 1'),
-      ('v5000000-0000-0000-0000-000000000002','HH-ME 5002','Ford','Transit 350 L3',2022,'diesel',67300,'active','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee','2026-04-12','Materialfahrzeug 2')
+      ('f1000000-0000-0000-0000-000000000001','HH-SE 1001','Mercedes-Benz','Sprinter 316 CDI',2021,'diesel',87450,'active','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','2025-11-15','Hauptfahrzeug Montagekolonne'),
+      ('f1000000-0000-0000-0000-000000000002','HH-SE 1002','Volkswagen','Crafter 35 2.0 TDI',2022,'diesel',54200,'active','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','2026-03-20','Materialfahrzeug'),
+      ('f1000000-0000-0000-0000-000000000003','HH-SE 1003','Ford','Transit Custom',2023,'diesel',28100,'active','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','2026-08-10','Kleinteile und Werkzeug'),
+      ('f2000000-0000-0000-0000-000000000001','BI-TB 2001','Mercedes-Benz','Vito 116 CDI',2020,'diesel',112300,'active','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','2025-09-05','Montagewagen Tischler'),
+      ('f2000000-0000-0000-0000-000000000002','BI-TB 2002','Volkswagen','Transporter T6',2021,'diesel',78600,'active','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','2026-01-22','Holztransport'),
+      ('f3000000-0000-0000-0000-000000000001','OB-MH 3001','Opel','Movano B',2022,'diesel',43800,'active','cccccccc-cccc-cccc-cccc-cccccccccccc','2026-05-30','Farbmaterialen'),
+      ('f3000000-0000-0000-0000-000000000002','OB-MH 3002','Renault','Trafic L2H1',2023,'diesel',19200,'active','cccccccc-cccc-cccc-cccc-cccccccccccc','2026-09-15','Gerüste und Leitern'),
+      ('f4000000-0000-0000-0000-000000000001','HH-GW 4001','Volkswagen','Caddy 2.0 TDI',2022,'diesel',61500,'active','dddddddd-dddd-dddd-dddd-dddddddddddd','2026-02-28','Bürofahrzeug GF'),
+      ('f5000000-0000-0000-0000-000000000001','HH-ME 5001','Mercedes-Benz','Sprinter 314 CDI',2021,'diesel',94100,'active','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee','2025-12-08','Montagekolonne 1'),
+      ('f5000000-0000-0000-0000-000000000002','HH-ME 5002','Ford','Transit 350 L3',2022,'diesel',67300,'active','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee','2026-04-12','Materialfahrzeug 2')
       ON CONFLICT (license_plate) DO NOTHING`;
 
     // ── Fuhrpark Demo-Fahrer ──────────────────────────────────────────────────
@@ -651,11 +611,11 @@ export async function POST(): Promise<NextResponse> {
       ('d5000000-0000-0000-0000-000000000001','Peter','Mehlig','p.mehlig@tischlerei-mehlig.de','+49 40 887766','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee','active')
       ON CONFLICT DO NOTHING`;
 
-    // ── Fuhrpark Demo-Termine (TÜV/Service fällig) ───────────────────────────
+    // ── Fuhrpark Demo-Termine ──────────────────────────────────────────────────
     await sql`INSERT INTO appointments (id,vehicle_id,appointment_type_id,due_date,status,notes) VALUES
-      ('a1000000-0000-0000-0000-000000000001','v1000000-0000-0000-0000-000000000001','11111111-1111-1111-1111-111111111001','2025-11-15','pending','TÜV Hauptuntersuchung'),
-      ('a1000000-0000-0000-0000-000000000002','v2000000-0000-0000-0000-000000000001','11111111-1111-1111-1111-111111111002','2025-10-01','pending','Jahresservice'),
-      ('a1000000-0000-0000-0000-000000000003','v1000000-0000-0000-0000-000000000002','11111111-1111-1111-1111-111111111003','2025-09-20','pending','Ölwechsel überfällig')
+      ('a1000000-0000-0000-0000-000000000001','f1000000-0000-0000-0000-000000000001','11111111-1111-1111-1111-111111111001','2025-11-15','pending','TÜV Hauptuntersuchung'),
+      ('a1000000-0000-0000-0000-000000000002','f2000000-0000-0000-0000-000000000001','11111111-1111-1111-1111-111111111002','2025-10-01','pending','Jahresservice'),
+      ('a1000000-0000-0000-0000-000000000003','f1000000-0000-0000-0000-000000000002','11111111-1111-1111-1111-111111111003','2025-09-20','pending','Ölwechsel überfällig')
       ON CONFLICT DO NOTHING`;
 
     return NextResponse.json({ ok: true, message: 'Schema applied successfully' });
