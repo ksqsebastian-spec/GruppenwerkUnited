@@ -19,8 +19,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const rows = await fetchDatenkodierungen(companyId, search, tag);
     return NextResponse.json(rows);
-  } catch {
-    return NextResponse.json({ error: 'Datenkodierungen konnten nicht geladen werden' }, { status: 500 });
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
   }
 }
 

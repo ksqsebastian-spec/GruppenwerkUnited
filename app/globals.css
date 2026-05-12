@@ -6,7 +6,7 @@
   :root {
     /* ─── Anthropic / Claude Design System ─────────────────────────────────── */
     /* Parchment canvas – warmes Cremepapier, die emotionale Basis des Designs */
-    --background:   54 24% 94%;    /* #f5f4ed Parchment  */
+    --background:   54 30% 91%;    /* #eeeade Parchment warm  */
     --foreground:   50  5%  8%;    /* #141413 Near Black  */
 
     /* Ivory – Card-Oberflächen, leicht heller als Parchment */

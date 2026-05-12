@@ -130,7 +130,7 @@ export function LeadImportDialog({ onClose }: LeadImportDialogProps): React.JSX.
         {/* Footer */}
         <div className="px-6 py-4 border-t border-[#f0f0f0] flex justify-end gap-2">
           {ergebnis ? (
-            <Button onClick={onClose} className="rounded-lg bg-[#000] text-white hover:bg-[#262626]">
+            <Button onClick={onClose} className="rounded-lg">
               Schließen
             </Button>
           ) : (
@@ -139,7 +139,7 @@ export function LeadImportDialog({ onClose }: LeadImportDialogProps): React.JSX.
               <Button
                 onClick={handleImport}
                 disabled={!datei || importLeads.isPending}
-                className="rounded-lg bg-[#000] text-white hover:bg-[#262626]"
+                className="rounded-lg"
               >
                 {importLeads.isPending ? 'Wird importiert…' : 'Importieren'}
               </Button>

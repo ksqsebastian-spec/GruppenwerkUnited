@@ -278,7 +278,7 @@ export function LeadDetailDialog({ lead, onClose }: LeadDetailDialogProps): Reac
               <Button
                 onClick={handleSave}
                 disabled={update.isPending}
-                className="rounded-lg bg-[#000] text-white hover:bg-[#262626]"
+                className="rounded-lg"
               >
                 {update.isPending ? 'Wird gespeichert…' : 'Speichern'}
               </Button>

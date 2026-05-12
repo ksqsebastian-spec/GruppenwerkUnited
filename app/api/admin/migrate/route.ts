@@ -477,6 +477,140 @@ export async function POST(): Promise<NextResponse> {
     )`;
     await sql`CREATE INDEX IF NOT EXISTS idx_lead_dateien_lead ON lead_dateien (lead_id)`;
 
+    // Schemakorrektur: alle Spalten sicherstellen die fetchLeads/fetchDatenkodierungen benötigen
+    // leads – alle Spalten der WHERE-Klausel und des SELECT
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS company TEXT NOT NULL DEFAULT ''`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS vorname TEXT NOT NULL DEFAULT ''`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS nachname TEXT NOT NULL DEFAULT ''`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS email TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS telefon TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS firma TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS position TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS linkedin_url TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS stadt TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS land TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS branche TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'neu'`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS prioritaet TEXT NOT NULL DEFAULT 'mittel'`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS notizen TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS naechste_aktion TEXT`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS letzter_kontakt DATE`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
+    // tags-Spalte: bei falschem Typ neu anlegen
+    await sql`DO $$ BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='leads' AND column_name='tags'
+        AND data_type != 'ARRAY'
+      ) THEN
+        ALTER TABLE leads DROP COLUMN tags;
+      END IF;
+    END $$`;
+    await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'`;
+
+    // datenkodierungen – alle Spalten der WHERE-Klausel sicherstellen
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS company TEXT NOT NULL DEFAULT ''`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS code TEXT`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS name TEXT`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS adresse TEXT`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS notizen TEXT`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
+    // tags-Spalte: bei falschem Typ (TEXT statt TEXT[]) neu anlegen
+    await sql`DO $$ BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='datenkodierungen' AND column_name='tags'
+        AND data_type != 'ARRAY'
+      ) THEN
+        ALTER TABLE datenkodierungen DROP COLUMN tags;
+      END IF;
+    END $$`;
+    await sql`ALTER TABLE datenkodierungen ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'`;
+    // Unique-Constraint für code sicherstellen
+    await sql`DO $$ BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'datenkodierungen_code_key' AND conrelid = 'datenkodierungen'::regclass
+      ) THEN
+        ALTER TABLE datenkodierungen ADD CONSTRAINT datenkodierungen_code_key UNIQUE (code);
+      END IF;
+    END $$`;
+
+    // updated_at-Trigger für leads
+    await sql.unsafe(`DROP TRIGGER IF EXISTS update_leads_updated_at ON leads; CREATE TRIGGER update_leads_updated_at BEFORE UPDATE ON leads FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`);
+    // updated_at-Trigger für datenkodierungen
+    await sql.unsafe(`DROP TRIGGER IF EXISTS update_datenkodierungen_updated_at ON datenkodierungen; CREATE TRIGGER update_datenkodierungen_updated_at BEFORE UPDATE ON datenkodierungen FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`);
+
+    await sql`ALTER TABLE vob.vob_tenders ADD COLUMN IF NOT EXISTS unique_url TEXT`;
+
+    await sql`CREATE OR REPLACE VIEW vob.vob_dashboard AS
+      SELECT
+        t.id AS tender_id,
+        t.title,
+        t.authority,
+        t.deadline,
+        t.deadline_date,
+        t.category,
+        t.url,
+        t.status,
+        t.requested,
+        t.created_at,
+        m.company_slug,
+        c.name AS company_name,
+        c.color AS company_color,
+        m.relevance,
+        m.reason,
+        s.calendar_week,
+        s.year,
+        s.scan_date,
+        s.report_url,
+        CASE
+          WHEN t.status != 'active' THEN 'expired'
+          WHEN t.deadline_date IS NULL THEN 'unknown'
+          WHEN t.deadline_date < CURRENT_DATE THEN 'expired'
+          WHEN t.deadline_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'urgent'
+          WHEN t.deadline_date <= CURRENT_DATE + INTERVAL '14 days' THEN 'soon'
+          ELSE 'normal'
+        END AS urgency
+      FROM vob.vob_tenders t
+      LEFT JOIN vob.vob_matches m ON m.tender_id = t.id
+      LEFT JOIN vob.companies c ON c.id = m.company_id
+      LEFT JOIN vob.vob_scans s ON s.id = t.scan_id`;
+
+    await sql`CREATE OR REPLACE VIEW vob.company_weekly_stats AS
+      SELECT
+        c.name AS company_name,
+        c.slug AS company_slug,
+        c.color,
+        s.calendar_week,
+        s.year,
+        s.scan_date,
+        COUNT(m.id)::int AS tender_count
+      FROM vob.companies c
+      JOIN vob.vob_matches m ON m.company_id = c.id
+      JOIN vob.vob_tenders t ON t.id = m.tender_id
+      JOIN vob.vob_scans s ON s.id = t.scan_id
+      GROUP BY c.id, c.name, c.slug, c.color, s.id, s.calendar_week, s.year, s.scan_date`;
+
+    await sql`CREATE OR REPLACE VIEW vob.company_trends AS
+      SELECT
+        ws.company_name,
+        ws.company_slug,
+        ws.color,
+        ws.calendar_week,
+        ws.year,
+        ws.scan_date,
+        ws.tender_count,
+        prev.tender_count AS prev_week_count,
+        ws.tender_count - COALESCE(prev.tender_count, 0) AS week_change
+      FROM vob.company_weekly_stats ws
+      LEFT JOIN vob.company_weekly_stats prev
+        ON prev.company_slug = ws.company_slug
+        AND (
+          (ws.calendar_week > 1 AND prev.year = ws.year AND prev.calendar_week = ws.calendar_week - 1)
+          OR (ws.calendar_week = 1 AND prev.year = ws.year - 1 AND prev.calendar_week = 52)
+        )`;
     await sql`INSERT INTO appointment_types (id,name,default_interval_months,color) VALUES ('11111111-1111-1111-1111-111111111001','TÜV',24,'#ef4444'),('11111111-1111-1111-1111-111111111002','Service/Wartung',12,'#3b82f6'),('11111111-1111-1111-1111-111111111003','Ölwechsel',12,'#f59e0b'),('11111111-1111-1111-1111-111111111004','Reifenwechsel',6,'#10b981'),('11111111-1111-1111-1111-111111111005','Inspektion',12,'#8b5cf6'),('11111111-1111-1111-1111-111111111006','Bremsenprüfung',12,'#ec4899'),('11111111-1111-1111-1111-111111111007','UVV-Prüfung',12,'#06b6d4'),('11111111-1111-1111-1111-111111111008','Leasing-Rückgabe',NULL,'#6b7280') ON CONFLICT (name) DO NOTHING`;
     await sql`INSERT INTO damage_types (id,name) VALUES ('22222222-2222-2222-2222-222222222001','Kollision/Unfall'),('22222222-2222-2222-2222-222222222002','Parkschaden'),('22222222-2222-2222-2222-222222222003','Vandalismus'),('22222222-2222-2222-2222-222222222004','Wetterschaden'),('22222222-2222-2222-2222-222222222005','Glasschaden'),('22222222-2222-2222-2222-222222222006','Mechanischer Schaden'),('22222222-2222-2222-2222-222222222007','Reifenschaden'),('22222222-2222-2222-2222-222222222008','Innenraumschaden') ON CONFLICT (name) DO NOTHING`;
     await sql`INSERT INTO cost_types (id,name,icon) VALUES ('33333333-3333-3333-3333-333333333001','Tanken','⛽'),('33333333-3333-3333-3333-333333333002','Service/Wartung','🔧'),('33333333-3333-3333-3333-333333333003','Reparatur','🛠️'),('33333333-3333-3333-3333-333333333004','Versicherung','🛡️'),('33333333-3333-3333-3333-333333333005','KFZ-Steuer','📋'),('33333333-3333-3333-3333-333333333006','Leasing','📄'),('33333333-3333-3333-3333-333333333007','Parken','🅿️'),('33333333-3333-3333-3333-333333333008','Maut','🛣️'),('33333333-3333-3333-3333-333333333009','Fahrzeugwäsche','🚿') ON CONFLICT (name) DO NOTHING`;

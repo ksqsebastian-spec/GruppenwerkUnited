@@ -10,10 +10,8 @@ export async function fetchDatenkodierungen(companyId: string, search?: string, 
   const rows = await sql`
     SELECT * FROM datenkodierungen
     WHERE company = ${companyId}
-      AND (${searchTerm} IS NULL OR (
-        code ILIKE ${searchTerm} OR name ILIKE ${searchTerm} OR adresse ILIKE ${searchTerm}
-      ))
-      AND (${tagTerm} IS NULL OR tags @> ARRAY[${tagTerm}]::text[])
+    ${searchTerm ? sql`AND (code ILIKE ${searchTerm} OR name ILIKE ${searchTerm} OR adresse ILIKE ${searchTerm})` : sql``}
+    ${tagTerm ? sql`AND tags @> ARRAY[${tagTerm}]::text[]` : sql``}
     ORDER BY created_at DESC
   `;
   return rows as unknown as Datenkodierung[];

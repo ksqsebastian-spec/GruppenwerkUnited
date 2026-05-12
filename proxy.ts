@@ -16,6 +16,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     pathname === '/login' ||
     pathname.startsWith('/api/auth') ||
     pathname.startsWith('/api/admin/migrate') ||
+    pathname.startsWith('/api/admin/db-check') ||
     pathname.startsWith('/kunden')
   ) {
     return NextResponse.next();

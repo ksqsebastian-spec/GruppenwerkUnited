@@ -162,7 +162,7 @@ export function LeadAktivitaeten({ leadId }: LeadAktivitaetenProps): React.JSX.E
             onClick={handleKommentar}
             disabled={!text.trim() || addKommentar.isPending}
             size="sm"
-            className="self-end rounded-lg bg-[#000] text-white hover:bg-[#262626] h-9"
+            className="self-end rounded-lg h-9"
           >
             <Send className="h-3.5 w-3.5" />
           </Button>
