@@ -85,7 +85,7 @@ export function Header(): React.JSX.Element {
                     ? 'bg-foreground/10 text-foreground font-semibold'
                     : isComingSoon
                       ? 'text-muted-foreground/40 cursor-not-allowed'
-                      : 'text-foreground/70 hover:bg-warm-sand hover:text-foreground'
+                      : 'text-foreground/70 hover:bg-secondary hover:text-foreground'
                 )}
                 aria-disabled={isComingSoon}
               >
@@ -105,8 +105,8 @@ export function Header(): React.JSX.Element {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-2 h-8 px-2">
                 {/* Warm Sand Avatar – kein kühles Grau */}
-                <div className="h-6 w-6 bg-warm-sand rounded-full flex items-center justify-center">
-                  <User className="h-3.5 w-3.5 text-charcoal-warm" />
+                <div className="h-6 w-6 bg-secondary rounded-full flex items-center justify-center">
+                  <User className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>
                 <span className="hidden sm:block text-sm font-medium text-foreground">
                   {company?.companyName ?? 'Werkbank'}

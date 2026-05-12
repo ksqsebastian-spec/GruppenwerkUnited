@@ -37,20 +37,20 @@
   }
 
   .dark {
-    --background:   50  5%  8%;    /* #141413 Near Black    */
-    --foreground:   50 30% 97%;    /* #faf9f5 Ivory         */
+    --background:   50  5%  8%;
+    --foreground:   50 30% 97%;
 
-    --card:         45  3% 18%;    /* #30302e Dark Surface  */
+    --card:         45  3% 18%;
     --card-foreground: 50 30% 97%;
 
     --popover:      45  3% 18%;
     --popover-foreground: 50 30% 97%;
 
-    --primary:      18 52% 52%;    /* Terracotta bleibt konstant */
-    --primary-foreground: 50 30% 97%;
+    --primary:      0 0% 0%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary:    45  3% 18%;    /* Dark Surface          */
-    --secondary-foreground: 43  6% 67%; /* #b0aea5 Warm Silver */
+    --secondary:    45  3% 18%;
+    --secondary-foreground: 43  6% 67%;
 
     --muted:        45  3% 18%;
     --muted-foreground: 43  6% 67%;
@@ -61,7 +61,7 @@
     --destructive:   0 55% 45%;
     --destructive-foreground: 50 30% 97%;
 
-    --border:       45  3% 18%;    /* #30302e Border Dark   */
+    --border:       45  3% 18%;
     --input:        45  3% 18%;
 
     --ring:         211 80% 57%;
@@ -76,7 +76,6 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-  /* Serif-Überschriften erben die Georgia-Fallback-Schrift */
   h1, h2, h3, h4 {
     font-feature-settings: "kern" 1, "liga" 1;
   }

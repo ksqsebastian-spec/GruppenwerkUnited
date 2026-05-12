@@ -74,7 +74,7 @@ function SidebarNavItem({
             ? 'bg-primary/10 text-primary'
             : comingSoon
               ? 'cursor-not-allowed text-muted-foreground/50'
-              : 'text-olive-gray hover:bg-warm-sand hover:text-foreground'
+              : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
         )}
         aria-disabled={comingSoon}
       >
@@ -93,7 +93,7 @@ function SidebarNavItem({
           </span>
         )}
         {comingSoon && (
-          <span className="rounded-full bg-warm-sand px-2 py-0.5 text-xs text-stone-gray">
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">
             Bald
           </span>
         )}
@@ -207,7 +207,7 @@ export function Sidebar(): React.JSX.Element {
         {/* Logo / Werkbank-Wordmark */}
         <div className="flex h-16 shrink-0 items-center">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center shadow-[#c96442_0px_0px_0px_0px,#c96442_0px_0px_0px_1px]">
+            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center shadow-ring-dark">
               <span className="text-xs font-bold text-primary-foreground leading-none tracking-tight">GW</span>
             </div>
             <span className="font-semibold text-base text-foreground tracking-tight">

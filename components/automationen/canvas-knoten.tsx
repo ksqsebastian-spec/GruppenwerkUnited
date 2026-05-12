@@ -58,7 +58,7 @@ function KopierenPille({
         kopiert
           ? 'border-green-300 bg-green-50 text-green-700'
           : 'border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted/60',
-        usesDatenkodierung && !kopiert && 'border-[#c96442]/30 text-[#c96442]'
+        usesDatenkodierung && !kopiert && 'border-primary/30 text-primary'
       )}
       title={usesDatenkodierung ? 'Prompt mit Datenkodierung kopieren' : 'Prompt kopieren'}
     >

@@ -619,6 +619,45 @@ export async function POST(): Promise<NextResponse> {
     await sql`INSERT INTO uvv_settings (id,check_interval_months,warning_days_before) VALUES ('00000000-0000-0000-0000-000000000002',12,30) ON CONFLICT (id) DO NOTHING`;
     await sql`INSERT INTO app_settings (key,value) VALUES ('praemie_betrag_default','1000'::jsonb) ON CONFLICT (key) DO NOTHING`;
 
+    // ── Fuhrpark Demo-Firmen ──────────────────────────────────────────────────
+    await sql`INSERT INTO companies (id,name) VALUES
+      ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','Seehafer Elemente'),
+      ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','Tischlerei Brink'),
+      ('cccccccc-cccc-cccc-cccc-cccccccccccc','Malerei Hantke'),
+      ('dddddddd-dddd-dddd-dddd-dddddddddddd','Gruppenwerk'),
+      ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee','Tischlerei Mehlig')
+      ON CONFLICT (name) DO NOTHING`;
+
+    // ── Fuhrpark Demo-Fahrzeuge ───────────────────────────────────────────────
+    await sql`INSERT INTO vehicles (id,license_plate,brand,model,year,fuel_type,mileage,status,company_id,tuv_due_date,notes) VALUES
+      ('v1000000-0000-0000-0000-000000000001','HH-SE 1001','Mercedes-Benz','Sprinter 316 CDI',2021,'diesel',87450,'active','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','2025-11-15','Hauptfahrzeug Montagekolonne'),
+      ('v1000000-0000-0000-0000-000000000002','HH-SE 1002','Volkswagen','Crafter 35 2.0 TDI',2022,'diesel',54200,'active','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','2026-03-20','Materialfahrzeug'),
+      ('v1000000-0000-0000-0000-000000000003','HH-SE 1003','Ford','Transit Custom',2023,'diesel',28100,'active','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','2026-08-10','Kleinteile und Werkzeug'),
+      ('v2000000-0000-0000-0000-000000000001','BI-TB 2001','Mercedes-Benz','Vito 116 CDI',2020,'diesel',112300,'active','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','2025-09-05','Montagewagen Tischler'),
+      ('v2000000-0000-0000-0000-000000000002','BI-TB 2002','Volkswagen','Transporter T6',2021,'diesel',78600,'active','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','2026-01-22','Holztransport'),
+      ('v3000000-0000-0000-0000-000000000001','OB-MH 3001','Opel','Movano B',2022,'diesel',43800,'active','cccccccc-cccc-cccc-cccc-cccccccccccc','2026-05-30','Farbmaterialen'),
+      ('v3000000-0000-0000-0000-000000000002','OB-MH 3002','Renault','Trafic L2H1',2023,'diesel',19200,'active','cccccccc-cccc-cccc-cccc-cccccccccccc','2026-09-15','Gerüste und Leitern'),
+      ('v4000000-0000-0000-0000-000000000001','HH-GW 4001','Volkswagen','Caddy 2.0 TDI',2022,'diesel',61500,'active','dddddddd-dddd-dddd-dddd-dddddddddddd','2026-02-28','Bürofahrzeug GF'),
+      ('v5000000-0000-0000-0000-000000000001','HH-ME 5001','Mercedes-Benz','Sprinter 314 CDI',2021,'diesel',94100,'active','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee','2025-12-08','Montagekolonne 1'),
+      ('v5000000-0000-0000-0000-000000000002','HH-ME 5002','Ford','Transit 350 L3',2022,'diesel',67300,'active','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee','2026-04-12','Materialfahrzeug 2')
+      ON CONFLICT (license_plate) DO NOTHING`;
+
+    // ── Fuhrpark Demo-Fahrer ──────────────────────────────────────────────────
+    await sql`INSERT INTO drivers (id,first_name,last_name,email,phone,company_id,status) VALUES
+      ('d1000000-0000-0000-0000-000000000001','Klaus','Müller','k.mueller@seehafer.de','+49 40 123456','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','active'),
+      ('d1000000-0000-0000-0000-000000000002','Anna','Schmidt','a.schmidt@seehafer.de','+49 40 123457','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','active'),
+      ('d2000000-0000-0000-0000-000000000001','Thomas','Brinkmann','t.brinkmann@tischlerei-brink.de','+49 521 98765','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','active'),
+      ('d3000000-0000-0000-0000-000000000001','Maria','Hantke','m.hantke@malerei-hantke.de','+49 234 55443','cccccccc-cccc-cccc-cccc-cccccccccccc','active'),
+      ('d5000000-0000-0000-0000-000000000001','Peter','Mehlig','p.mehlig@tischlerei-mehlig.de','+49 40 887766','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee','active')
+      ON CONFLICT DO NOTHING`;
+
+    // ── Fuhrpark Demo-Termine (TÜV/Service fällig) ───────────────────────────
+    await sql`INSERT INTO appointments (id,vehicle_id,appointment_type_id,due_date,status,notes) VALUES
+      ('a1000000-0000-0000-0000-000000000001','v1000000-0000-0000-0000-000000000001','11111111-1111-1111-1111-111111111001','2025-11-15','pending','TÜV Hauptuntersuchung'),
+      ('a1000000-0000-0000-0000-000000000002','v2000000-0000-0000-0000-000000000001','11111111-1111-1111-1111-111111111002','2025-10-01','pending','Jahresservice'),
+      ('a1000000-0000-0000-0000-000000000003','v1000000-0000-0000-0000-000000000002','11111111-1111-1111-1111-111111111003','2025-09-20','pending','Ölwechsel überfällig')
+      ON CONFLICT DO NOTHING`;
+
     return NextResponse.json({ ok: true, message: 'Schema applied successfully' });
   } catch (error) {
     console.error('Migration error:', error);
