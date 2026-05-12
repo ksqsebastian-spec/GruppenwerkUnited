@@ -13,13 +13,13 @@ export async function fetchLeads(companyId: string, filter: LeadFilter = {}): Pr
   const rows = await sql`
     SELECT * FROM leads
     WHERE company = ${companyId}
-      AND (${filter.status ?? null} IS NULL OR status = ${filter.status ?? null})
-      AND (${filter.prioritaet ?? null} IS NULL OR prioritaet = ${filter.prioritaet ?? null})
-      AND (${filter.branche ?? null} IS NULL OR branche = ${filter.branche ?? null})
-      AND (${search} IS NULL OR (
-        vorname ILIKE ${search} OR nachname ILIKE ${search} OR
-        email ILIKE ${search} OR firma ILIKE ${search} OR position ILIKE ${search}
-      ))
+    ${filter.status ? sql`AND status = ${filter.status}` : sql``}
+    ${filter.prioritaet ? sql`AND prioritaet = ${filter.prioritaet}` : sql``}
+    ${filter.branche ? sql`AND branche = ${filter.branche}` : sql``}
+    ${search ? sql`AND (
+      vorname ILIKE ${search} OR nachname ILIKE ${search} OR
+      email ILIKE ${search} OR firma ILIKE ${search} OR position ILIKE ${search}
+    )` : sql``}
     ORDER BY created_at DESC
   `;
   return rows as unknown as Lead[];
