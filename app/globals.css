@@ -4,47 +4,36 @@
 
 @layer base {
   :root {
-    /* ─── Anthropic / Claude Design System ─────────────────────────────────── */
-    /* Parchment canvas – warmes Cremepapier, die emotionale Basis des Designs */
-    --background:   54 30% 91%;    /* #eeeade Parchment warm  */
-    --foreground:   50  5%  8%;    /* #141413 Near Black  */
+    --background:   0 0% 100%;     /* #ffffff Weiß            */
+    --foreground:   0 0% 4%;       /* #0a0a0a Fast-Schwarz    */
 
-    /* Ivory – Card-Oberflächen, leicht heller als Parchment */
-    --card:         50 30% 97%;    /* #faf9f5 Ivory        */
-    --card-foreground: 50 5% 8%;
+    --card:         0 0% 100%;
+    --card-foreground: 0 0% 4%;
 
-    --popover:         50 30% 97%;
-    --popover-foreground: 50 5% 8%;
+    --popover:      0 0% 100%;
+    --popover-foreground: 0 0% 4%;
 
-    /* Terracotta – primäre Markenfarbe, einzige Chromfarbe im System */
-    --primary:      18 52% 52%;    /* #c96442 Terracotta Brand  */
-    --primary-foreground: 50 30% 97%; /* Ivory text on terracotta */
+    --primary:      0 0% 0%;       /* #000000 Schwarz         */
+    --primary-foreground: 0 0% 100%; /* Weißer Text auf schwarz */
 
-    /* Warm Sand – sekundäre Flächen und Buttons */
-    --secondary:    48 18% 88%;    /* #e8e6dc Warm Sand    */
-    --secondary-foreground: 44 4% 29%; /* #4d4c48 Charcoal Warm */
+    --secondary:    0 0% 96%;      /* #f5f5f5 Hellgrau        */
+    --secondary-foreground: 0 0% 9%;
 
-    /* Muted – gedämpfte Hintergründe */
-    --muted:        48 18% 88%;    /* #e8e6dc Warm Sand    */
-    --muted-foreground: 44 3% 51%; /* #87867f Stone Gray   */
+    --muted:        0 0% 96%;
+    --muted-foreground: 0 0% 45%;  /* #737373 Mittelgrau      */
 
-    /* Accent – identisch mit secondary für konsistentes Hover-Verhalten */
-    --accent:       48 18% 88%;
-    --accent-foreground: 44 4% 29%;
+    --accent:       0 0% 96%;
+    --accent-foreground: 0 0% 9%;
 
-    /* Destructive – warmes Rot, kein kühles Signal-Rot */
-    --destructive:   0 55% 45%;    /* #b53333 Error Crimson */
-    --destructive-foreground: 50 30% 97%;
+    --destructive:   0 84% 60%;    /* #f87171 Rot             */
+    --destructive-foreground: 0 0% 98%;
 
-    /* Borders – warme Creme-Töne, kein kühles Grau */
-    --border:       45 21% 92%;    /* #f0eee6 Border Cream  */
-    --input:        45 21% 92%;
+    --border:       0 0% 90%;      /* #e5e5e5 Grau            */
+    --input:        0 0% 90%;
 
-    /* Ring – Focus Blue ist die EINZIGE kühle Farbe, nur für Accessibility */
-    --ring:         211 80% 57%;   /* #3898ec Focus Blue    */
+    --ring:         0 0% 0%;       /* Schwarz für Focus       */
 
-    /* Radius – weich aber nicht übertrieben */
-    --radius: 0.5rem;              /* 8px – comfortably rounded */
+    --radius: 0.5rem;
   }
 
   .dark {
@@ -95,12 +84,12 @@
 
 /* ─── ROI-Modul Designtokens ─────────────────────────────────────────────── */
 :root {
-  --roi-bg: #f5f4ed;
-  --roi-surface: #faf9f5;
-  --roi-surface-2: #f0eee6;
-  --roi-surface-3: #e8e6dc;
-  --roi-border: #f0eee6;
-  --roi-border-hover: #e8e6dc;
+  --roi-bg: #ffffff;
+  --roi-surface: #ffffff;
+  --roi-surface-2: #f5f5f5;
+  --roi-surface-3: #ebebeb;
+  --roi-border: #e5e5e5;
+  --roi-border-hover: #d4d4d4;
   --roi-text: #141413;
   --roi-text-muted: #5e5d59;
   --roi-text-dim: #87867f;
@@ -120,7 +109,7 @@
   --navy-light: #0a0654;
   --orange: #f28900;
   --orange-dark: #ff6b00;
-  --bg-card: #faf9f5;
+  --bg-card: #ffffff;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
