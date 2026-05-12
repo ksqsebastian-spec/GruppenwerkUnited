@@ -114,6 +114,7 @@ export async function deleteDateiEintrag(id: string): Promise<void> {
   await sql`DELETE FROM lead_dateien WHERE id = ${id}`;
 }
 
-export async function getDateiDownloadUrl(_dateipfad: string): Promise<string> {
-  throw new Error('Datei-Downloads sind auf Sevalla noch nicht verfügbar');
+export async function getDateiDownloadUrl(dateipfad: string): Promise<string> {
+  const { getDownloadUrl } = await import('@/lib/storage');
+  return getDownloadUrl(dateipfad);
 }
