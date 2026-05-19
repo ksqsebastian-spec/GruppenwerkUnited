@@ -2,13 +2,12 @@ import { supabase } from '@/lib/supabase/client';
 import type { Company, CompanyInsert, CompanyUpdate } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
-/**
- * Lädt alle Firmen
- */
+const COMPANY_COLUMNS = 'id, name, created_at';
+
 export async function fetchCompanies(): Promise<Company[]> {
   const { data, error } = await supabase
     .from('companies')
-    .select('*')
+    .select(COMPANY_COLUMNS)
     .order('name');
 
   if (error) {
@@ -19,14 +18,11 @@ export async function fetchCompanies(): Promise<Company[]> {
   return data ?? [];
 }
 
-/**
- * Erstellt eine neue Firma
- */
 export async function createCompany(company: CompanyInsert): Promise<Company> {
   const { data, error } = await supabase
     .from('companies')
     .insert(company)
-    .select()
+    .select(COMPANY_COLUMNS)
     .single();
 
   if (error) {
@@ -37,15 +33,12 @@ export async function createCompany(company: CompanyInsert): Promise<Company> {
   return data;
 }
 
-/**
- * Aktualisiert eine Firma
- */
 export async function updateCompany(id: string, updates: CompanyUpdate): Promise<Company> {
   const { data, error } = await supabase
     .from('companies')
     .update(updates)
     .eq('id', id)
-    .select()
+    .select(COMPANY_COLUMNS)
     .single();
 
   if (error) {
@@ -76,7 +69,7 @@ export async function getOrCreateFuhrparkCompany(name: string): Promise<string> 
     .single();
 
   if (error) {
-    // Race condition: andere Anfrage hat die Firma gerade angelegt
+    // Race condition: andere Anfrage hat die Firma gerade angelegt — erneut lesen
     if (error.code === '23505') {
       const { data: retry } = await supabase
         .from('companies')
@@ -92,9 +85,6 @@ export async function getOrCreateFuhrparkCompany(name: string): Promise<string> 
   return data.id;
 }
 
-/**
- * Löscht eine Firma
- */
 export async function deleteCompany(id: string): Promise<void> {
   const { error } = await supabase
     .from('companies')

@@ -2,7 +2,7 @@ import { requireAuth } from '@/lib/modules/recruiting/auth';
 import { validateOrigin } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCreateSchema } from "@/lib/modules/recruiting/validators";
-import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { logAudit } from "@/lib/modules/recruiting/audit";
 
 const VALID_STATUSES = ["offen", "eingestellt", "probezeit_bestanden", "ausgezahlt"] as const;

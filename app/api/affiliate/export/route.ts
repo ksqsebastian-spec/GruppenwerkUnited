@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // GET /api/affiliate/export — CSV export of all empfehlungen
 export async function GET(request: NextRequest) {

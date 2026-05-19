@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const VALID_STATUSES = ["offen", "eingestellt", "probezeit_bestanden", "ausgezahlt"] as const;
 

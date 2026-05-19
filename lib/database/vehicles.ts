@@ -2,22 +2,39 @@ import { supabase } from '@/lib/supabase/client';
 import type { Vehicle, VehicleInsert, VehicleUpdate, VehicleFilters } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
+/** Spalten der `vehicles`-Tabelle, die in Listen/Detail benötigt werden. */
+const VEHICLE_LIST_COLUMNS = `
+  id, license_plate, brand, model, year, vin, fuel_type, purchase_date, purchase_price,
+  mileage, is_leased, leasing_company, leasing_end_date, leasing_rate, leasing_contract_number,
+  holder, user_name, insurance_number, insurance_company, tuv_due_date, status, company_id,
+  notes, created_at, updated_at,
+  company:companies(id, name),
+  appointments(id, due_date, status, appointment_type:appointment_types(name, color))
+`;
+
+const VEHICLE_DETAIL_COLUMNS = `
+  id, license_plate, brand, model, year, vin, fuel_type, purchase_date, purchase_price,
+  mileage, is_leased, leasing_company, leasing_end_date, leasing_rate, leasing_contract_number,
+  holder, user_name, insurance_number, insurance_company, tuv_due_date, status, company_id,
+  notes, created_at, updated_at,
+  company:companies(id, name),
+  appointments(*, appointment_type:appointment_types(*)),
+  damages(*, damage_type:damage_types(*)),
+  documents(*, document_type:document_types(*)),
+  costs(*, cost_type:cost_types(*)),
+  vehicle_drivers(id, is_primary, driver:drivers(*))
+`;
+
 /**
- * Lädt alle Fahrzeuge mit optionalen Filtern
+ * Lädt alle Fahrzeuge mit optionalen Filtern.
+ *
+ * Multi-Tenant-Hinweis: filters.companyId MUSS von server-seitiger Session kommen,
+ * nicht von Client-Parametern. Siehe lib/auth/fuhrpark-scope.ts.
  */
 export async function fetchVehicles(filters?: VehicleFilters): Promise<Vehicle[]> {
   let query = supabase
     .from('vehicles')
-    .select(`
-      *,
-      company:companies(id, name),
-      appointments(
-        id,
-        due_date,
-        status,
-        appointment_type:appointment_types(name, color)
-      )
-    `)
+    .select(VEHICLE_LIST_COLUMNS)
     .order('license_plate');
 
   if (filters?.companyId) {
@@ -45,38 +62,24 @@ export async function fetchVehicles(filters?: VehicleFilters): Promise<Vehicle[]
     throw new Error(ERROR_MESSAGES.VEHICLE_LOAD_FAILED);
   }
 
-  return data ?? [];
+  return (data ?? []) as unknown as Vehicle[];
 }
 
 /**
- * Lädt ein einzelnes Fahrzeug mit allen Relationen
+ * Lädt ein einzelnes Fahrzeug mit allen Relationen.
+ * Bei gesetztem `tenantCompanyId` wird zusätzlich auf Eigentümerschaft geprüft.
  */
-export async function fetchVehicle(id: string): Promise<Vehicle | null> {
-  const { data, error } = await supabase
+export async function fetchVehicle(id: string, tenantCompanyId?: string | null): Promise<Vehicle | null> {
+  let query = supabase
     .from('vehicles')
-    .select(`
-      *,
-      company:companies(id, name),
-      appointments(*,
-        appointment_type:appointment_types(*)
-      ),
-      damages(*,
-        damage_type:damage_types(*)
-      ),
-      documents(*,
-        document_type:document_types(*)
-      ),
-      costs(*,
-        cost_type:cost_types(*)
-      ),
-      vehicle_drivers(
-        id,
-        is_primary,
-        driver:drivers(*)
-      )
-    `)
-    .eq('id', id)
-    .single();
+    .select(VEHICLE_DETAIL_COLUMNS)
+    .eq('id', id);
+
+  if (tenantCompanyId) {
+    query = query.eq('company_id', tenantCompanyId);
+  }
+
+  const { data, error } = await query.single();
 
   if (error) {
     if (error.code === 'PGRST116') {
@@ -86,11 +89,11 @@ export async function fetchVehicle(id: string): Promise<Vehicle | null> {
     throw new Error(ERROR_MESSAGES.VEHICLE_NOT_FOUND);
   }
 
-  return data;
+  return data as unknown as Vehicle;
 }
 
 /**
- * Erstellt ein neues Fahrzeug
+ * Erstellt ein neues Fahrzeug.
  */
 export async function createVehicle(vehicle: VehicleInsert): Promise<Vehicle> {
   const { data, error } = await supabase
@@ -111,15 +114,19 @@ export async function createVehicle(vehicle: VehicleInsert): Promise<Vehicle> {
 }
 
 /**
- * Aktualisiert ein Fahrzeug
+ * Aktualisiert ein Fahrzeug. Bei gesetztem tenantCompanyId wird auf Eigentümerschaft geprüft.
  */
-export async function updateVehicle(id: string, updates: VehicleUpdate): Promise<Vehicle> {
-  const { data, error } = await supabase
+export async function updateVehicle(id: string, updates: VehicleUpdate, tenantCompanyId?: string | null): Promise<Vehicle> {
+  let query = supabase
     .from('vehicles')
     .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
+    .eq('id', id);
+
+  if (tenantCompanyId) {
+    query = query.eq('company_id', tenantCompanyId);
+  }
+
+  const { data, error } = await query.select().single();
 
   if (error) {
     console.error('Fehler beim Aktualisieren des Fahrzeugs:', error);
@@ -130,13 +137,17 @@ export async function updateVehicle(id: string, updates: VehicleUpdate): Promise
 }
 
 /**
- * Archiviert ein Fahrzeug (nicht löschen!)
+ * Archiviert ein Fahrzeug (nicht löschen!).
  */
-export async function archiveVehicle(id: string): Promise<void> {
-  const { error } = await supabase
+export async function archiveVehicle(id: string, tenantCompanyId?: string | null): Promise<void> {
+  let query = supabase
     .from('vehicles')
     .update({ status: 'archived', updated_at: new Date().toISOString() })
     .eq('id', id);
+
+  if (tenantCompanyId) query = query.eq('company_id', tenantCompanyId);
+
+  const { error } = await query;
 
   if (error) {
     console.error('Fehler beim Archivieren des Fahrzeugs:', error);
@@ -145,13 +156,13 @@ export async function archiveVehicle(id: string): Promise<void> {
 }
 
 /**
- * Löscht ein Fahrzeug dauerhaft
+ * Löscht ein Fahrzeug dauerhaft.
  */
-export async function deleteVehicle(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('vehicles')
-    .delete()
-    .eq('id', id);
+export async function deleteVehicle(id: string, tenantCompanyId?: string | null): Promise<void> {
+  let query = supabase.from('vehicles').delete().eq('id', id);
+  if (tenantCompanyId) query = query.eq('company_id', tenantCompanyId);
+
+  const { error } = await query;
 
   if (error) {
     console.error('Fehler beim Löschen des Fahrzeugs:', error);
@@ -159,10 +170,8 @@ export async function deleteVehicle(id: string): Promise<void> {
   }
 }
 
-// ID des Termin-Typs "Leasing-Rückgabe" aus den Seed-Daten
+// Seed-UUIDs aus supabase/schema/05_rls_grants_seed.sql — siehe DEFAULT_APPOINTMENT_TYPES.
 const LEASING_RETURN_APPOINTMENT_TYPE_ID = '11111111-1111-1111-1111-111111111008';
-
-// ID des Kostentyps "Leasing" aus den Seed-Daten
 const LEASING_COST_TYPE_ID = '33333333-3333-3333-3333-333333333006';
 
 /**
@@ -195,7 +204,6 @@ export async function syncLeasingAppointment(
 
   // Fall 2: Leasing mit Enddatum -> Termin erstellen oder aktualisieren
   if (existingAppointment) {
-    // Termin aktualisieren
     await supabase
       .from('appointments')
       .update({
@@ -205,7 +213,6 @@ export async function syncLeasingAppointment(
       })
       .eq('id', existingAppointment.id);
   } else {
-    // Neuen Termin erstellen
     await supabase
       .from('appointments')
       .insert({
@@ -227,12 +234,10 @@ export async function syncLeasingCost(
   leasingRate: number | null | undefined,
   isLeased: boolean
 ): Promise<void> {
-  // Kein Leasing oder keine Rate → nichts tun
   if (!isLeased || !leasingRate || leasingRate <= 0) {
     return;
   }
 
-  // Erster Tag des aktuellen Monats
   const now = new Date();
   const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     .toISOString()
@@ -241,7 +246,7 @@ export async function syncLeasingCost(
     .toISOString()
     .split('T')[0];
 
-  // Prüfen ob bereits ein Leasing-Kosteneintrag für diesen Monat existiert
+  // Existenz-Check: nur id selektieren, kein vollständiger Row-Fetch
   const { data: existingCost } = await supabase
     .from('costs')
     .select('id')
@@ -251,12 +256,8 @@ export async function syncLeasingCost(
     .lt('date', firstOfNextMonth)
     .maybeSingle();
 
-  // Bereits vorhanden → nichts tun
-  if (existingCost) {
-    return;
-  }
+  if (existingCost) return;
 
-  // Neuen Kosteneintrag erstellen
   await supabase.from('costs').insert({
     vehicle_id: vehicleId,
     cost_type_id: LEASING_COST_TYPE_ID,

@@ -1,7 +1,7 @@
 import { requireAuth } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCompleteSchema } from "@/lib/modules/affiliate/validators";
-import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { berechneProvision } from "@/lib/modules/affiliate/utils";
 import { logAudit } from "@/lib/modules/affiliate/audit";
 

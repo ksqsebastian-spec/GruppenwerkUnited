@@ -1,15 +1,25 @@
 /**
  * Session-Kodierung via HMAC-SHA256 (Web Crypto API).
  * Funktioniert in Edge Runtime (proxy.ts) und Node.js (API-Routes).
+ *
+ * Format: `<base64url(payload-json)>.<base64url(hmac-sig)>`
+ *
+ * Die Signatur wird zeit-konstant verifiziert (crypto.subtle.verify).
+ * Eine Manipulation des companyId/isAdmin-Felds im Payload invalidiert die Signatur.
  */
 
 export interface SessionData {
   companyId: string;
   companyName: string;
   isAdmin: boolean;
+  /** Issued-at (unix ms) — gesetzt vom Server, optional für Abwärtskompatibilität */
+  iat?: number;
 }
 
 export const SESSION_COOKIE = 'werkbank-session';
+
+// Sessions älter als 30 Tage werden abgelehnt, selbst wenn die Signatur valide ist.
+const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -45,7 +55,8 @@ async function importKey(): Promise<CryptoKey> {
 }
 
 export async function encodeSession(data: SessionData): Promise<string> {
-  const payloadBuf = enc.encode(JSON.stringify(data));
+  const withIat: SessionData = { ...data, iat: data.iat ?? Date.now() };
+  const payloadBuf = enc.encode(JSON.stringify(withIat));
   const payload = b64urlEncode(payloadBuf);
   const key = await importKey();
   const sigBuf = await crypto.subtle.sign('HMAC', key, enc.encode(payload));
@@ -60,6 +71,7 @@ export async function decodeSession(token: string): Promise<SessionData | null> 
     const payload = token.slice(0, lastDot);
     const sig = token.slice(lastDot + 1);
     const key = await importKey();
+    // crypto.subtle.verify ist zeit-konstant — keine Timing-Leaks bei falscher Signatur.
     const valid = await crypto.subtle.verify(
       'HMAC',
       key,
@@ -67,7 +79,12 @@ export async function decodeSession(token: string): Promise<SessionData | null> 
       enc.encode(payload)
     );
     if (!valid) return null;
-    return JSON.parse(dec.decode(b64urlDecode(payload))) as SessionData;
+    const parsed = JSON.parse(dec.decode(b64urlDecode(payload))) as SessionData;
+    // Server-seitiger Ablauf: auch valide signierte Tokens nach Max-Age ungültig machen.
+    if (typeof parsed.iat === 'number' && Date.now() - parsed.iat > SESSION_MAX_AGE_MS) {
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }

@@ -2,7 +2,7 @@ import { requireAuth } from '@/lib/modules/affiliate/auth';
 import { validateOrigin } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { handwerkerCreateSchema, handwerkerUpdateSchema, paginationSchema } from "@/lib/modules/affiliate/validators";
-import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { logAudit } from "@/lib/modules/affiliate/audit";
 
 // GET /api/affiliate/handwerker — list handwerker or empfehlungen (admin)

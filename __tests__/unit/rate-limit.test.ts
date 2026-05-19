@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { checkRateLimit, RATE_LIMITS } from '@/lib/modules/recruiting/rate-limit';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 describe('Rate Limiter', () => {
   beforeEach(() => {

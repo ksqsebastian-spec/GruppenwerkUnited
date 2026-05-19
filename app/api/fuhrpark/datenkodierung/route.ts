@@ -5,74 +5,91 @@ import {
   updateDatenkodierungTags,
   deleteDatenkodierung,
 } from '@/lib/database/datenkodierung';
+import { requireSession } from '@/lib/auth/api';
+
+/**
+ * Datenkodierungen verwenden die session.companyId direkt (kein UUID-Lookup nötig,
+ * da `company` als string-ID gespeichert wird, nicht als UUID-FK).
+ */
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const session = await requireSession();
+  if (session instanceof NextResponse) return session;
+
   const { searchParams } = new URL(request.url);
-  const companyId = searchParams.get('companyId');
   const search = searchParams.get('search') ?? undefined;
   const tag = searchParams.get('tag') ?? undefined;
 
-  if (!companyId) {
-    return NextResponse.json({ error: 'companyId erforderlich' }, { status: 400 });
-  }
-
   try {
-    const rows = await fetchDatenkodierungen(companyId, search, tag);
+    const rows = await fetchDatenkodierungen(session.companyId, search, tag);
     return NextResponse.json(rows);
-  } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Kodierungen konnten nicht geladen werden' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  let body: { companyId?: unknown; [key: string]: unknown };
+  const session = await requireSession();
+  if (session instanceof NextResponse) return session;
+
+  let body: Record<string, unknown>;
   try {
-    body = await request.json() as { companyId?: unknown; [key: string]: unknown };
+    body = await request.json() as Record<string, unknown>;
   } catch {
     return NextResponse.json({ error: 'Ungültiges JSON' }, { status: 400 });
   }
-  if (typeof body.companyId !== 'string') {
-    return NextResponse.json({ error: 'companyId erforderlich' }, { status: 400 });
-  }
-  const { companyId, ...input } = body;
+  // companyId NUR aus Session — Client-Wert wird ignoriert
+  delete body.companyId;
   try {
-    const row = await createDatenkodierung(companyId as string, input as Parameters<typeof createDatenkodierung>[1]);
+    const row = await createDatenkodierung(session.companyId, body as Parameters<typeof createDatenkodierung>[1]);
     return NextResponse.json(row, { status: 201 });
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Kodierung konnte nicht erstellt werden' }, { status: 500 });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Kodierung konnte nicht erstellt werden' },
+      { status: 500 }
+    );
   }
 }
 
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
-  let body: { companyId?: unknown; id?: unknown; tags?: unknown };
+  const session = await requireSession();
+  if (session instanceof NextResponse) return session;
+
+  let body: { id?: unknown; tags?: unknown };
   try {
-    body = await request.json() as { companyId?: unknown; id?: unknown; tags?: unknown };
+    body = await request.json() as { id?: unknown; tags?: unknown };
   } catch {
     return NextResponse.json({ error: 'Ungültiges JSON' }, { status: 400 });
   }
-  if (typeof body.companyId !== 'string' || typeof body.id !== 'string' || !Array.isArray(body.tags)) {
-    return NextResponse.json({ error: 'companyId, id und tags erforderlich' }, { status: 400 });
+  if (typeof body.id !== 'string' || !Array.isArray(body.tags)) {
+    return NextResponse.json({ error: 'id und tags erforderlich' }, { status: 400 });
   }
   try {
-    const row = await updateDatenkodierungTags(body.companyId, body.id, body.tags as string[]);
+    const row = await updateDatenkodierungTags(session.companyId, body.id, body.tags as string[]);
     return NextResponse.json(row);
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Tags konnten nicht gespeichert werden' }, { status: 500 });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Tags konnten nicht gespeichert werden' },
+      { status: 500 }
+    );
   }
 }
 
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
-  let body: { companyId?: unknown; id?: unknown };
+  const session = await requireSession();
+  if (session instanceof NextResponse) return session;
+
+  let body: { id?: unknown };
   try {
-    body = await request.json() as { companyId?: unknown; id?: unknown };
+    body = await request.json() as { id?: unknown };
   } catch {
     return NextResponse.json({ error: 'Ungültiges JSON' }, { status: 400 });
   }
-  if (typeof body.companyId !== 'string' || typeof body.id !== 'string') {
-    return NextResponse.json({ error: 'companyId und id erforderlich' }, { status: 400 });
+  if (typeof body.id !== 'string') {
+    return NextResponse.json({ error: 'id erforderlich' }, { status: 400 });
   }
   try {
-    await deleteDatenkodierung(body.companyId, body.id);
+    await deleteDatenkodierung(session.companyId, body.id);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: 'Kodierung konnte nicht gelöscht werden' }, { status: 500 });

@@ -2,40 +2,43 @@ import { supabase } from '@/lib/supabase/client';
 import type { Appointment, AppointmentInsert, AppointmentUpdate, AppointmentFilters, UpcomingAppointments } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
-/**
- * Lädt einen einzelnen Termin mit Details
- */
-export async function fetchAppointment(id: string): Promise<Appointment> {
-  const { data, error } = await supabase
-    .from('appointments')
-    .select(`
-      *,
-      vehicle:vehicles(id, license_plate, brand, model),
-      appointment_type:appointment_types(id, name, color)
-    `)
-    .eq('id', id)
-    .single();
+// appointments hat kein direktes company_id → Tenant-Scope läuft über vehicle.company_id.
+const APPOINTMENT_COLUMNS = `
+  id, vehicle_id, appointment_type_id, due_date, completed_date, status, notes, created_at, updated_at,
+  vehicle:vehicles!inner(id, license_plate, brand, model, company_id),
+  appointment_type:appointment_types(id, name, color)
+`;
+
+export interface AppointmentQueryFilters extends AppointmentFilters {
+  tenantCompanyId?: string | null;
+}
+
+export async function fetchAppointment(id: string, tenantCompanyId?: string | null): Promise<Appointment> {
+  let query = supabase.from('appointments').select(APPOINTMENT_COLUMNS).eq('id', id);
+
+  if (tenantCompanyId) {
+    query = query.eq('vehicle.company_id', tenantCompanyId);
+  }
+
+  const { data, error } = await query.single();
 
   if (error) {
     console.error('Fehler beim Laden des Termins:', error);
     throw new Error(ERROR_MESSAGES.APPOINTMENT_NOT_FOUND);
   }
 
-  return data;
+  return data as unknown as Appointment;
 }
 
-/**
- * Lädt alle Termine mit optionalen Filtern
- */
-export async function fetchAppointments(filters?: AppointmentFilters): Promise<Appointment[]> {
+export async function fetchAppointments(filters?: AppointmentQueryFilters): Promise<Appointment[]> {
   let query = supabase
     .from('appointments')
-    .select(`
-      *,
-      vehicle:vehicles(id, license_plate, brand, model),
-      appointment_type:appointment_types(id, name, color)
-    `)
+    .select(APPOINTMENT_COLUMNS)
     .order('due_date');
+
+  if (filters?.tenantCompanyId) {
+    query = query.eq('vehicle.company_id', filters.tenantCompanyId);
+  }
 
   if (filters?.vehicleId) {
     query = query.eq('vehicle_id', filters.vehicleId);
@@ -60,13 +63,18 @@ export async function fetchAppointments(filters?: AppointmentFilters): Promise<A
     throw new Error(ERROR_MESSAGES.APPOINTMENT_LOAD_FAILED);
   }
 
-  return data ?? [];
+  return (data ?? []) as unknown as Appointment[];
 }
 
 /**
- * Lädt überfällige und bald fällige Termine (für Dashboard)
+ * Lädt überfällige und bald fällige Termine (für Dashboard).
+ *
+ * Status-Buckets:
+ * - overdue: due_date < heute
+ * - urgent:  in den nächsten 14 Tagen fällig
+ * - upcoming: in 15-30 Tagen fällig
  */
-export async function fetchUpcomingAppointments(): Promise<UpcomingAppointments> {
+export async function fetchUpcomingAppointments(tenantCompanyId?: string | null): Promise<UpcomingAppointments> {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -76,23 +84,25 @@ export async function fetchUpcomingAppointments(): Promise<UpcomingAppointments>
   const in30Days = new Date(today);
   in30Days.setDate(today.getDate() + 30);
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('appointments')
-    .select(`
-      *,
-      vehicle:vehicles(id, license_plate, brand, model),
-      appointment_type:appointment_types(id, name, color)
-    `)
+    .select(APPOINTMENT_COLUMNS)
     .neq('status', 'completed')
     .lte('due_date', in30Days.toISOString())
     .order('due_date');
+
+  if (tenantCompanyId) {
+    query = query.eq('vehicle.company_id', tenantCompanyId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Fehler beim Laden der Termine:', error);
     throw new Error(ERROR_MESSAGES.APPOINTMENT_LOAD_FAILED);
   }
 
-  const appointments = data ?? [];
+  const appointments = (data ?? []) as unknown as Appointment[];
 
   return {
     overdue: appointments.filter((a) => new Date(a.due_date) < today),
@@ -107,10 +117,21 @@ export async function fetchUpcomingAppointments(): Promise<UpcomingAppointments>
   };
 }
 
-/**
- * Erstellt einen neuen Termin
- */
-export async function createAppointment(appointment: AppointmentInsert): Promise<Appointment> {
+async function assertVehicleBelongsToTenant(vehicleId: string, tenantCompanyId: string): Promise<void> {
+  const { data } = await supabase
+    .from('vehicles')
+    .select('id')
+    .eq('id', vehicleId)
+    .eq('company_id', tenantCompanyId)
+    .maybeSingle();
+  if (!data) throw new Error('Fahrzeug nicht gefunden');
+}
+
+export async function createAppointment(appointment: AppointmentInsert, tenantCompanyId?: string | null): Promise<Appointment> {
+  if (tenantCompanyId && appointment.vehicle_id) {
+    await assertVehicleBelongsToTenant(appointment.vehicle_id, tenantCompanyId);
+  }
+
   const { data, error } = await supabase
     .from('appointments')
     .insert(appointment)
@@ -125,10 +146,11 @@ export async function createAppointment(appointment: AppointmentInsert): Promise
   return data;
 }
 
-/**
- * Aktualisiert einen Termin
- */
-export async function updateAppointment(id: string, updates: AppointmentUpdate): Promise<Appointment> {
+export async function updateAppointment(id: string, updates: AppointmentUpdate, tenantCompanyId?: string | null): Promise<Appointment> {
+  if (tenantCompanyId) {
+    await fetchAppointment(id, tenantCompanyId);
+  }
+
   const { data, error } = await supabase
     .from('appointments')
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -144,10 +166,11 @@ export async function updateAppointment(id: string, updates: AppointmentUpdate):
   return data;
 }
 
-/**
- * Markiert einen Termin als erledigt
- */
-export async function completeAppointment(id: string): Promise<void> {
+export async function completeAppointment(id: string, tenantCompanyId?: string | null): Promise<void> {
+  if (tenantCompanyId) {
+    await fetchAppointment(id, tenantCompanyId);
+  }
+
   const { error } = await supabase
     .from('appointments')
     .update({
@@ -163,10 +186,11 @@ export async function completeAppointment(id: string): Promise<void> {
   }
 }
 
-/**
- * Löscht einen Termin
- */
-export async function deleteAppointment(id: string): Promise<void> {
+export async function deleteAppointment(id: string, tenantCompanyId?: string | null): Promise<void> {
+  if (tenantCompanyId) {
+    await fetchAppointment(id, tenantCompanyId);
+  }
+
   const { error } = await supabase
     .from('appointments')
     .delete()
