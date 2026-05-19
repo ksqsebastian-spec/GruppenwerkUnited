@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireSession } from '@/lib/auth/api'
 
 /**
  * POST /api/tenders/delete
  * Löscht eine oder mehrere VOB-Ausschreibungen anhand ihrer IDs.
  * Zugehörige Matches werden kaskadierend gelöscht (CASCADE).
+ * Zugriff: eingeloggte Benutzer (VOB ist modul-geschützt via proxy.ts).
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const session = await requireSession()
+  if (session instanceof NextResponse) return session
+
   let ids: string[]
 
   try {

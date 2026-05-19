@@ -117,3 +117,40 @@ export async function archiveDriver(id: string, tenantCompanyId?: string | null)
     throw new Error(ERROR_MESSAGES.DRIVER_DELETE_FAILED);
   }
 }
+
+/**
+ * Prüft ob ein Fahrer zur angegebenen Firma gehört. Wird für Tenant-Isolation
+ * bei Sub-Resource-Routen (z. B. UVV-Unterweisungen) verwendet.
+ */
+export async function assertDriverInScope(driverId: string, tenantCompanyId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('drivers')
+    .select('id')
+    .eq('id', driverId)
+    .eq('company_id', tenantCompanyId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Fehler beim Prüfen des Fahrer-Scopes:', error);
+    return false;
+  }
+  return !!data;
+}
+
+/**
+ * Prüft ob ALLE Fahrer in der Liste zur angegebenen Firma gehören.
+ */
+export async function assertDriversInScope(driverIds: string[], tenantCompanyId: string): Promise<boolean> {
+  if (driverIds.length === 0) return true;
+  const { data, error } = await supabase
+    .from('drivers')
+    .select('id')
+    .in('id', driverIds)
+    .eq('company_id', tenantCompanyId);
+
+  if (error) {
+    console.error('Fehler beim Prüfen des Fahrer-Scopes:', error);
+    return false;
+  }
+  return (data?.length ?? 0) === driverIds.length;
+}

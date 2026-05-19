@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAdminSession } from '@/lib/auth/api'
 
 /**
  * POST /api/tenders/wipe
  * Löscht ALLE VOB-Ausschreibungen, Matches und Scans.
  * Achtung: Irreversibel! Nur für administrative Bereinigungen gedacht.
+ * Zugriff: nur Admins.
  */
 export async function POST(): Promise<NextResponse> {
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
+
   const supabase = createAdminClient()
 
   // Reihenfolge: zuerst abhängige Tabellen löschen

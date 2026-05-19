@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAdminSession } from '@/lib/auth/api';
 
 export async function GET(): Promise<NextResponse> {
+  const session = await requireAdminSession();
+  if (session instanceof NextResponse) return session;
+
   try {
     const supabase = createAdminClient();
 
@@ -13,17 +17,14 @@ export async function GET(): Promise<NextResponse> {
     if (error) {
       return NextResponse.json({
         exists: false,
-        error: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
+        error: 'Datenbank-Prüfung fehlgeschlagen',
       });
     }
 
     return NextResponse.json({ exists: true, rowCount: data?.length ?? 0 });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
-      { exists: false, error: err instanceof Error ? err.message : String(err) },
+      { exists: false, error: 'Datenbank-Prüfung fehlgeschlagen' },
       { status: 500 }
     );
   }

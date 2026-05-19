@@ -398,9 +398,10 @@ export async function deleteUvvCheck(id: string): Promise<void> {
 
 /**
  * Lädt Statistiken für das UVV-Dashboard
+ * Wenn companyId gesetzt ist, werden nur Fahrer dieser Firma berücksichtigt.
  */
-export async function fetchUvvControlStats(): Promise<UvvControlStats> {
-  const drivers = await fetchDriversWithUvvStatus({ status: 'active' });
+export async function fetchUvvControlStats(companyId?: string): Promise<UvvControlStats> {
+  const drivers = await fetchDriversWithUvvStatus({ status: 'active', companyId });
 
   const stats: UvvControlStats = {
     totalDrivers: drivers.length,
@@ -414,10 +415,11 @@ export async function fetchUvvControlStats(): Promise<UvvControlStats> {
 
 /**
  * Lädt die Anzahl der Fahrer mit fälligen/überfälligen UVV-Unterweisungen
- * Wird für das Sidebar-Badge verwendet
+ * Wird für das Sidebar-Badge verwendet.
+ * Wenn companyId gesetzt ist, werden nur Fahrer dieser Firma berücksichtigt.
  */
-export async function fetchUvvWarningCount(): Promise<number> {
-  const drivers = await fetchDriversWithUvvStatus({ status: 'active' });
+export async function fetchUvvWarningCount(companyId?: string): Promise<number> {
+  const drivers = await fetchDriversWithUvvStatus({ status: 'active', companyId });
   return drivers.filter(
     (d) => d.uvv_status === 'overdue' || d.uvv_status === 'due_soon'
   ).length;
