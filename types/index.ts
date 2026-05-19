@@ -571,6 +571,8 @@ export interface LicenseDriverFilters {
   status?: VehicleStatus;
   checkStatus?: LicenseCheckStatus;
   search?: string;
+  /** Wird serverseitig aus der Session gefüllt — Tenant-Isolation. */
+  companyId?: string;
 }
 
 // ============================================================================

@@ -164,3 +164,43 @@ export async function archiveLicenseEmployee(id: string): Promise<void> {
     throw new Error(ERROR_MESSAGES.LICENSE_EMPLOYEE_ARCHIVE_FAILED);
   }
 }
+
+/**
+ * Prüft ob ein Mitarbeiter zur angegebenen Firma gehört.
+ */
+export async function assertLicenseEmployeeInScope(
+  employeeId: string,
+  tenantCompanyId: string
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('license_check_employees')
+    .select('id')
+    .eq('id', employeeId)
+    .eq('company_id', tenantCompanyId)
+    .maybeSingle();
+  if (error) {
+    console.error('Fehler beim Prüfen des Mitarbeiter-Scopes:', error);
+    return false;
+  }
+  return !!data;
+}
+
+/**
+ * Prüft ob ALLE Mitarbeiter in der Liste zur angegebenen Firma gehören.
+ */
+export async function assertLicenseEmployeesInScope(
+  employeeIds: string[],
+  tenantCompanyId: string
+): Promise<boolean> {
+  if (employeeIds.length === 0) return true;
+  const { data, error } = await supabase
+    .from('license_check_employees')
+    .select('id')
+    .in('id', employeeIds)
+    .eq('company_id', tenantCompanyId);
+  if (error) {
+    console.error('Fehler beim Prüfen des Mitarbeiter-Scopes:', error);
+    return false;
+  }
+  return (data?.length ?? 0) === employeeIds.length;
+}
