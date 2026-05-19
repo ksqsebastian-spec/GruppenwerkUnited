@@ -38,7 +38,9 @@ jobs:
     needs: quality
 
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/werkbank_test
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       SESSION_SECRET: ci-session-secret
       CRON_SECRET: ci-cron-secret
