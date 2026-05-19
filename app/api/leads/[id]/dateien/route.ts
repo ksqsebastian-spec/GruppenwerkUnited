@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireSession } from '@/lib/auth/api';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { fetchDateien, createDateiEintrag } from '@/lib/database/leads';
-import { uploadFile } from '@/lib/storage';
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_TYPES = [
@@ -38,42 +38,35 @@ export async function POST(
 
   const { id } = await params;
 
-  let formData: FormData;
   try {
-    formData = await req.formData();
-  } catch {
-    return NextResponse.json({ error: 'Ungültige Formulardaten' }, { status: 400 });
-  }
+    const formData = await req.formData();
+    const file = formData.get('file') as File | null;
+    if (!file) return NextResponse.json({ error: 'Keine Datei' }, { status: 400 });
+    if (file.size > MAX_SIZE) return NextResponse.json({ error: 'Datei zu groß (max 10 MB)' }, { status: 400 });
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json({ error: 'Ungültiges Dateiformat' }, { status: 400 });
+    }
 
-  const file = formData.get('file');
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: 'Keine Datei übermittelt' }, { status: 400 });
-  }
-
-  if (file.size > MAX_SIZE) {
-    return NextResponse.json({ error: 'Datei zu groß (max. 10 MB)' }, { status: 400 });
-  }
-
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    return NextResponse.json({ error: 'Dateityp nicht erlaubt (PDF, JPG, PNG, WEBP, DOCX, XLSX)' }, { status: 400 });
-  }
-
-  const ext = file.name.split('.').pop() ?? '';
-  const key = `leads/${session.companyId}/${id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-
-  try {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const pfad = `${session.companyId}/${id}/${Date.now()}_${safeName}`;
     const buffer = Buffer.from(await file.arrayBuffer());
-    await uploadFile(key, buffer, file.type);
+
+    const supabase = createAdminClient();
+    const { error: uploadError } = await supabase.storage
+      .from('lead-dateien')
+      .upload(pfad, buffer, { contentType: file.type, upsert: false });
+
+    if (uploadError) throw new Error('Upload fehlgeschlagen: ' + uploadError.message);
 
     const eintrag = await createDateiEintrag(id, session.companyId, {
       dateiname: file.name,
-      dateipfad: key,
+      dateipfad: pfad,
       dateityp: file.type,
       dateigroesse: file.size,
     });
 
     return NextResponse.json(eintrag, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

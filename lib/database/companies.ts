@@ -1,42 +1,111 @@
-import sql from '@/lib/db';
+import { supabase } from '@/lib/supabase/client';
 import type { Company, CompanyInsert, CompanyUpdate } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
+/**
+ * Lädt alle Firmen
+ */
 export async function fetchCompanies(): Promise<Company[]> {
-  return sql`SELECT * FROM companies ORDER BY name` as Promise<Company[]>;
+  const { data, error } = await supabase
+    .from('companies')
+    .select('*')
+    .order('name');
+
+  if (error) {
+    console.error('Fehler beim Laden der Firmen:', error);
+    throw new Error(ERROR_MESSAGES.COMPANY_LOAD_FAILED);
+  }
+
+  return data ?? [];
 }
 
+/**
+ * Erstellt eine neue Firma
+ */
 export async function createCompany(company: CompanyInsert): Promise<Company> {
-  const rows = await sql`
-    INSERT INTO companies ${sql(company as Record<string, unknown>)}
-    RETURNING *
-  `;
-  if (!rows[0]) throw new Error(ERROR_MESSAGES.COMPANY_CREATE_FAILED);
-  return rows[0] as Company;
+  const { data, error } = await supabase
+    .from('companies')
+    .insert(company)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Fehler beim Erstellen der Firma:', error);
+    throw new Error(ERROR_MESSAGES.COMPANY_CREATE_FAILED);
+  }
+
+  return data;
 }
 
+/**
+ * Aktualisiert eine Firma
+ */
 export async function updateCompany(id: string, updates: CompanyUpdate): Promise<Company> {
-  const rows = await sql`
-    UPDATE companies SET ${sql(updates as Record<string, unknown>)} WHERE id = ${id} RETURNING *
-  `;
-  if (!rows[0]) throw new Error(ERROR_MESSAGES.COMPANY_UPDATE_FAILED);
-  return rows[0] as Company;
+  const { data, error } = await supabase
+    .from('companies')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Fehler beim Aktualisieren der Firma:', error);
+    throw new Error(ERROR_MESSAGES.COMPANY_UPDATE_FAILED);
+  }
+
+  return data;
 }
 
+/**
+ * Sucht eine Fuhrpark-Firma per Name oder legt sie neu an.
+ * Gibt die UUID zurück. Wird beim ersten Zugriff eines neuen Mandanten aufgerufen.
+ */
 export async function getOrCreateFuhrparkCompany(name: string): Promise<string> {
-  const rows = await sql`SELECT id FROM companies WHERE name = ${name} LIMIT 1`;
-  if (rows[0]) return (rows[0] as { id: string }).id;
-  const inserted = await sql`INSERT INTO companies (name) VALUES (${name}) RETURNING id`;
-  if (!inserted[0]) throw new Error('Firma konnte nicht angelegt werden');
-  return (inserted[0] as { id: string }).id;
+  const { data: existing } = await supabase
+    .from('companies')
+    .select('id')
+    .eq('name', name)
+    .maybeSingle();
+
+  if (existing) return existing.id;
+
+  const { data, error } = await supabase
+    .from('companies')
+    .insert({ name })
+    .select('id')
+    .single();
+
+  if (error) {
+    // Race condition: andere Anfrage hat die Firma gerade angelegt
+    if (error.code === '23505') {
+      const { data: retry } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('name', name)
+        .single();
+      if (retry) return retry.id;
+    }
+    console.error('Fehler beim Anlegen der Fuhrpark-Firma:', error);
+    throw new Error(ERROR_MESSAGES.COMPANY_CREATE_FAILED);
+  }
+
+  return data.id;
 }
 
+/**
+ * Löscht eine Firma
+ */
 export async function deleteCompany(id: string): Promise<void> {
-  try {
-    await sql`DELETE FROM companies WHERE id = ${id}`;
-  } catch (err: unknown) {
-    const pg = err as { code?: string };
-    if (pg.code === '23503') throw new Error(ERROR_MESSAGES.COMPANY_IN_USE);
+  const { error } = await supabase
+    .from('companies')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    if (error.code === '23503') {
+      throw new Error(ERROR_MESSAGES.COMPANY_IN_USE);
+    }
+    console.error('Fehler beim Löschen der Firma:', error);
     throw new Error(ERROR_MESSAGES.COMPANY_DELETE_FAILED);
   }
 }

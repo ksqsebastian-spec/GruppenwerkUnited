@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import sql from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function GET(): Promise<NextResponse> {
-  try {
-    const rows = await sql`SELECT * FROM damage_types ORDER BY name`;
-    return NextResponse.json(rows);
-  } catch {
+  const db = createAdminClient();
+  const { data, error } = await db.from('damage_types').select('*').order('name');
+  if (error) {
     return NextResponse.json({ error: 'Schadenstypen konnten nicht geladen werden' }, { status: 500 });
   }
+  return NextResponse.json(data ?? []);
 }

@@ -1,9 +1,9 @@
 import { requireAuth } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
-import { sql } from "@/lib/modules/recruiting/db";
+import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
 import { logAudit } from "@/lib/modules/recruiting/audit";
 
-// POST /api/recruiting/referrals/[id]/complete — mark empfehlung as eingestellt
+// POST /api/referrals/[id]/complete — mark empfehlung as eingestellt
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -12,46 +12,62 @@ export async function POST(
   if (authResult instanceof NextResponse) return authResult;
 
   const { id } = await params;
-  const companyFilter = !authResult.isAdmin ? authResult.companyId : null;
 
-  const rows = await sql`
-    SELECT * FROM empfehlungen
-    WHERE id = ${id}
-      AND status = 'offen'
-      AND stelle_id IS NOT NULL
-      AND (${companyFilter}::text IS NULL OR company = ${companyFilter}::text)
-    LIMIT 1
-  `;
+  const adminClient = createAdminClient();
 
-  if (!rows[0]) {
+  // Empfehlung laden (muss 'offen' sein, Nicht-Admins nur ihre Firma, nur Recruiting)
+  let fetchQuery = adminClient
+    .from("empfehlungen")
+    .select("*")
+    .eq("id", id)
+    .eq("status", "offen")
+    // Nur Recruiting-Empfehlungen (stelle_id IS NOT NULL)
+    .not("stelle_id", "is", null);
+
+  if (!authResult.isAdmin) {
+    fetchQuery = fetchQuery.eq("company", authResult.companyId);
+  }
+
+  const { data: empfehlung, error: fetchError } = await fetchQuery.single();
+
+  if (fetchError || !empfehlung) {
     return NextResponse.json(
       { error: "Empfehlung nicht gefunden oder bereits bearbeitet" },
       { status: 404 }
     );
   }
 
-  const empfehlung = rows[0] as { praemie_betrag: number };
+  // Use existing praemie_betrag (set at creation from global default)
+  // or allow override via request body
   let praemieBetrag = empfehlung.praemie_betrag;
-
   try {
     const body = await request.json();
     if (body?.praemie_betrag !== undefined) {
       const betrag = Number(body.praemie_betrag);
-      if (!isNaN(betrag) && betrag >= 0) praemieBetrag = betrag;
+      if (!isNaN(betrag) && betrag >= 0) {
+        praemieBetrag = betrag;
+      }
     }
   } catch {
     // No body is fine — use existing praemie_betrag
   }
 
-  const updated = await sql`
-    UPDATE empfehlungen
-    SET status = 'eingestellt', praemie_betrag = ${praemieBetrag}
-    WHERE id = ${id}
-    RETURNING *
-  `;
+  // Update status to eingestellt
+  const { data: updated, error: updateError } = await adminClient
+    .from("empfehlungen")
+    .update({
+      status: "eingestellt",
+      praemie_betrag: praemieBetrag,
+    })
+    .eq("id", id)
+    .select()
+    .single();
 
-  if (!updated[0]) {
-    return NextResponse.json({ error: "Status konnte nicht aktualisiert werden" }, { status: 500 });
+  if (updateError) {
+    return NextResponse.json(
+      { error: "Status konnte nicht aktualisiert werden" },
+      { status: 500 }
+    );
   }
 
   await logAudit({
@@ -59,9 +75,11 @@ export async function POST(
     action: "empfehlung.eingestellt",
     targetType: "empfehlung",
     targetId: id,
-    details: { praemie_betrag: praemieBetrag },
+    details: {
+      praemie_betrag: praemieBetrag,
+    },
     ipAddress: request.headers.get("x-forwarded-for"),
   });
 
-  return NextResponse.json(updated[0]);
+  return NextResponse.json(updated);
 }

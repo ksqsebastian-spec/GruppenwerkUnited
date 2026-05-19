@@ -106,11 +106,12 @@ export function matchCompanyByPasswordEnv(password: string): CompanyConfig | nul
  */
 export async function matchCompanyByPasswordDb(password: string): Promise<CompanyConfig | null> {
   try {
-    const { default: sql } = await import('@/lib/db');
-    const rows = await sql`SELECT value FROM app_settings WHERE key = 'passwords' LIMIT 1`;
-    if (!rows[0]) return null;
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const db = createAdminClient();
+    const { data } = await db.from('app_settings').select('value').eq('key', 'passwords').single();
+    if (!data) return null;
 
-    const dbPasswords = (rows[0] as { value: Record<string, string> }).value;
+    const dbPasswords = (data as { value: Record<string, string> }).value;
     for (const company of COMPANY_CONFIGS) {
       const dbPassword = dbPasswords[company.passwordEnvKey];
       if (dbPassword && password === dbPassword) {
