@@ -4,27 +4,16 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
-
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-
 import {
   licenseEmployeeSchema,
   type LicenseEmployeeFormData,
@@ -36,6 +25,7 @@ import {
   useUpdateLicenseEmployee,
 } from '@/hooks/use-license-control';
 import type { LicenseCheckEmployee } from '@/types';
+import { EmployeeFormFields } from './employee-form-fields';
 
 interface EmployeeFormProps {
   /** Bestehender Mitarbeiter (für Bearbeitung) */
@@ -53,9 +43,7 @@ export function EmployeeForm({ employee }: EmployeeFormProps): React.JSX.Element
 
   const isEditing = !!employee;
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
-  const autoSaveKey = isEditing
-    ? `license-employee-edit-${employee.id}`
-    : 'license-employee-new';
+  const autoSaveKey = isEditing ? `license-employee-edit-${employee.id}` : 'license-employee-new';
 
   const form = useForm<LicenseEmployeeFormData>({
     resolver: zodResolver(licenseEmployeeSchema),
@@ -73,19 +61,15 @@ export function EmployeeForm({ employee }: EmployeeFormProps): React.JSX.Element
     },
   });
 
-  // Auto-Save aktivieren
   const { clear: clearAutoSave } = useAutoSave({
     key: autoSaveKey,
     data: form.watch(),
     onRestore: (data) => {
-      if (!isEditing) {
-        form.reset(data);
-      }
+      if (!isEditing) form.reset(data);
     },
   });
 
   const handleSubmit = async (data: LicenseEmployeeFormData): Promise<void> => {
-    // Konvertiere leere Strings zu null für die Datenbank
     const insertData = {
       first_name: data.first_name,
       last_name: data.last_name,
@@ -111,153 +95,8 @@ export function EmployeeForm({ employee }: EmployeeFormProps): React.JSX.Element
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        {/* Persönliche Daten */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Persönliche Daten</h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="first_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Vorname *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Max" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <EmployeeFormFields form={form} companies={companies} />
 
-            <FormField
-              control={form.control}
-              name="last_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nachname *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Mustermann" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="personnel_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Personalnummer</FormLabel>
-                  <FormControl>
-                    <Input placeholder="12345" {...field} value={field.value ?? ''} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="company_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Firma *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Firma auswählen" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {companies.map((company) => (
-                        <SelectItem key={company.id} value={company.id}>
-                          {company.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>E-Mail</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="max.mustermann@firma.de"
-                      {...field}
-                      value={field.value ?? ''}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Führerschein-Daten */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Führerschein-Daten</h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="license_classes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Führerscheinklassen *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="B, BE, C1" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Kommagetrennt, z.B. &quot;B, BE, C1&quot;
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="license_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Führerscheinnummer</FormLabel>
-                  <FormControl>
-                    <Input placeholder="B072..." {...field} value={field.value ?? ''} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="license_expiry_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Führerschein gültig bis</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} value={field.value ?? ''} />
-                  </FormControl>
-                  <FormDescription>
-                    Ablaufdatum des Führerscheins selbst (nicht der Kontrolle)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Notizen */}
         <FormField
           control={form.control}
           name="notes"
@@ -277,7 +116,6 @@ export function EmployeeForm({ employee }: EmployeeFormProps): React.JSX.Element
           )}
         />
 
-        {/* Buttons */}
         <div className="flex justify-end gap-4">
           <Button
             type="button"

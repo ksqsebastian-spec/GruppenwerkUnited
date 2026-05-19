@@ -3,38 +3,11 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Pencil, Archive, Loader2 } from 'lucide-react';
-
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-
 import {
   licenseInspectorSchema,
   type LicenseInspectorFormData,
@@ -46,6 +19,8 @@ import {
   useArchiveLicenseInspector,
 } from '@/hooks/use-license-control';
 import type { LicenseCheckInspector } from '@/types';
+import { InspectorManagementTable } from './inspector-management-table';
+import { InspectorManagementDialog } from './inspector-management-dialog';
 
 /**
  * Verwaltung der Prüfer für Führerscheinkontrollen
@@ -80,17 +55,12 @@ export function InspectorManagement(): React.JSX.Element {
       });
     } else {
       setEditingInspector(null);
-      form.reset({
-        name: '',
-        email: '',
-        status: 'active',
-      });
+      form.reset({ name: '', email: '', status: 'active' });
     }
     setDialogOpen(true);
   };
 
   const handleSubmit = async (data: LicenseInspectorFormData): Promise<void> => {
-    // Konvertiere leere Strings und undefined zu null für die Datenbank
     const insertData = {
       name: data.name,
       email: data.email || null,
@@ -161,148 +131,23 @@ export function InspectorManagement(): React.JSX.Element {
           }
         />
       ) : (
-        <div className="border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>E-Mail</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-24">Aktionen</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {activeInspectors.map((inspector) => (
-                <TableRow key={inspector.id}>
-                  <TableCell className="font-medium">{inspector.name}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {inspector.email || '-'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      Aktiv
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleOpenDialog(inspector)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleArchiveClick(inspector)}
-                      >
-                        <Archive className="h-4 w-4 text-red-600" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <InspectorManagementTable
+          activeInspectors={activeInspectors}
+          archivedInspectors={archivedInspectors}
+          onEdit={handleOpenDialog}
+          onArchive={handleArchiveClick}
+        />
       )}
 
-      {archivedInspectors.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground">
-            Archivierte Prüfer ({archivedInspectors.length})
-          </h4>
-          <div className="border rounded-lg opacity-60">
-            <Table>
-              <TableBody>
-                {archivedInspectors.map((inspector) => (
-                  <TableRow key={inspector.id}>
-                    <TableCell>{inspector.name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {inspector.email || '-'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">Archiviert</Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      )}
+      <InspectorManagementDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        isEditing={editingInspector !== null}
+        isSubmitting={isSubmitting}
+        form={form}
+        onSubmit={handleSubmit}
+      />
 
-      {/* Prüfer Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingInspector ? 'Prüfer bearbeiten' : 'Neuen Prüfer anlegen'}
-            </DialogTitle>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Max Mustermann" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>E-Mail</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="max@firma.de"
-                        {...field}
-                        value={field.value ?? ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                >
-                  Abbrechen
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Speichern...
-                    </>
-                  ) : editingInspector ? (
-                    'Änderungen speichern'
-                  ) : (
-                    'Prüfer anlegen'
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Archive Confirmation */}
       <ConfirmDialog
         open={archiveDialogOpen}
         onOpenChange={setArchiveDialogOpen}

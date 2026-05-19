@@ -3,8 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
 import {
   Car,
   Pencil,
@@ -15,13 +13,9 @@ import {
   Receipt,
   FileText,
   User,
-  Building,
-  Gauge,
-  Fuel,
-  Shield,
   Info,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,39 +26,13 @@ import { useArchiveVehicle, useDeleteVehicle } from '@/hooks/use-vehicles';
 import { useDocuments } from '@/hooks/use-documents';
 import type { Vehicle } from '@/types';
 
+import { getTuvStatus } from './vehicle-detail-helpers';
+import { VehicleInfoCards } from './vehicle-detail-info-cards';
+import { VehicleDetailsTab } from './vehicle-detail-tab';
+
 interface VehicleDetailProps {
   /** Das anzuzeigende Fahrzeug */
   vehicle: Vehicle;
-}
-
-/**
- * Mappt Kraftstofftypen auf deutsche Bezeichnungen
- */
-const fuelTypeLabels: Record<string, string> = {
-  diesel: 'Diesel',
-  benzin: 'Benzin',
-  elektro: 'Elektro',
-  hybrid_benzin: 'Hybrid (Benzin)',
-  hybrid_diesel: 'Hybrid (Diesel)',
-  gas: 'Gas',
-};
-
-/**
- * Formatiert den Kilometerstand
- */
-function formatMileage(mileage: number): string {
-  return new Intl.NumberFormat('de-DE').format(mileage) + ' km';
-}
-
-/**
- * Formatiert einen Euro-Betrag
- */
-function formatCurrency(amount: number | null | undefined): string {
-  if (amount === null || amount === undefined) return '-';
-  return new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(amount);
 }
 
 /**
@@ -93,22 +61,7 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): React.JSX.Elemen
     router.push('/fuhrpark/vehicles');
   };
 
-  /**
-   * Prüft TÜV-Status
-   */
-  const getTuvStatus = (): { status: 'ok' | 'warning' | 'overdue'; label: string } => {
-    if (!vehicle.tuv_due_date) return { status: 'ok', label: 'Nicht erfasst' };
-
-    const due = new Date(vehicle.tuv_due_date);
-    const now = new Date();
-    const daysUntil = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (daysUntil < 0) return { status: 'overdue', label: `${Math.abs(daysUntil)} Tage überfällig` };
-    if (daysUntil <= 30) return { status: 'warning', label: `In ${daysUntil} Tagen fällig` };
-    return { status: 'ok', label: format(due, 'MMMM yyyy', { locale: de }) };
-  };
-
-  const tuvStatus = getTuvStatus();
+  const tuvStatus = getTuvStatus(vehicle.tuv_due_date);
 
   return (
     <div className="space-y-6">
@@ -124,9 +77,7 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): React.JSX.Elemen
               {vehicle.brand} {vehicle.model} ({vehicle.year})
             </p>
           </div>
-          {vehicle.status === 'archived' && (
-            <Badge variant="secondary">Archiviert</Badge>
-          )}
+          {vehicle.status === 'archived' && <Badge variant="secondary">Archiviert</Badge>}
         </div>
 
         <div className="flex items-center gap-2">
@@ -136,17 +87,11 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): React.JSX.Elemen
               Bearbeiten
             </Link>
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => setArchiveDialogOpen(true)}
-          >
+          <Button variant="outline" onClick={() => setArchiveDialogOpen(true)}>
             <Archive className="mr-2 h-4 w-4" />
             Archivieren
           </Button>
-          <Button
-            variant="destructive"
-            onClick={() => setDeleteDialogOpen(true)}
-          >
+          <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
             <Trash2 className="mr-2 h-4 w-4" />
             Löschen
           </Button>
@@ -154,75 +99,7 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): React.JSX.Elemen
       </div>
 
       {/* Info-Karten */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Gauge className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Kilometerstand</p>
-                <p className="text-lg font-medium">{formatMileage(vehicle.mileage)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Fuel className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Kraftstoff</p>
-                <p className="text-lg font-medium">
-                  {fuelTypeLabels[vehicle.fuel_type] ?? vehicle.fuel_type}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Building className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Firma</p>
-                <p className="text-lg font-medium">{vehicle.company?.name ?? '-'}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={tuvStatus.status !== 'ok' ? 'border-yellow-500' : ''}>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Shield
-                className={`h-5 w-5 ${
-                  tuvStatus.status === 'overdue'
-                    ? 'text-red-600'
-                    : tuvStatus.status === 'warning'
-                    ? 'text-yellow-600'
-                    : 'text-muted-foreground'
-                }`}
-              />
-              <div>
-                <p className="text-sm text-muted-foreground">TÜV</p>
-                <p
-                  className={`text-lg font-medium ${
-                    tuvStatus.status === 'overdue'
-                      ? 'text-red-600'
-                      : tuvStatus.status === 'warning'
-                      ? 'text-yellow-600'
-                      : ''
-                  }`}
-                >
-                  {tuvStatus.label}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <VehicleInfoCards vehicle={vehicle} tuvStatus={tuvStatus} />
 
       {/* Tabs für Details */}
       <Tabs defaultValue="details">
@@ -254,109 +131,7 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): React.JSX.Elemen
         </TabsList>
 
         <TabsContent value="details" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Fahrzeugdaten */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Fahrzeugdaten</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <DetailRow label="Kennzeichen" value={vehicle.license_plate} />
-                <DetailRow label="Marke" value={vehicle.brand} />
-                <DetailRow label="Modell" value={vehicle.model} />
-                <DetailRow label="Baujahr" value={vehicle.year.toString()} />
-                <DetailRow label="VIN" value={vehicle.vin ?? '-'} />
-                <DetailRow
-                  label="Kraftstoff"
-                  value={fuelTypeLabels[vehicle.fuel_type] ?? vehicle.fuel_type}
-                />
-                <DetailRow label="Kilometerstand" value={formatMileage(vehicle.mileage)} />
-              </CardContent>
-            </Card>
-
-            {/* Kauf/Leasing */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Kauf / Leasing</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <DetailRow
-                  label="Art"
-                  value={vehicle.is_leased ? 'Leasing' : 'Kauf'}
-                />
-                {vehicle.is_leased ? (
-                  <>
-                    <DetailRow
-                      label="Leasinggeber"
-                      value={vehicle.leasing_company ?? '-'}
-                    />
-                    <DetailRow
-                      label="Leasingende"
-                      value={
-                        vehicle.leasing_end_date
-                          ? format(new Date(vehicle.leasing_end_date), 'dd.MM.yyyy', { locale: de })
-                          : '-'
-                      }
-                    />
-                    <DetailRow
-                      label="Monatliche Rate"
-                      value={formatCurrency(vehicle.leasing_rate)}
-                    />
-                    <DetailRow
-                      label="Vertragsnummer"
-                      value={vehicle.leasing_contract_number ?? '-'}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <DetailRow
-                      label="Kaufdatum"
-                      value={
-                        vehicle.purchase_date
-                          ? format(new Date(vehicle.purchase_date), 'dd.MM.yyyy', { locale: de })
-                          : '-'
-                      }
-                    />
-                    <DetailRow label="Kaufpreis" value={formatCurrency(vehicle.purchase_price)} />
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Halter & Nutzer */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Halter & Nutzer</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <DetailRow label="Fahrzeughalter" value={vehicle.holder ?? '-'} />
-                <DetailRow label="Hauptnutzer" value={vehicle.user_name ?? '-'} />
-              </CardContent>
-            </Card>
-
-            {/* Versicherung */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Versicherung</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <DetailRow label="Versicherung" value={vehicle.insurance_company ?? '-'} />
-                <DetailRow label="Vertragsnummer" value={vehicle.insurance_number ?? '-'} />
-              </CardContent>
-            </Card>
-
-            {/* Notizen */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Notizen</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {vehicle.notes ?? 'Keine Notizen vorhanden.'}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          <VehicleDetailsTab vehicle={vehicle} />
         </TabsContent>
 
         <TabsContent value="appointments">
@@ -469,18 +244,6 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps): React.JSX.Elemen
         variant="destructive"
         isLoading={deleteMutation.isPending}
       />
-    </div>
-  );
-}
-
-/**
- * Hilfskomponente für Detail-Zeilen
- */
-function DetailRow({ label, value }: { label: string; value: string }): React.JSX.Element {
-  return (
-    <div className="flex justify-between border-b pb-2 last:border-0">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium">{value}</span>
     </div>
   );
 }

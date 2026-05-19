@@ -43,6 +43,13 @@ export function SettingsForm(): React.JSX.Element {
     },
   });
 
+  // Auto-Save: Formulardaten lokal sichern, falls die Seite verlassen wird
+  const { clear: clearAutoSave } = useAutoSave<LicenseSettingsFormData>({
+    key: 'license-control-settings-form',
+    data: form.watch(),
+    onRestore: (saved) => form.reset(saved),
+  });
+
   // Formular mit geladenen Daten aktualisieren
   useEffect(() => {
     if (settings) {
@@ -55,6 +62,7 @@ export function SettingsForm(): React.JSX.Element {
 
   const handleSubmit = async (data: LicenseSettingsFormData): Promise<void> => {
     await updateMutation.mutateAsync(data);
+    clearAutoSave();
   };
 
   if (isLoading) {
