@@ -21,19 +21,6 @@ import { useAppointments } from '@/hooks/use-appointments';
 import type { DocumentEntityType } from '@/types';
 
 /**
- * Entity-Typ Labels für UI
- */
-const entityTypeLabels: Record<DocumentEntityType, string> = {
-  vehicle: 'Fahrzeug',
-  damage: 'Schadensmeldung',
-  appointment: 'Termin',
-  driver: 'Fahrer',
-  license_check_employee: 'FS-Mitarbeiter',
-  license_check: 'FS-Kontrolle',
-  uvv_check: 'UVV-Unterweisung',
-};
-
-/**
  * Wrapper-Komponente für Entity-Auswahl
  */
 function DocumentUploadForm(): React.JSX.Element {

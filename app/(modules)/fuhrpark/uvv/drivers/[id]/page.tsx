@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ClipboardCheck, FileText, Building2, Mail, Phone } from 'lucide-react';
+import { ClipboardCheck, Building2, Mail, Phone } from 'lucide-react';
 import { PageHeader } from '@/components/shared/page-header';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { Button } from '@/components/ui/button';

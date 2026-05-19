@@ -11,7 +11,6 @@ import {
   Archive,
   Mail,
   Phone,
-  Building,
   CreditCard,
   Calendar,
   Car,

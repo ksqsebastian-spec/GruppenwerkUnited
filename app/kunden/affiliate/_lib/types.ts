@@ -10,7 +10,7 @@ export interface ReferralData extends ReferralFormData {
   refCode: string;
 }
 
-const nameRegex = /^[a-zA-ZäöüÄÖÜßéèêàáâ\s\-]+$/;
+const nameRegex = /^[a-zA-ZäöüÄÖÜßéèêàáâ\s-]+$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ibanRegex = /^[A-Z]{2}\d{2}[A-Z0-9]{4}\d{7}([A-Z0-9]?){0,16}$/;
 

@@ -26,7 +26,7 @@ import {
 } from '@/hooks/use-vehicle-drivers';
 import { useDrivers } from '@/hooks/use-drivers';
 import { useVehicles } from '@/hooks/use-vehicles';
-import type { VehicleDriver, Driver, Vehicle } from '@/types';
+import type { VehicleDriver } from '@/types';
 
 interface AssignDriverToVehicleProps {
   vehicleId: string;

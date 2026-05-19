@@ -31,7 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DocumentList } from '@/components/documents';
 import { DocumentUpload } from '@/components/documents/document-upload';
 import { useDamage, useUpdateDamageStatus, useDeleteDamage } from '@/hooks/use-damages';

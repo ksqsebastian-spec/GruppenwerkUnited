@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import sql from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
@@ -16,38 +16,43 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const dateTo = searchParams.get('dateTo');
 
   try {
-    const rows = await sql`
-      SELECT d.*,
-        json_build_object('id', dt.id, 'name', dt.name) AS document_type,
-        CASE WHEN d.vehicle_id IS NOT NULL THEN
-          json_build_object('id', v.id, 'license_plate', v.license_plate, 'brand', v.brand, 'model', v.model)
-        END AS vehicle,
-        CASE WHEN d.driver_id IS NOT NULL THEN
-          json_build_object('id', dr.id, 'first_name', dr.first_name, 'last_name', dr.last_name)
-        END AS driver,
-        CASE WHEN d.license_check_employee_id IS NOT NULL THEN
-          json_build_object('id', le.id, 'first_name', le.first_name, 'last_name', le.last_name)
-        END AS license_check_employee
-      FROM documents d
-      LEFT JOIN document_types dt ON dt.id = d.document_type_id
-      LEFT JOIN vehicles v ON v.id = d.vehicle_id
-      LEFT JOIN drivers dr ON dr.id = d.driver_id
-      LEFT JOIN license_check_employees le ON le.id = d.license_check_employee_id
-      WHERE TRUE
-        AND (${vehicleId}::uuid IS NULL OR d.vehicle_id = ${vehicleId}::uuid)
-        AND (${damageId}::uuid IS NULL OR d.damage_id = ${damageId}::uuid)
-        AND (${appointmentId}::uuid IS NULL OR d.appointment_id = ${appointmentId}::uuid)
-        AND (${driverId}::uuid IS NULL OR d.driver_id = ${driverId}::uuid)
-        AND (${licenseCheckEmployeeId}::uuid IS NULL OR d.license_check_employee_id = ${licenseCheckEmployeeId}::uuid)
-        AND (${licenseCheckId}::uuid IS NULL OR d.license_check_id = ${licenseCheckId}::uuid)
-        AND (${uvvCheckId}::uuid IS NULL OR d.uvv_check_id = ${uvvCheckId}::uuid)
-        AND (${entityType} IS NULL OR d.entity_type = ${entityType})
-        AND (${documentTypeId}::uuid IS NULL OR d.document_type_id = ${documentTypeId}::uuid)
-        AND (${dateFrom} IS NULL OR d.uploaded_at >= ${dateFrom}::timestamptz)
-        AND (${dateTo} IS NULL OR d.uploaded_at <= (${dateTo}::date + INTERVAL '1 day'))
-      ORDER BY d.uploaded_at DESC
-    `;
-    return NextResponse.json(rows);
+    const db = createAdminClient();
+
+    // Abfrage mit verknüpften Tabellen
+    let query = db
+      .from('documents')
+      .select(
+        `*,
+        document_type:document_types(id, name),
+        vehicle:vehicles(id, license_plate, brand, model),
+        driver:drivers(id, first_name, last_name),
+        license_check_employee:license_check_employees(id, first_name, last_name)`
+      )
+      .order('uploaded_at', { ascending: false });
+
+    // Filter anwenden
+    if (vehicleId) query = query.eq('vehicle_id', vehicleId);
+    if (damageId) query = query.eq('damage_id', damageId);
+    if (appointmentId) query = query.eq('appointment_id', appointmentId);
+    if (driverId) query = query.eq('driver_id', driverId);
+    if (licenseCheckEmployeeId) query = query.eq('license_check_employee_id', licenseCheckEmployeeId);
+    if (licenseCheckId) query = query.eq('license_check_id', licenseCheckId);
+    if (uvvCheckId) query = query.eq('uvv_check_id', uvvCheckId);
+    if (entityType) query = query.eq('entity_type', entityType);
+    if (documentTypeId) query = query.eq('document_type_id', documentTypeId);
+    if (dateFrom) query = query.gte('uploaded_at', dateFrom);
+    if (dateTo) {
+      // Bis Ende des angegebenen Tages filtern
+      const toDate = new Date(dateTo);
+      toDate.setDate(toDate.getDate() + 1);
+      query = query.lt('uploaded_at', toDate.toISOString());
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      return NextResponse.json({ error: 'Dokumente konnten nicht geladen werden' }, { status: 500 });
+    }
+    return NextResponse.json(data ?? []);
   } catch {
     return NextResponse.json({ error: 'Dokumente konnten nicht geladen werden' }, { status: 500 });
   }
@@ -61,8 +66,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Ungültiges JSON' }, { status: 400 });
   }
   try {
-    const [row] = await sql`INSERT INTO documents ${sql(body)} RETURNING *`;
-    return NextResponse.json(row, { status: 201 });
+    const db = createAdminClient();
+    const { data, error } = await db
+      .from('documents')
+      .insert(body)
+      .select()
+      .single();
+    if (error) {
+      return NextResponse.json({ error: error.message ?? 'Dokument konnte nicht erstellt werden' }, { status: 500 });
+    }
+    return NextResponse.json(data, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Dokument konnte nicht erstellt werden' }, { status: 500 });
   }

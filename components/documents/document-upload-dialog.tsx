@@ -196,7 +196,7 @@ export function DocumentUploadDialog({ trigger }: DocumentUploadDialogProps): Re
       setOpen(false);
       setFile(null);
       form.reset();
-    } catch (error) {
+    } catch {
       // Fehler wird vom Hook gehandelt
     }
   };

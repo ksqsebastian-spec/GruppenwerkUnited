@@ -1,4 +1,11 @@
-import sql from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
+
+/**
+ * Gemeinsamer Audit-Logger für alle Module (Recruiting, Affiliate, …).
+ * Schreibt in die zentrale `audit_log`-Tabelle.
+ *
+ * Design: Fehler im Audit-Log dürfen den Hauptfluss niemals unterbrechen.
+ */
 
 export interface AuditLogParams {
   userId: string;
@@ -11,14 +18,17 @@ export interface AuditLogParams {
 
 export async function logAudit(params: AuditLogParams): Promise<void> {
   try {
-    await sql`
-      INSERT INTO audit_log (user_id, action, target_type, target_id, details, ip_address)
-      VALUES (
-        ${params.userId}, ${params.action}, ${params.targetType}, ${params.targetId},
-        ${JSON.stringify(params.details ?? {})}, ${params.ipAddress ?? null}
-      )
-    `;
+    const adminClient = createAdminClient();
+    await adminClient.from('audit_log').insert({
+      user_id: params.userId,
+      action: params.action,
+      target_type: params.targetType,
+      target_id: params.targetId,
+      details: params.details ?? {},
+      ip_address: params.ipAddress ?? null,
+    });
   } catch (error) {
+    // Audit logging should never break the main flow
     console.error('Audit log fehlgeschlagen:', error);
   }
 }

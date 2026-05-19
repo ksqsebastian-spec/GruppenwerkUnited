@@ -101,7 +101,6 @@ export default function DatenkodierungPage(): React.JSX.Element {
       <KodierungTable
         daten={data ?? []}
         onNeuErstellen={handleNeuErstellen}
-        activeTag={aktiverTag}
         onTagFilter={handleTagFilter}
       />
 

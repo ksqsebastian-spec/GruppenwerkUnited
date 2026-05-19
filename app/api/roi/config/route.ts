@@ -1,28 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
-import sql from '@/lib/db';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireSession } from '@/lib/auth/api';
 
 export async function GET(): Promise<NextResponse> {
   const session = await requireSession();
   if (session instanceof NextResponse) return session;
 
-  let rows = await sql`SELECT * FROM roi.config WHERE company_id = ${session.companyId} LIMIT 1`;
+  const supabase = createAdminClient();
 
-  if (!rows[0]) {
-    try {
-      rows = await sql`INSERT INTO roi.config (company_id) VALUES (${session.companyId}) RETURNING *`;
-    } catch (err) {
-      console.error('Fehler beim Erstellen der ROI-Konfiguration:', err);
-      return NextResponse.json({ error: 'Konfiguration konnte nicht geladen werden' }, { status: 500 });
+  let { data, error } = await supabase
+    .schema('roi')
+    .from('config')
+    .select('*')
+    .eq('company_id', session.companyId)
+    .limit(1)
+    .single();
+
+  // Noch keine Konfiguration für diese Firma — Standard-Zeile anlegen
+  if (error?.code === 'PGRST116' || !data) {
+    const { data: created, error: createError } = await supabase
+      .schema('roi')
+      .from('config')
+      .insert({ company_id: session.companyId })
+      .select()
+      .single();
+
+    if (createError) {
+      console.error('Fehler beim Erstellen der ROI-Konfiguration:', createError);
+      return NextResponse.json(
+        { error: 'Konfiguration konnte nicht geladen werden' },
+        { status: 500 }
+      );
     }
+
+    data = created;
+    error = null;
   }
 
-  return NextResponse.json(rows[0]);
+  if (error) {
+    console.error('Fehler beim Laden der ROI-Konfiguration:', error);
+    return NextResponse.json(
+      { error: 'Konfiguration konnte nicht geladen werden' },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json(data);
 }
 
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
   const session = await requireSession();
   if (session instanceof NextResponse) return session;
+
+  const supabase = createAdminClient();
 
   let body: { id: string; key: string; value: number };
   try {
@@ -31,21 +61,22 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
   }
 
-  try {
-    const updated = await sql`
-      UPDATE roi.config
-      SET ${sql({ [body.key]: body.value })}
-      WHERE id = ${body.id} AND company_id = ${session.companyId}
-      RETURNING *
-    `;
+  const { data, error } = await supabase
+    .schema('roi')
+    .from('config')
+    .update({ [body.key]: body.value })
+    .eq('id', body.id)
+    .eq('company_id', session.companyId)
+    .select()
+    .single();
 
-    if (!updated[0]) {
-      return NextResponse.json({ error: 'Konfiguration konnte nicht aktualisiert werden' }, { status: 500 });
-    }
-
-    return NextResponse.json(updated[0]);
-  } catch (err) {
-    console.error('Fehler beim Aktualisieren der Konfiguration:', err);
-    return NextResponse.json({ error: 'Konfiguration konnte nicht aktualisiert werden' }, { status: 500 });
+  if (error) {
+    console.error('Fehler beim Aktualisieren der Konfiguration:', error);
+    return NextResponse.json(
+      { error: 'Konfiguration konnte nicht aktualisiert werden' },
+      { status: 500 }
+    );
   }
+
+  return NextResponse.json(data);
 }

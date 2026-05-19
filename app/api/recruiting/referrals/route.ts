@@ -2,13 +2,9 @@ import { requireAuth } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCreateSchema, paginationSchema } from "@/lib/modules/recruiting/validators";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/modules/recruiting/rate-limit";
-import { sql } from "@/lib/modules/recruiting/db";
+import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
 
 const VALID_STATUSES = ["offen", "eingestellt", "probezeit_bestanden", "ausgezahlt"] as const;
-
-function generateRefCode(): string {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
 
 // GET /api/recruiting/referrals — Empfehlungen auflisten
 export async function GET(request: NextRequest) {
@@ -27,54 +23,66 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get("status");
   const offset = (page - 1) * pageSize;
 
-  const validStatus = status && VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number]) ? status : null;
-  const companyFilter = !authResult.isAdmin ? authResult.companyId : null;
+  const adminClient = createAdminClient();
 
-  try {
-    const [rows, countRows] = await Promise.all([
-      sql`
-        SELECT * FROM empfehlungen
-        WHERE stelle_id IS NOT NULL
-          AND handwerker_id IS NULL
-          AND (${validStatus}::text IS NULL OR status = ${validStatus}::text)
-          AND (${companyFilter}::text IS NULL OR company = ${companyFilter}::text)
-          AND (${stelleId}::uuid IS NULL OR stelle_id = ${stelleId}::uuid)
-        ORDER BY created_at DESC
-        LIMIT ${pageSize} OFFSET ${offset}
-      `,
-      sql`
-        SELECT COUNT(*) AS count FROM empfehlungen
-        WHERE stelle_id IS NOT NULL
-          AND handwerker_id IS NULL
-          AND (${validStatus}::text IS NULL OR status = ${validStatus}::text)
-          AND (${companyFilter}::text IS NULL OR company = ${companyFilter}::text)
-          AND (${stelleId}::uuid IS NULL OR stelle_id = ${stelleId}::uuid)
-      `,
-    ]);
+  let query = adminClient
+    .from("empfehlungen")
+    .select("*", { count: "exact" })
+    // Nur Recruiting-Empfehlungen (stelle_id IS NOT NULL, handwerker_id IS NULL)
+    .not("stelle_id", "is", null)
+    .is("handwerker_id", null)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + pageSize - 1);
 
-    const total = Number((countRows[0] as { count: string }).count);
-    return NextResponse.json({
-      data: rows,
-      total,
-      page,
-      pageSize,
-      hasMore: total > offset + pageSize,
-    });
-  } catch {
-    return NextResponse.json({ error: "Daten konnten nicht geladen werden" }, { status: 500 });
+  // SICHERHEIT: Nicht-Admins dürfen nur Empfehlungen ihrer Firma sehen
+  if (!authResult.isAdmin) {
+    query = query.eq("company", authResult.companyId);
   }
+
+  if (stelleId) {
+    query = query.eq("stelle_id", stelleId);
+  }
+
+  if (status && VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
+    query = query.eq("status", status);
+  }
+
+  const { data, count, error } = await query;
+
+  if (error) {
+    return NextResponse.json(
+      { error: "Daten konnten nicht geladen werden"},
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({
+    data: data || [],
+    total: count || 0,
+    page,
+    pageSize,
+    hasMore: (count || 0) > offset + pageSize,
+  });
 }
 
-// POST /api/recruiting/referrals — create new empfehlung
+// POST /api/referrals — create new empfehlung
 export async function POST(request: NextRequest) {
+  // Rate limit by IP
   const ip = request.headers.get("x-forwarded-for") || "unknown";
-  const rateCheck = checkRateLimit(`referral-create:${ip}`, RATE_LIMITS.referralCreate);
+  const rateCheck = checkRateLimit(
+    `referral-create:${ip}`,
+    RATE_LIMITS.referralCreate
+  );
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: "Zu viele Anfragen. Bitte warte eine Stunde." },
       {
         status: 429,
-        headers: { "Retry-After": String(Math.ceil((rateCheck.resetAt - Date.now()) / 1000)) },
+        headers: {
+          "Retry-After": String(
+            Math.ceil((rateCheck.resetAt - Date.now()) / 1000)
+          ),
+        },
       }
     );
   }
@@ -83,35 +91,75 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Ungültiger Request-Body" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Ungültiger Request-Body" },
+      { status: 400 }
+    );
   }
 
   const parsed = empfehlungCreateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Validierungsfehler", details: parsed.error.format() }, { status: 400 });
+    return NextResponse.json(
+      {
+        error: "Validierungsfehler",
+        details: parsed.error.format(),
+      },
+      { status: 400 }
+    );
   }
 
+  const adminClient = createAdminClient();
+
+  // Generate ref_code if not provided
+  let refCode = parsed.data.ref_code;
+  if (!refCode) {
+    const { data: generated } = await adminClient.rpc("generate_ref_code");
+    refCode = generated as string;
+  }
+
+  // Fetch global default praemie
+  const { data: settings } = await adminClient
+    .from("app_settings")
+    .select("value")
+    .eq("key", "praemie_betrag_default")
+    .single();
+  const praemieBetrag = Number(settings?.value ?? 1000);
+
+  // Firma aus der Stelle ableiten (für korrekte Datentrennung)
   const stelleId = (parsed.data as Record<string, unknown>).stelle_id as string | undefined;
   let company = '';
   if (stelleId) {
-    const rows = await sql`SELECT company FROM stellen WHERE id = ${stelleId} LIMIT 1`;
-    company = (rows[0] as { company: string } | undefined)?.company ?? '';
+    const { data: stelle } = await adminClient
+      .from("stellen")
+      .select("company")
+      .eq("id", stelleId)
+      .single();
+    company = stelle?.company ?? '';
   }
 
-  const praemieRows = await sql`SELECT value FROM app_settings WHERE key = 'praemie_betrag_default' LIMIT 1`;
-  const praemieBetrag = Number((praemieRows[0] as { value: string } | undefined)?.value ?? 1000);
+  const { data, error } = await adminClient
+    .from("empfehlungen")
+    .insert({
+      ...parsed.data,
+      ref_code: refCode,
+      praemie_betrag: praemieBetrag,
+      company,
+    })
+    .select()
+    .single();
 
-  const refCode = parsed.data.ref_code || generateRefCode();
-  const insertData = { ...parsed.data, ref_code: refCode, praemie_betrag: praemieBetrag, company };
-
-  try {
-    const [row] = await sql`INSERT INTO empfehlungen ${sql(insertData)} RETURNING *`;
-    return NextResponse.json(row, { status: 201 });
-  } catch (e: unknown) {
-    const err = e as { code?: string };
-    if (err?.code === '23505') {
-      return NextResponse.json({ error: "Ref-Code bereits vergeben" }, { status: 409 });
+  if (error) {
+    if (error.code === "23505") {
+      return NextResponse.json(
+        { error: "Ref-Code bereits vergeben" },
+        { status: 409 }
+      );
     }
-    return NextResponse.json({ error: "Empfehlung konnte nicht erstellt werden" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Empfehlung konnte nicht erstellt werden"},
+      { status: 500 }
+    );
   }
+
+  return NextResponse.json(data, { status: 201 });
 }

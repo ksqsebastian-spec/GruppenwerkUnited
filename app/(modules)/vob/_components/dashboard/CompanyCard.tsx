@@ -2,15 +2,14 @@
 
 import Link from 'next/link'
 import { daysUntilDeadline, formatDeadline } from '@/lib/modules/vob/utils'
-import type { Company, DashboardRow, CompanyTrend } from '@/lib/modules/vob/types'
+import type { Company, DashboardRow } from '@/lib/modules/vob/types'
 
 interface CompanyCardProps {
   company: Company
   tenders: DashboardRow[]
-  trend?: CompanyTrend
 }
 
-export function CompanyCard({ company, tenders, trend }: CompanyCardProps): React.JSX.Element {
+export function CompanyCard({ company, tenders }: CompanyCardProps): React.JSX.Element {
   const activeTenders = tenders.filter(t => t.status === 'active')
 
   const upcoming = activeTenders

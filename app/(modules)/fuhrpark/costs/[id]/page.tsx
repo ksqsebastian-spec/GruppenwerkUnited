@@ -12,7 +12,6 @@ import {
   Car,
   Calendar,
   FileText,
-  Download,
   ExternalLink,
 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/page-header';
@@ -21,7 +20,6 @@ import { ErrorState } from '@/components/shared/error-state';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useCost, useDeleteCost } from '@/hooks/use-costs';
 
 /**

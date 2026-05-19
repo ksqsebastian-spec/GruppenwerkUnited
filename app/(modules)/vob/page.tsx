@@ -39,14 +39,6 @@ export default async function VobDashboardPage(): Promise<React.JSX.Element> {
     .filter((t) => t.status === 'active')
     .slice(0, 15);
 
-  // Aktuellsten Trend je Unternehmen ermitteln
-  const latestTrends: Record<string, (typeof trends)[0]> = {};
-  for (const t of trends) {
-    if (!latestTrends[t.company_slug]) {
-      latestTrends[t.company_slug] = t;
-    }
-  }
-
   return (
     <>
       <div className="max-w-[1200px]">
@@ -73,7 +65,6 @@ export default async function VobDashboardPage(): Promise<React.JSX.Element> {
                   key={company.slug}
                   company={company}
                   tenders={companyTenders[company.slug] ?? []}
-                  trend={latestTrends[company.slug]}
                 />
               ))}
             </div>

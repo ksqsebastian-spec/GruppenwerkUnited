@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -26,7 +25,6 @@ import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
  * Passwort-Schutz via SITE_PASSWORD Umgebungsvariable
  */
 export default function LoginPage(): React.JSX.Element {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormData>({

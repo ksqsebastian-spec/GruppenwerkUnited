@@ -4,7 +4,6 @@ import { getUrgencyLabel } from './utils'
 // Dynamische Imports für PDF-Bibliotheken (nur client-seitig nutzbar)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type JsPDFInstance = any
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AutoTableFn = (doc: JsPDFInstance, options: Record<string, unknown>) => void
 
 /**

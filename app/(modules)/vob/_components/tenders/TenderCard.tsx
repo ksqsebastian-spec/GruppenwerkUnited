@@ -1,9 +1,8 @@
 'use client'
 
-import { Badge } from '@/components/ui/badge'
 import { UrgencyBadge } from './UrgencyBadge'
 import { NewBadge } from './NewBadge'
-import { formatDeadline, daysUntilDeadline, getRelevanceBgClass, computeUrgency } from '@/lib/modules/vob/utils'
+import { formatDeadline, daysUntilDeadline, computeUrgency } from '@/lib/modules/vob/utils'
 import type { DashboardRow } from '@/lib/modules/vob/types'
 
 interface TenderCardProps {

@@ -2,7 +2,7 @@
 
 import { PageHeader } from '@/components/shared/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building, Download, Database } from 'lucide-react';
+import { Building, Download } from 'lucide-react';
 import { CompanyList, DataExport } from '@/components/settings';
 
 /**
