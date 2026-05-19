@@ -1,16 +1,16 @@
+import type { jsPDF as JsPDF } from 'jspdf'
 import type { DashboardRow } from './types'
 import { getUrgencyLabel } from './utils'
 
 // Dynamische Imports für PDF-Bibliotheken (nur client-seitig nutzbar)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type JsPDFInstance = any
+type JsPDFInstance = JsPDF
 type AutoTableFn = (doc: JsPDFInstance, options: Record<string, unknown>) => void
 
 /**
  * Erstellt ein PDF mit allen Ausschreibungen eines Unternehmens.
  */
 export async function generateCompanyPdf(companyName: string, tenders: DashboardRow[]): Promise<JsPDFInstance> {
-  const { jsPDF } = await import('jspdf') as { jsPDF: new () => JsPDFInstance }
+  const { jsPDF } = await import('jspdf')
   const autoTableModule = await import('jspdf-autotable') as { default: AutoTableFn }
   const autoTable = autoTableModule.default
 
@@ -137,7 +137,7 @@ export async function generateCompanyPdf(companyName: string, tenders: Dashboard
  * Erstellt ein PDF für eine einzelne Ausschreibung mit allen Unternehmens-Matches.
  */
 export async function generateSingleTenderPdf(tender: DashboardRow, allMatches: DashboardRow[]): Promise<JsPDFInstance> {
-  const { jsPDF } = await import('jspdf') as { jsPDF: new () => JsPDFInstance }
+  const { jsPDF } = await import('jspdf')
 
   const doc: JsPDFInstance = new jsPDF()
   const today = new Date().toLocaleDateString('de-DE')

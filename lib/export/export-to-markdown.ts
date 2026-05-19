@@ -4,8 +4,10 @@
 
 import type { ExportPayload } from './full-export';
 
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return '–';
+function formatDate(iso: unknown): string {
+  if (iso === null || iso === undefined || typeof iso !== 'string') {
+    return iso === null || iso === undefined ? '–' : String(iso);
+  }
   try {
     return new Date(iso).toLocaleDateString('de-DE', {
       day: '2-digit', month: '2-digit', year: 'numeric',
@@ -15,12 +17,14 @@ function formatDate(iso: string | null | undefined): string {
   }
 }
 
-function formatCurrency(val: number | null | undefined): string {
+function formatCurrency(val: unknown): string {
   if (val === null || val === undefined) return '–';
-  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(val);
+  const num = typeof val === 'number' ? val : Number(val);
+  if (Number.isNaN(num)) return '–';
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(num);
 }
 
-function row(cells: (string | number | null | undefined)[]): string {
+function row(cells: unknown[]): string {
   return '| ' + cells.map((c) => String(c ?? '–').replace(/\|/g, '\\|')).join(' | ') + ' |';
 }
 
@@ -36,8 +40,7 @@ function subsection(title: string, content: string): string {
   return `\n### ${title}\n\n${content}\n`;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyRecord = Record<string, any>;
+type AnyRecord = Record<string, unknown>;
 
 function fuhrparkToMd(data: ExportPayload['fuhrpark']): string {
   if (!data) return '';
@@ -110,7 +113,8 @@ function fuhrparkToMd(data: ExportPayload['fuhrpark']): string {
     const header = tableHeader(['Name', 'Typ', 'Entität', 'Größe (KB)', 'Hochgeladen am']);
     const rows = (data.dokumente_metadaten as AnyRecord[]).map((d) => {
       const typ = d.document_type as AnyRecord | null;
-      return row([d.name, typ?.name ?? d.document_type_id, d.entity_type, Math.round((d.file_size ?? 0) / 1024), formatDate(d.uploaded_at)]);
+      const fileSize = typeof d.file_size === 'number' ? d.file_size : Number(d.file_size ?? 0);
+      return row([d.name, typ?.name ?? d.document_type_id, d.entity_type, Math.round((Number.isNaN(fileSize) ? 0 : fileSize) / 1024), formatDate(d.uploaded_at)]);
     });
     parts.push(subsection(`Dokumente – Metadaten (${data.dokumente_metadaten.length})`, header + '\n' + rows.join('\n')));
   }
@@ -244,9 +248,10 @@ function roiToMd(data: ExportPayload['roi']): string {
 function datenkodierungToMd(data: unknown[] | undefined): string {
   if (!data || data.length === 0) return subsection('Datenkodierung', '_Keine Einträge vorhanden._');
   const header = tableHeader(['Code', 'Name', 'Adresse', 'Tags', 'Erstellt am']);
-  const rows = (data as AnyRecord[]).map((d) =>
-    row([d.code, d.name, d.adresse, (d.tags ?? []).join(', '), formatDate(d.created_at)])
-  );
+  const rows = (data as AnyRecord[]).map((d) => {
+    const tags = Array.isArray(d.tags) ? d.tags : [];
+    return row([d.code, d.name, d.adresse, tags.join(', '), formatDate(d.created_at)]);
+  });
   return subsection(`Einträge (${data.length})`, header + '\n' + rows.join('\n'));
 }
 

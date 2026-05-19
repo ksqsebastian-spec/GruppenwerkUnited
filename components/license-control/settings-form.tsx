@@ -26,6 +26,7 @@ import {
   useLicenseSettings,
   useUpdateLicenseSettings,
 } from '@/hooks/use-license-control';
+import { useAutoSave } from '@/hooks/use-auto-save';
 
 /**
  * Formular für Führerscheinkontrolle-Einstellungen
