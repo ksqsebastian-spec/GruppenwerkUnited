@@ -2,16 +2,50 @@ import { supabase } from '@/lib/supabase/client';
 import type { VehicleDriver, VehicleDriverInsert } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
-/**
- * Lädt alle Fahrer-Zuweisungen für ein Fahrzeug
- */
-export async function fetchVehicleDrivers(vehicleId: string): Promise<VehicleDriver[]> {
+const VEHICLE_DRIVER_FROM_VEHICLE = `
+  id, vehicle_id, driver_id, is_primary, assigned_at,
+  driver:drivers(id, first_name, last_name, email, phone, company_id)
+`;
+
+const VEHICLE_DRIVER_FROM_DRIVER = `
+  id, vehicle_id, driver_id, is_primary, assigned_at,
+  vehicle:vehicles(id, license_plate, brand, model, company_id)
+`;
+
+const VEHICLE_DRIVER_BOTH = `
+  id, vehicle_id, driver_id, is_primary, assigned_at,
+  driver:drivers(id, first_name, last_name, email, phone, company_id),
+  vehicle:vehicles(id, license_plate, brand, model, company_id)
+`;
+
+async function assertVehicleBelongsToTenant(vehicleId: string, tenantCompanyId: string): Promise<void> {
+  const { data } = await supabase
+    .from('vehicles')
+    .select('id')
+    .eq('id', vehicleId)
+    .eq('company_id', tenantCompanyId)
+    .maybeSingle();
+  if (!data) throw new Error('Fahrzeug nicht gefunden');
+}
+
+async function assertDriverBelongsToTenant(driverId: string, tenantCompanyId: string): Promise<void> {
+  const { data } = await supabase
+    .from('drivers')
+    .select('id')
+    .eq('id', driverId)
+    .eq('company_id', tenantCompanyId)
+    .maybeSingle();
+  if (!data) throw new Error('Fahrer nicht gefunden');
+}
+
+export async function fetchVehicleDrivers(vehicleId: string, tenantCompanyId?: string | null): Promise<VehicleDriver[]> {
+  if (tenantCompanyId) {
+    await assertVehicleBelongsToTenant(vehicleId, tenantCompanyId);
+  }
+
   const { data, error } = await supabase
     .from('vehicle_drivers')
-    .select(`
-      *,
-      driver:drivers(id, first_name, last_name, email, phone)
-    `)
+    .select(VEHICLE_DRIVER_FROM_VEHICLE)
     .eq('vehicle_id', vehicleId)
     .order('is_primary', { ascending: false });
 
@@ -20,19 +54,17 @@ export async function fetchVehicleDrivers(vehicleId: string): Promise<VehicleDri
     throw new Error(ERROR_MESSAGES.VEHICLE_DRIVER_LOAD_FAILED);
   }
 
-  return data ?? [];
+  return (data ?? []) as unknown as VehicleDriver[];
 }
 
-/**
- * Lädt alle Fahrzeug-Zuweisungen für einen Fahrer
- */
-export async function fetchDriverVehicles(driverId: string): Promise<VehicleDriver[]> {
+export async function fetchDriverVehicles(driverId: string, tenantCompanyId?: string | null): Promise<VehicleDriver[]> {
+  if (tenantCompanyId) {
+    await assertDriverBelongsToTenant(driverId, tenantCompanyId);
+  }
+
   const { data, error } = await supabase
     .from('vehicle_drivers')
-    .select(`
-      *,
-      vehicle:vehicles(id, license_plate, brand, model)
-    `)
+    .select(VEHICLE_DRIVER_FROM_DRIVER)
     .eq('driver_id', driverId)
     .order('is_primary', { ascending: false });
 
@@ -41,15 +73,20 @@ export async function fetchDriverVehicles(driverId: string): Promise<VehicleDriv
     throw new Error(ERROR_MESSAGES.VEHICLE_DRIVER_LOAD_FAILED);
   }
 
-  return data ?? [];
+  return (data ?? []) as unknown as VehicleDriver[];
 }
 
-/**
- * Weist einen Fahrer einem Fahrzeug zu
- */
 export async function assignDriverToVehicle(
-  data: VehicleDriverInsert
+  data: VehicleDriverInsert,
+  tenantCompanyId?: string | null
 ): Promise<VehicleDriver> {
+  if (tenantCompanyId) {
+    await Promise.all([
+      assertVehicleBelongsToTenant(data.vehicle_id, tenantCompanyId),
+      assertDriverBelongsToTenant(data.driver_id, tenantCompanyId),
+    ]);
+  }
+
   // Wenn als Hauptfahrer markiert, erst alle anderen auf nicht-primär setzen
   if (data.is_primary) {
     await supabase
@@ -61,15 +98,10 @@ export async function assignDriverToVehicle(
   const { data: result, error } = await supabase
     .from('vehicle_drivers')
     .insert(data)
-    .select(`
-      *,
-      driver:drivers(id, first_name, last_name, email, phone),
-      vehicle:vehicles(id, license_plate, brand, model)
-    `)
+    .select(VEHICLE_DRIVER_BOTH)
     .single();
 
   if (error) {
-    // Unique constraint - Fahrer bereits zugewiesen
     if (error.code === '23505') {
       throw new Error(ERROR_MESSAGES.VEHICLE_DRIVER_ALREADY_ASSIGNED);
     }
@@ -77,16 +109,18 @@ export async function assignDriverToVehicle(
     throw new Error(ERROR_MESSAGES.VEHICLE_DRIVER_ASSIGN_FAILED);
   }
 
-  return result;
+  return result as unknown as VehicleDriver;
 }
 
-/**
- * Entfernt eine Fahrer-Fahrzeug-Zuweisung
- */
 export async function unassignDriverFromVehicle(
   vehicleId: string,
-  driverId: string
+  driverId: string,
+  tenantCompanyId?: string | null
 ): Promise<void> {
+  if (tenantCompanyId) {
+    await assertVehicleBelongsToTenant(vehicleId, tenantCompanyId);
+  }
+
   const { error } = await supabase
     .from('vehicle_drivers')
     .delete()
@@ -99,14 +133,16 @@ export async function unassignDriverFromVehicle(
   }
 }
 
-/**
- * Setzt einen Fahrer als Hauptfahrer für ein Fahrzeug
- */
 export async function setPrimaryDriver(
   vehicleId: string,
-  driverId: string
+  driverId: string,
+  tenantCompanyId?: string | null
 ): Promise<void> {
-  // Erst alle auf nicht-primär setzen
+  if (tenantCompanyId) {
+    await assertVehicleBelongsToTenant(vehicleId, tenantCompanyId);
+  }
+
+  // Zwei Updates: erst Reset aller Primary-Flags, dann gewählten Fahrer markieren.
   const { error: resetError } = await supabase
     .from('vehicle_drivers')
     .update({ is_primary: false })
@@ -117,7 +153,6 @@ export async function setPrimaryDriver(
     throw new Error(ERROR_MESSAGES.VEHICLE_DRIVER_UPDATE_FAILED);
   }
 
-  // Dann den ausgewählten Fahrer als Hauptfahrer setzen
   const { error } = await supabase
     .from('vehicle_drivers')
     .update({ is_primary: true })

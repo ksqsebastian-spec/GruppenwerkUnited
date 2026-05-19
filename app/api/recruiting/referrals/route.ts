@@ -1,8 +1,8 @@
 import { requireAuth } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCreateSchema, paginationSchema } from "@/lib/modules/recruiting/validators";
-import { checkRateLimit, RATE_LIMITS } from "@/lib/modules/recruiting/rate-limit";
-import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const VALID_STATUSES = ["offen", "eingestellt", "probezeit_bestanden", "ausgezahlt"] as const;
 

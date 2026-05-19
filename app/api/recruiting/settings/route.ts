@@ -1,7 +1,7 @@
 import { requireAdmin } from '@/lib/modules/recruiting/auth';
 import { validateOrigin } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // GET /api/recruiting/settings — get app settings
 export async function GET() {

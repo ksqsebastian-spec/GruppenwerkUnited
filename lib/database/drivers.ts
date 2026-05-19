@@ -2,8 +2,22 @@ import { supabase } from '@/lib/supabase/client';
 import type { Driver, DriverInsert, DriverUpdate } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
+const DRIVER_LIST_COLUMNS = `
+  id, first_name, last_name, email, phone, license_class, license_expiry,
+  company_id, status, notes, is_license_inspector, is_uvv_instructor, created_at, updated_at,
+  company:companies(id, name),
+  vehicle_drivers(id, is_primary, vehicle:vehicles(id, license_plate))
+`;
+
+const DRIVER_DETAIL_COLUMNS = `
+  id, first_name, last_name, email, phone, license_class, license_expiry,
+  company_id, status, notes, is_license_inspector, is_uvv_instructor, created_at, updated_at,
+  company:companies(id, name),
+  vehicle_drivers(id, is_primary, vehicle:vehicles(id, license_plate, brand, model))
+`;
+
 /**
- * Lädt alle Fahrer
+ * Lädt alle Fahrer. filters.companyId MUSS aus der Session kommen.
  */
 export async function fetchDrivers(filters?: {
   companyId?: string;
@@ -11,15 +25,7 @@ export async function fetchDrivers(filters?: {
 }): Promise<Driver[]> {
   let query = supabase
     .from('drivers')
-    .select(`
-      *,
-      company:companies(id, name),
-      vehicle_drivers(
-        id,
-        is_primary,
-        vehicle:vehicles(id, license_plate)
-      )
-    `)
+    .select(DRIVER_LIST_COLUMNS)
     .order('last_name');
 
   if (filters?.companyId) {
@@ -37,26 +43,20 @@ export async function fetchDrivers(filters?: {
     throw new Error(ERROR_MESSAGES.DRIVER_LOAD_FAILED);
   }
 
-  return data ?? [];
+  return (data ?? []) as unknown as Driver[];
 }
 
-/**
- * Lädt einen einzelnen Fahrer
- */
-export async function fetchDriver(id: string): Promise<Driver | null> {
-  const { data, error } = await supabase
+export async function fetchDriver(id: string, tenantCompanyId?: string | null): Promise<Driver | null> {
+  let query = supabase
     .from('drivers')
-    .select(`
-      *,
-      company:companies(id, name),
-      vehicle_drivers(
-        id,
-        is_primary,
-        vehicle:vehicles(id, license_plate, brand, model)
-      )
-    `)
-    .eq('id', id)
-    .single();
+    .select(DRIVER_DETAIL_COLUMNS)
+    .eq('id', id);
+
+  if (tenantCompanyId) {
+    query = query.eq('company_id', tenantCompanyId);
+  }
+
+  const { data, error } = await query.single();
 
   if (error) {
     if (error.code === 'PGRST116') {
@@ -66,12 +66,9 @@ export async function fetchDriver(id: string): Promise<Driver | null> {
     throw new Error(ERROR_MESSAGES.DRIVER_NOT_FOUND);
   }
 
-  return data;
+  return data as unknown as Driver;
 }
 
-/**
- * Erstellt einen neuen Fahrer
- */
 export async function createDriver(driver: DriverInsert): Promise<Driver> {
   const { data, error } = await supabase
     .from('drivers')
@@ -87,16 +84,15 @@ export async function createDriver(driver: DriverInsert): Promise<Driver> {
   return data;
 }
 
-/**
- * Aktualisiert einen Fahrer
- */
-export async function updateDriver(id: string, updates: DriverUpdate): Promise<Driver> {
-  const { data, error } = await supabase
+export async function updateDriver(id: string, updates: DriverUpdate, tenantCompanyId?: string | null): Promise<Driver> {
+  let query = supabase
     .from('drivers')
     .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
+    .eq('id', id);
+
+  if (tenantCompanyId) query = query.eq('company_id', tenantCompanyId);
+
+  const { data, error } = await query.select().single();
 
   if (error) {
     console.error('Fehler beim Aktualisieren des Fahrers:', error);
@@ -106,14 +102,15 @@ export async function updateDriver(id: string, updates: DriverUpdate): Promise<D
   return data;
 }
 
-/**
- * Archiviert einen Fahrer
- */
-export async function archiveDriver(id: string): Promise<void> {
-  const { error } = await supabase
+export async function archiveDriver(id: string, tenantCompanyId?: string | null): Promise<void> {
+  let query = supabase
     .from('drivers')
     .update({ status: 'archived', updated_at: new Date().toISOString() })
     .eq('id', id);
+
+  if (tenantCompanyId) query = query.eq('company_id', tenantCompanyId);
+
+  const { error } = await query;
 
   if (error) {
     console.error('Fehler beim Archivieren des Fahrers:', error);

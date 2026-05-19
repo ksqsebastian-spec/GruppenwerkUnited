@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { logAudit } from "@/lib/modules/recruiting/audit";
 
 // POST /api/referrals/[id]/complete — mark empfehlung as eingestellt

@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchVehicle, updateVehicle, archiveVehicle, deleteVehicle, syncLeasingAppointment, syncLeasingCost } from '@/lib/database/vehicles';
+import { requireFuhrparkScope } from '@/lib/auth/fuhrpark-scope';
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+  const scope = await requireFuhrparkScope();
+  if (scope instanceof NextResponse) return scope;
+
   const { id } = await params;
   try {
-    const row = await fetchVehicle(id);
+    const row = await fetchVehicle(id, scope.companyId);
     if (!row) return NextResponse.json({ error: 'Fahrzeug nicht gefunden' }, { status: 404 });
     return NextResponse.json(row);
   } catch {
@@ -13,34 +17,44 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+  const scope = await requireFuhrparkScope();
+  if (scope instanceof NextResponse) return scope;
+
   const { id } = await params;
-  let body: unknown;
+  let body: Record<string, unknown>;
   try {
-    body = await request.json();
+    body = await request.json() as Record<string, unknown>;
   } catch {
     return NextResponse.json({ error: 'Ungültiges JSON' }, { status: 400 });
   }
-  const b = body as Record<string, unknown>;
   try {
-    if (b.action === 'archive') {
-      await archiveVehicle(id);
+    if (body.action === 'archive') {
+      await archiveVehicle(id, scope.companyId);
       return NextResponse.json({ success: true });
     }
-    const row = await updateVehicle(id, b as Parameters<typeof updateVehicle>[1]);
+    // company_id darf nicht via Update verändert werden (Tenant-Isolation)
+    delete body.company_id;
+    const row = await updateVehicle(id, body as Parameters<typeof updateVehicle>[1], scope.companyId);
     await Promise.all([
-      syncLeasingAppointment(id, (b.leasing_end_date as string | null) ?? null, !!(b.is_leased)),
-      syncLeasingCost(id, b.leasing_rate as number | null | undefined, !!(b.is_leased)),
+      syncLeasingAppointment(id, (body.leasing_end_date as string | null) ?? null, !!body.is_leased),
+      syncLeasingCost(id, body.leasing_rate as number | null | undefined, !!body.is_leased),
     ]);
     return NextResponse.json(row);
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Fahrzeug konnte nicht aktualisiert werden' }, { status: 500 });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Fahrzeug konnte nicht aktualisiert werden' },
+      { status: 500 }
+    );
   }
 }
 
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+  const scope = await requireFuhrparkScope();
+  if (scope instanceof NextResponse) return scope;
+
   const { id } = await params;
   try {
-    await deleteVehicle(id);
+    await deleteVehicle(id, scope.companyId);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: 'Fahrzeug konnte nicht gelöscht werden' }, { status: 500 });

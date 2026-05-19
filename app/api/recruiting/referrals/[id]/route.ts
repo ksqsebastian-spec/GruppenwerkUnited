@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/modules/recruiting/auth';
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/modules/recruiting/supabase-admin";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // GET /api/recruiting/referrals/[id] — einzelne Empfehlung abrufen
 export async function GET(

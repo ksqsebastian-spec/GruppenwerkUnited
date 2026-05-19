@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchDamage, updateDamage, deleteDamage } from '@/lib/database/damages';
+import { requireFuhrparkScope } from '@/lib/auth/fuhrpark-scope';
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+  const scope = await requireFuhrparkScope();
+  if (scope instanceof NextResponse) return scope;
+
   const { id } = await params;
   try {
-    const row = await fetchDamage(id);
+    const row = await fetchDamage(id, scope.companyId);
     if (!row) return NextResponse.json({ error: 'Schaden nicht gefunden' }, { status: 404 });
     return NextResponse.json(row);
   } catch {
@@ -13,6 +17,9 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+  const scope = await requireFuhrparkScope();
+  if (scope instanceof NextResponse) return scope;
+
   const { id } = await params;
   let body: unknown;
   try {
@@ -21,17 +28,23 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ error: 'Ungültiges JSON' }, { status: 400 });
   }
   try {
-    const row = await updateDamage(id, body as Parameters<typeof updateDamage>[1]);
+    const row = await updateDamage(id, body as Parameters<typeof updateDamage>[1], scope.companyId);
     return NextResponse.json(row);
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Schaden konnte nicht aktualisiert werden' }, { status: 500 });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Schaden konnte nicht aktualisiert werden' },
+      { status: 500 }
+    );
   }
 }
 
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+  const scope = await requireFuhrparkScope();
+  if (scope instanceof NextResponse) return scope;
+
   const { id } = await params;
   try {
-    await deleteDamage(id);
+    await deleteDamage(id, scope.companyId);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: 'Schaden konnte nicht gelöscht werden' }, { status: 500 });

@@ -1,13 +1,86 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireFuhrparkScope } from '@/lib/auth/fuhrpark-scope';
 
+/**
+ * Dashboard-Daten für den Fuhrpark.
+ * 8 parallele Queries, alle gefiltert auf die Tenant-Firma (sofern nicht Admin).
+ */
 export async function GET(): Promise<NextResponse> {
+  const scope = await requireFuhrparkScope();
+  if (scope instanceof NextResponse) return scope;
+
   try {
     const db = createAdminClient();
     const now = new Date();
     const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
     const in30Days = new Date(now);
     in30Days.setDate(now.getDate() + 30);
+
+    // Builder-Helfer: pure column-Filter, wenn Tenant-Scope aktiv
+    const scopeFilter = scope.companyId;
+
+    const vehicleCountQ = db.from('vehicles').select('*', { count: 'exact', head: true }).eq('status', 'active');
+    if (scopeFilter) vehicleCountQ.eq('company_id', scopeFilter);
+
+    // Schäden zählen — Filterung über vehicle.company_id via inner-Join
+    const openDamagesQ = scopeFilter
+      ? db.from('damages')
+          .select('id, vehicle:vehicles!inner(company_id)', { count: 'exact', head: true })
+          .in('status', ['reported', 'in_repair'])
+          .eq('vehicle.company_id', scopeFilter)
+      : db.from('damages').select('*', { count: 'exact', head: true }).in('status', ['reported', 'in_repair']);
+
+    const driverCountQ = db.from('drivers').select('*', { count: 'exact', head: true }).eq('status', 'active');
+    if (scopeFilter) driverCountQ.eq('company_id', scopeFilter);
+
+    const costsQ = scopeFilter
+      ? db.from('costs')
+          .select('amount, vehicle:vehicles!inner(company_id)')
+          .gte('date', firstOfMonth)
+          .eq('vehicle.company_id', scopeFilter)
+      : db.from('costs').select('amount').gte('date', firstOfMonth);
+
+    const warningAppointmentsQ = scopeFilter
+      ? db.from('appointments')
+          .select('id, due_date, status, notes, vehicle:vehicles!inner(id, license_plate, brand, model, company_id), appointment_type:appointment_types(id, name, color)')
+          .neq('status', 'completed')
+          .lte('due_date', in30Days.toISOString())
+          .eq('vehicle.company_id', scopeFilter)
+          .order('due_date', { ascending: true })
+      : db.from('appointments')
+          .select('id, due_date, status, notes, vehicle:vehicles(id, license_plate, brand, model), appointment_type:appointment_types(id, name, color)')
+          .neq('status', 'completed')
+          .lte('due_date', in30Days.toISOString())
+          .order('due_date', { ascending: true });
+
+    const vehicleActivitiesQ = db.from('vehicles')
+      .select('id, license_plate, created_at')
+      .order('created_at', { ascending: false })
+      .limit(3);
+    if (scopeFilter) vehicleActivitiesQ.eq('company_id', scopeFilter);
+
+    const damageActivitiesQ = scopeFilter
+      ? db.from('damages')
+          .select('id, description, created_at, vehicle:vehicles!inner(license_plate, company_id)')
+          .eq('vehicle.company_id', scopeFilter)
+          .order('created_at', { ascending: false })
+          .limit(3)
+      : db.from('damages')
+          .select('id, description, created_at, vehicle:vehicles(license_plate)')
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+    const costActivitiesQ = scopeFilter
+      ? db.from('costs')
+          .select('id, amount, created_at, vehicle:vehicles!inner(license_plate, company_id)')
+          .eq('vehicle.company_id', scopeFilter)
+          .order('created_at', { ascending: false })
+          .limit(3)
+      : db.from('costs')
+          .select('id, amount, created_at, vehicle:vehicles(license_plate)')
+          .order('created_at', { ascending: false })
+          .limit(3);
 
     const [
       vehicleCountResult,
@@ -19,29 +92,16 @@ export async function GET(): Promise<NextResponse> {
       damageActivitiesResult,
       costActivitiesResult,
     ] = await Promise.all([
-      // Anzahl aktiver Fahrzeuge
-      db.from('vehicles').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      // Anzahl offener Schäden
-      db.from('damages').select('*', { count: 'exact', head: true }).in('status', ['reported', 'in_repair']),
-      // Anzahl aktiver Fahrer
-      db.from('drivers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      // Kosten im aktuellen Monat
-      db.from('costs').select('amount').gte('date', firstOfMonth),
-      // Termine mit Warnung (nicht abgeschlossen, fällig innerhalb 30 Tage)
-      db.from('appointments')
-        .select('*, vehicle:vehicles(id, license_plate, brand, model)')
-        .neq('status', 'completed')
-        .lte('due_date', in30Days.toISOString())
-        .order('due_date', { ascending: true }),
-      // Letzte 3 Fahrzeug-Aktivitäten
-      db.from('vehicles').select('id, license_plate, created_at').order('created_at', { ascending: false }).limit(3),
-      // Letzte 3 Schaden-Aktivitäten
-      db.from('damages').select('id, description, created_at, vehicle:vehicles(license_plate)').order('created_at', { ascending: false }).limit(3),
-      // Letzte 3 Kosten-Aktivitäten
-      db.from('costs').select('id, amount, created_at, vehicle:vehicles(license_plate)').order('created_at', { ascending: false }).limit(3),
+      vehicleCountQ,
+      openDamagesQ,
+      driverCountQ,
+      costsQ,
+      warningAppointmentsQ,
+      vehicleActivitiesQ,
+      damageActivitiesQ,
+      costActivitiesQ,
     ]);
 
-    // Fehlerprüfung für alle Abfragen
     if (vehicleCountResult.error) throw vehicleCountResult.error;
     if (openDamagesResult.error) throw openDamagesResult.error;
     if (driverCountResult.error) throw driverCountResult.error;
@@ -51,13 +111,11 @@ export async function GET(): Promise<NextResponse> {
     if (damageActivitiesResult.error) throw damageActivitiesResult.error;
     if (costActivitiesResult.error) throw costActivitiesResult.error;
 
-    // Kosten für den Monat summieren
     const costsThisMonth = (costsResult.data ?? []).reduce(
       (sum: number, row: { amount: number }) => sum + Number(row.amount),
       0
     );
 
-    // Aktivitäten zusammenführen und sortieren
     const activities = [
       ...(vehicleActivitiesResult.data ?? []).map((v) => ({
         id: `vehicle-${v.id}`,
@@ -68,10 +126,12 @@ export async function GET(): Promise<NextResponse> {
       ...(damageActivitiesResult.data ?? []).map((d) => {
         const vehicle = d.vehicle as unknown as { license_plate: string } | null;
         const desc = d.description as string | null;
+        const truncated = desc?.substring(0, 50) ?? '';
+        const ellipsis = (desc?.length ?? 0) > 50 ? '...' : '';
         return {
           id: `damage-${d.id}`,
           type: 'damage',
-          description: `Schaden gemeldet: ${desc?.substring(0, 50) ?? ''}${(desc?.length ?? 0) > 50 ? '...' : ''} (${vehicle?.license_plate ?? 'Unbekannt'})`,
+          description: `Schaden gemeldet: ${truncated}${ellipsis} (${vehicle?.license_plate ?? 'Unbekannt'})`,
           created_at: d.created_at,
         };
       }),

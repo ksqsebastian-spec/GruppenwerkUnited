@@ -1,8 +1,8 @@
 import { requireAuth } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCreateSchema, paginationSchema } from "@/lib/modules/affiliate/validators";
-import { checkRateLimit, RATE_LIMITS } from "@/lib/modules/affiliate/rate-limit";
-import { createAdminClient } from "@/lib/modules/affiliate/supabase-admin";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // GET /api/affiliate/referrals — Empfehlungen auflisten
 export async function GET(request: NextRequest) {
