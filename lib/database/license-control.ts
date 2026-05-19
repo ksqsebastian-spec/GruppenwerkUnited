@@ -25,6 +25,8 @@ export {
   createLicenseEmployee,
   updateLicenseEmployee,
   archiveLicenseEmployee,
+  assertLicenseEmployeeInScope,
+  assertLicenseEmployeesInScope,
 } from './license-control-employees';
 export {
   fetchDriversWithLicenseStatus,

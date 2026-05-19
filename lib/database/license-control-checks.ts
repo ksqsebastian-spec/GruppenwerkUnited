@@ -44,6 +44,7 @@ export async function fetchDriversWithLicenseStatus(
     .select(DRIVER_WITH_CHECKS_SELECT)
     .order('last_name');
 
+  if (filters?.companyId) query = query.eq('company_id', filters.companyId);
   if (filters?.status) query = query.eq('status', filters.status);
   if (filters?.search) {
     query = query.or(
@@ -195,9 +196,10 @@ export async function deleteLicenseCheck(id: string): Promise<void> {
 
 /**
  * Statistik-Aggregation. Lädt alle aktiven Fahrer einmal und zählt die Buckets.
+ * Wenn companyId gesetzt ist, werden nur Fahrer dieser Firma berücksichtigt.
  */
-export async function fetchLicenseControlStats(): Promise<LicenseControlStats> {
-  const drivers = await fetchDriversWithLicenseStatus({ status: 'active' });
+export async function fetchLicenseControlStats(companyId?: string): Promise<LicenseControlStats> {
+  const drivers = await fetchDriversWithLicenseStatus({ status: 'active', companyId });
 
   return {
     totalEmployees: drivers.length,
@@ -209,9 +211,10 @@ export async function fetchLicenseControlStats(): Promise<LicenseControlStats> {
 
 /**
  * Zählt Fahrer mit fälligen/überfälligen Kontrollen (für Sidebar-Badge).
+ * Wenn companyId gesetzt ist, werden nur Fahrer dieser Firma berücksichtigt.
  */
-export async function fetchLicenseWarningCount(): Promise<number> {
-  const drivers = await fetchDriversWithLicenseStatus({ status: 'active' });
+export async function fetchLicenseWarningCount(companyId?: string): Promise<number> {
+  const drivers = await fetchDriversWithLicenseStatus({ status: 'active', companyId });
   return drivers.filter(
     (d) => d.check_status === 'overdue' || d.check_status === 'due_soon'
   ).length;

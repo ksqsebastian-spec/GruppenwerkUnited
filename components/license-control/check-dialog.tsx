@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
-import { Loader2, Upload, X, FileText, ImageIcon } from 'lucide-react';
-
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,7 +32,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
 import {
   quickLicenseCheckSchema,
   type QuickLicenseCheckFormData,
@@ -46,6 +44,7 @@ import {
 } from '@/hooks/use-license-control';
 import { useUploadDocument, useDocumentTypes } from '@/hooks/use-documents';
 import type { LicenseCheckEmployee } from '@/types';
+import { CheckDialogFileUpload } from './check-dialog-file-upload';
 
 interface CheckDialogProps {
   open: boolean;
@@ -56,11 +55,7 @@ interface CheckDialogProps {
 /**
  * Dialog für schnelle Führerscheinkontrolle mit optionalem Dokument-Upload
  */
-export function CheckDialog({
-  open,
-  onOpenChange,
-  employee,
-}: CheckDialogProps): React.JSX.Element {
+export function CheckDialog({ open, onOpenChange, employee }: CheckDialogProps): React.JSX.Element {
   const { data: inspectors = [] } = useLicenseInspectors('active');
   const { data: settings } = useLicenseSettings();
   const { data: documentTypes = [] } = useDocumentTypes();
@@ -68,12 +63,10 @@ export function CheckDialog({
   const uploadDocument = useUploadDocument();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Finde Dokumenttyp "Führerschein" oder nimm den ersten
-  const licenseDocType = documentTypes.find(
-    (t) => t.name.toLowerCase().includes('führerschein')
-  ) || documentTypes[0];
+  const licenseDocType =
+    documentTypes.find((t) => t.name.toLowerCase().includes('führerschein')) || documentTypes[0];
 
   const form = useForm<QuickLicenseCheckFormData>({
     resolver: zodResolver(quickLicenseCheckSchema),
@@ -87,46 +80,16 @@ export function CheckDialog({
   // Formular und Datei zurücksetzen wenn Dialog geöffnet wird
   useEffect(() => {
     if (open) {
-      form.reset({
-        checked_by_id: '',
-        license_verified: false,
-        notes: '',
-      });
+      form.reset({ checked_by_id: '', license_verified: false, notes: '' });
       setSelectedFile(null);
     }
   }, [open, form]);
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>): void => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Prüfe Dateigröße (max 10 MB)
-      if (file.size > 10 * 1024 * 1024) {
-        alert('Die Datei ist zu groß. Maximal 10 MB erlaubt.');
-        return;
-      }
-      // Prüfe Dateityp
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        alert('Ungültiges Dateiformat. Erlaubt: PDF, JPG, PNG, WEBP.');
-        return;
-      }
-      setSelectedFile(file);
-    }
-  };
-
-  const handleRemoveFile = (): void => {
-    setSelectedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
 
   const handleSubmit = async (data: QuickLicenseCheckFormData): Promise<void> => {
     const today = format(new Date(), 'yyyy-MM-dd');
     const intervalMonths = settings?.check_interval_months ?? 6;
     const nextCheckDue = calculateNextCheckDue(today, intervalMonths);
 
-    // 1. Kontrolle erstellen
     const newCheck = await createCheck.mutateAsync({
       employee_id: employee.id,
       driver_id: null,
@@ -137,7 +100,6 @@ export function CheckDialog({
       notes: data.notes || null,
     });
 
-    // 2. Falls Datei ausgewählt, Dokument hochladen
     if (selectedFile && newCheck?.id && licenseDocType?.id) {
       await uploadDocument.mutateAsync({
         entityType: 'license_check',
@@ -197,10 +159,7 @@ export function CheckDialog({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>Führerschein im Original vorgelegt</FormLabel>
@@ -212,46 +171,7 @@ export function CheckDialog({
               )}
             />
 
-            {/* Datei-Upload */}
-            <div className="space-y-2">
-              <FormLabel>Führerschein-Scan (optional)</FormLabel>
-              {selectedFile ? (
-                <div className="flex items-center gap-2 rounded-md border p-3 bg-muted/50">
-                  {selectedFile.type.startsWith('image/') ? (
-                    <ImageIcon className="h-5 w-5 text-blue-500" />
-                  ) : (
-                    <FileText className="h-5 w-5 text-red-500" />
-                  )}
-                  <span className="flex-1 text-sm truncate">{selectedFile.name}</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={handleRemoveFile}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div
-                  className="flex items-center justify-center gap-2 rounded-md border border-dashed p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    Klicken zum Hochladen (PDF, JPG, PNG)
-                  </span>
-                </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.webp"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
+            <CheckDialogFileUpload selectedFile={selectedFile} onFileSelected={setSelectedFile} />
 
             <FormField
               control={form.control}
@@ -276,11 +196,7 @@ export function CheckDialog({
             </div>
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Abbrechen
               </Button>
               <Button type="submit" disabled={isSubmitting}>

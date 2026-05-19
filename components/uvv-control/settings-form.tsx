@@ -9,9 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useUvvSettings, useUpdateUvvSettings } from '@/hooks/use-uvv-control';
-import { uvvSettingsSchema, type UvvSettingsFormData } from '@/lib/validations/uvv-control';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUvvSettings, useUpdateUvvSettings } from '@/hooks/use-uvv-control';
+import { useAutoSave } from '@/hooks/use-auto-save';
+import { uvvSettingsSchema, type UvvSettingsFormData } from '@/lib/validations/uvv-control';
 
 /**
  * Formular für UVV-Einstellungen
@@ -24,6 +25,7 @@ export function SettingsForm(): React.JSX.Element {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isDirty },
   } = useForm<UvvSettingsFormData>({
     resolver: zodResolver(uvvSettingsSchema),
@@ -32,6 +34,13 @@ export function SettingsForm(): React.JSX.Element {
       warning_days_before: 30,
       default_topics: '',
     },
+  });
+
+  // Auto-Save: Formulardaten lokal sichern, falls die Seite verlassen wird
+  const { clear: clearAutoSave } = useAutoSave<UvvSettingsFormData>({
+    key: 'uvv-settings-form',
+    data: watch(),
+    onRestore: (saved) => reset(saved),
   });
 
   // Formular mit geladenen Daten befüllen
@@ -47,6 +56,7 @@ export function SettingsForm(): React.JSX.Element {
 
   const onSubmit = async (data: UvvSettingsFormData): Promise<void> => {
     await updateSettings.mutateAsync(data);
+    clearAutoSave();
   };
 
   if (isLoading) {

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateLicenseInspector, archiveLicenseInspector } from '@/lib/database/license-control';
+import { requireFuhrparkScope } from '@/lib/auth/fuhrpark-scope';
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+  const scope = await requireFuhrparkScope();
+  if (scope instanceof NextResponse) return scope;
+
   const { id } = await params;
   let body: unknown;
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Ungültiges JSON' }, { status: 400 }); }

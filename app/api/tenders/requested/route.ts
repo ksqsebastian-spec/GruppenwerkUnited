@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireSession } from '@/lib/auth/api'
 
 /**
  * POST /api/tenders/requested
  * Setzt das "requested"-Flag einer VOB-Ausschreibung (angefordert / nicht angefordert).
+ * Zugriff: eingeloggte Benutzer (VOB ist modul-geschützt via proxy.ts).
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const session = await requireSession()
+  if (session instanceof NextResponse) return session
+
   let id: string
   let requested: boolean
 
