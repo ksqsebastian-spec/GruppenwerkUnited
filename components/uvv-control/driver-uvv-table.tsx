@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/select';
 import { UvvStatusBadge } from './uvv-status-badge';
 import { UvvCheckDialog } from './uvv-check-dialog';
-import { GeneratePdfButton } from './generate-pdf-button';
+import { generateUvvInstructionPdf } from '@/lib/pdf/uvv-instruction';
 import { useDriversWithUvvStatus } from '@/hooks/use-uvv-control';
 import { useCompanies } from '@/hooks/use-companies';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -195,8 +195,6 @@ export function DriverUvvTable({
                           <DropdownMenuItem
                             onClick={() => {
                               // PDF generieren – Einstellungen über API laden (kein direkter DB-Zugriff im Client)
-                              const { generateUvvInstructionPdf } =
-                                require('@/lib/pdf/uvv-instruction');
                               fetch('/api/uvv-control/settings')
                                 .then((r) => r.json())
                                 .then((settings) => {

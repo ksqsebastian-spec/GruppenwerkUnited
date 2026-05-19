@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Wrench, Clock, LogOut, Download } from 'lucide-react';
+import { Wrench, Clock, LogOut } from 'lucide-react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { MODULES, MODULE_ICONS, type ModuleConfig } from '@/lib/modules';
 import { useAuth } from '@/components/providers/auth-provider';

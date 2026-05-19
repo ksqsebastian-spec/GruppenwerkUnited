@@ -32,7 +32,7 @@ export function RecentFeed({ tenders, latestScanDate }: RecentFeedProps) {
             Noch keine Ausschreibungen.
           </p>
         )}
-        {uniqueTenders.map((tender, i) => {
+        {uniqueTenders.map((tender) => {
           const isNew = !!latestScanDate && tender.scan_date === latestScanDate
           const days = daysUntilDeadline(tender.deadline_date)
 

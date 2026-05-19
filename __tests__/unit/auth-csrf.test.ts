@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 // validateOrigin von recruiting und affiliate sind identisch implementiert
 // Wir testen die Logik direkt durch Nachbildung der Funktion

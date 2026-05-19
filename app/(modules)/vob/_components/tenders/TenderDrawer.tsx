@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { UrgencyBadge } from './UrgencyBadge'
-import { formatDeadline, daysUntilDeadline, getRelevanceBgClass, computeUrgency } from '@/lib/modules/vob/utils'
+import { daysUntilDeadline, getRelevanceBgClass, computeUrgency } from '@/lib/modules/vob/utils'
 import { ExternalLink, Download, Trash2, Check } from 'lucide-react'
 import { suggestCompany } from '@/lib/modules/vob/match-suggest'
 import type { Company, DashboardRow } from '@/lib/modules/vob/types'

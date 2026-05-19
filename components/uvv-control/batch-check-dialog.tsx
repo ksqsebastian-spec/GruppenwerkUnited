@@ -46,7 +46,6 @@ import {
   useDriversWithUvvStatus,
   useCreateBatchUvvChecks,
 } from '@/hooks/use-uvv-control';
-import type { DriverWithUvvStatus } from '@/types';
 
 interface BatchCheckDialogProps {
   /** Ob der Dialog geöffnet ist */

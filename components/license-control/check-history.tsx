@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { CheckCircle, XCircle, Trash2, FileText, Paperclip, Download } from 'lucide-react';
+import { CheckCircle, XCircle, Trash2, FileText, Paperclip } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {

@@ -25,7 +25,6 @@ import type { Datenkodierung } from '@/types';
 interface KodierungTableProps {
   daten: Datenkodierung[];
   onNeuErstellen: () => void;
-  activeTag?: string;
   onTagFilter: (tag: string) => void;
 }
 
@@ -66,7 +65,7 @@ function CopyButton({ code }: CopyButtonProps): React.JSX.Element {
   );
 }
 
-export function KodierungTable({ daten, onNeuErstellen, activeTag, onTagFilter }: KodierungTableProps): React.JSX.Element {
+export function KodierungTable({ daten, onNeuErstellen, onTagFilter }: KodierungTableProps): React.JSX.Element {
   const [detailDatensatz, setDetailDatensatz] = useState<Datenkodierung | null>(null);
   const [loeschenId, setLoeschenId] = useState<string | null>(null);
 

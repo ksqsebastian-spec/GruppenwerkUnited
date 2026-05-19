@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
  */
 test.describe('Auth Middleware – Weiterleitungen', () => {
   test('Root-Seite leitet nicht-authentifizierte Nutzer zu /login weiter', async ({ page }) => {
-    const response = await page.goto('/');
+    await page.goto('/');
     // Entweder direkt /login oder nach Redirect
     await expect(page).toHaveURL(/\/(login)?/, { timeout: 5000 });
   });

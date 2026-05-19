@@ -10,7 +10,6 @@ import {
   Pencil,
   Archive,
   Mail,
-  Building,
   CreditCard,
   Calendar,
   FileText,

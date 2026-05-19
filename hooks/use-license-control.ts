@@ -224,7 +224,7 @@ export function useCreateBatchLicenseChecks() {
 export function useDeleteLicenseCheck() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, employeeId }: { id: string; employeeId: string }) =>
+    mutationFn: ({ id }: { id: string; employeeId: string }) =>
       apiFetch<{ success: boolean }>('/api/license-control/checks', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['license-checks', variables.employeeId] });

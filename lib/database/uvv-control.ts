@@ -12,7 +12,6 @@ import type {
   UvvControlStats,
   DriverWithUvvStatus,
   UvvDriverFilters,
-  Driver,
 } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 

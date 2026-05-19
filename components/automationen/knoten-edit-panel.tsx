@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
-import { getAppTypKonfiguration, APP_TYPEN } from '@/lib/automationen/app-typen';
+import { APP_TYPEN } from '@/lib/automationen/app-typen';
 import { useUpdateKnoten, useDeleteKnoten } from '@/hooks/use-automationen';
 import type { AutomatisierungsKnoten, AutomatisierungAppTyp } from '@/types';
 

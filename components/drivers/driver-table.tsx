@@ -10,7 +10,6 @@ import {
   Pencil,
   Eye,
   Archive,
-  Trash2,
   User,
   AlertTriangle,
   Mail,

@@ -8,7 +8,7 @@ export interface ReferralData extends ReferralFormData {
   refCode: string;
 }
 
-const nameRegex = /^[a-zA-ZäöüÄÖÜßéèêàáâ\s\-]+$/;
+const nameRegex = /^[a-zA-ZäöüÄÖÜßéèêàáâ\s-]+$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export interface ValidationErrors {

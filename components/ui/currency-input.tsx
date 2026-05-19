@@ -100,7 +100,7 @@ export function CurrencyInput({
     const input = e.target.value;
 
     // Nur erlaubte Zeichen: Zahlen, Punkt, Komma
-    const filtered = input.replace(/[^0-9.,\-]/g, '');
+    const filtered = input.replace(/[^0-9.,-]/g, '');
     setDisplayValue(filtered);
 
     // Sofort parsen und onChange aufrufen

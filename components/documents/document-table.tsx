@@ -176,8 +176,8 @@ function getFileIcon(mimeType: string): React.JSX.Element {
  */
 export function DocumentTable({
   documents,
-  sortField,
-  sortDirection,
+  sortField: _sortField,
+  sortDirection: _sortDirection,
   onSortChange,
 }: DocumentTableProps): React.JSX.Element {
   const deleteMutation = useDeleteDocument();
