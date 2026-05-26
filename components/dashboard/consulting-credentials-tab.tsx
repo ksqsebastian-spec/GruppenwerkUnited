@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, Lock, Unlock, Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Lock, Unlock, Eye, EyeOff, ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +53,8 @@ export function ConsultingCredentialsTab({ companyId }: Props): React.JSX.Elemen
   const [unlockInput, setUnlockInput] = useState('');
   const [showUnlockInput, setShowUnlockInput] = useState(false);
   const [showPwField, setShowPwField] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const [dialog, setDialog] = useState<{ open: boolean; editing: ConsultingCredential | null }>({
     open: false,
@@ -80,6 +82,7 @@ export function ConsultingCredentialsTab({ companyId }: Props): React.JSX.Elemen
   const handleLock = (): void => {
     sessionStorage.removeItem(SESSION_KEY);
     setUnlocked(false);
+    setShowUnlockInput(false);
   };
 
   const openAdd = (): void => {
@@ -128,22 +131,45 @@ export function ConsultingCredentialsTab({ companyId }: Props): React.JSX.Elemen
     }
   };
 
+  const handleLogoUpload = async (file: File): Promise<void> => {
+    if (!dialog.editing?.id) {
+      toast.error('Erst speichern, dann Logo hochladen');
+      return;
+    }
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('credential_id', dialog.editing.id);
+      const res = await fetch('/api/consulting/credentials/logo', { method: 'POST', body: fd });
+      if (!res.ok) throw new Error('Upload fehlgeschlagen');
+      const { logo_url } = await res.json() as { logo_url: string };
+      setForm((f) => ({ ...f, logo_url }));
+      toast.success('Logo hochgeladen');
+    } catch {
+      toast.error('Logo-Upload fehlgeschlagen');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   const isPending = createMutation.isPending || updateMutation.isPending;
 
-  return (
-    <div className="flex-1 min-w-0 flex flex-col gap-3">
-      {/* Toolbar */}
-      <div className="flex items-center gap-2">
-        {unlocked ? (
-          <button
-            type="button"
-            onClick={handleLock}
-            className="flex items-center gap-1.5 text-[12px] text-[#22C55E] hover:text-[#16A34A] transition-colors"
-          >
-            <Unlock className="h-3.5 w-3.5" />
-            Entsperrt
-          </button>
-        ) : showUnlockInput ? (
+  /* ── Locked gate ── */
+  if (!unlocked) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-4">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-12 w-12 rounded-full bg-[#f5f5f5] flex items-center justify-center">
+            <Lock className="h-5 w-5 text-[#a3a3a3]" />
+          </div>
+          <div className="text-center">
+            <p className="text-[14px] font-medium text-[#000000]">Zugänge gesperrt</p>
+            <p className="text-[12px] text-[#a3a3a3] mt-0.5">Passwort eingeben um fortzufahren</p>
+          </div>
+        </div>
+
+        {showUnlockInput ? (
           <div className="flex items-center gap-2">
             <Input
               autoFocus
@@ -155,25 +181,33 @@ export function ConsultingCredentialsTab({ companyId }: Props): React.JSX.Elemen
                 if (e.key === 'Escape') setShowUnlockInput(false);
               }}
               placeholder="Passwort…"
-              className="h-7 text-xs w-32"
+              className="h-9 text-sm w-40"
             />
-            <Button size="sm" onClick={handleUnlock} className="h-7 text-xs px-3">
-              Entsperren
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setShowUnlockInput(false)} className="h-7 text-xs px-2">
-              Abbrechen
-            </Button>
+            <Button size="sm" onClick={handleUnlock} className="h-9">Entsperren</Button>
+            <Button size="sm" variant="ghost" onClick={() => setShowUnlockInput(false)} className="h-9">Abbrechen</Button>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => setShowUnlockInput(true)}
-            className="flex items-center gap-1.5 text-[12px] text-[#a3a3a3] hover:text-[#000000] transition-colors"
-          >
-            <Lock className="h-3.5 w-3.5" />
-            Gesperrt
-          </button>
+          <Button onClick={() => setShowUnlockInput(true)} variant="outline" className="flex items-center gap-2">
+            <Unlock className="h-4 w-4" />
+            Entsperren
+          </Button>
         )}
+      </div>
+    );
+  }
+
+  /* ── Unlocked ── */
+  return (
+    <div className="flex-1 min-w-0 flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handleLock}
+          className="flex items-center gap-1.5 text-[12px] text-[#22C55E] hover:text-[#16A34A] transition-colors"
+        >
+          <Unlock className="h-3.5 w-3.5" />
+          Entsperrt
+        </button>
         <div className="ml-auto">
           <Button size="sm" onClick={openAdd}>
             <Plus className="h-3.5 w-3.5 mr-1" />
@@ -182,7 +216,6 @@ export function ConsultingCredentialsTab({ companyId }: Props): React.JSX.Elemen
         </div>
       </div>
 
-      {/* List */}
       {isLoading ? (
         <div className="h-24 rounded-xl border border-[#e5e5e5] bg-[#f5f5f5] animate-pulse" />
       ) : !credentials || credentials.length === 0 ? (
@@ -205,13 +238,57 @@ export function ConsultingCredentialsTab({ companyId }: Props): React.JSX.Elemen
         </div>
       )}
 
-      {/* Add / Edit Dialog */}
       <Dialog open={dialog.open} onOpenChange={(o) => !o && setDialog({ open: false, editing: null })}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{dialog.editing ? 'Zugangsdaten bearbeiten' : 'Neue Zugangsdaten'}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-3 py-1">
+            {/* Logo upload — only available when editing an existing record */}
+            {dialog.editing && (
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-[#e5e5e5] bg-[#fafafa]">
+                <div className="h-10 w-10 rounded-md border border-[#e5e5e5] bg-white flex items-center justify-center overflow-hidden shrink-0">
+                  {form.logo_url ? (
+                    <img src={form.logo_url} alt="Logo" className="h-8 w-8 object-contain" />
+                  ) : (
+                    <ImageIcon className="h-5 w-5 text-[#c0c0c0]" />
+                  )}
+                </div>
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
+                  <p className="text-[12px] text-[#737373]">Logo / Bild</p>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void handleLogoUpload(file);
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={uploadingLogo}
+                    onClick={() => logoInputRef.current?.click()}
+                    className="h-7 text-xs w-fit"
+                  >
+                    {uploadingLogo ? 'Wird hochgeladen…' : 'Bild hochladen'}
+                  </Button>
+                </div>
+                {form.logo_url && (
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, logo_url: null }))}
+                    className="text-[11px] text-[#a3a3a3] hover:text-[#EF4444] shrink-0"
+                  >
+                    Entfernen
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="cred-title">Bezeichnung *</Label>
