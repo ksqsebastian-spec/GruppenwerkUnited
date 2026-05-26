@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Plus, Euro, Users } from 'lucide-react';
+import { ArrowLeft, Plus, Euro, Users, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConsultingStatusBadge } from '@/components/dashboard/consulting-status-badge';
 import { ConsultingCategorySection } from '@/components/dashboard/consulting-category-section';
 import { ConsultingCostPanel } from '@/components/dashboard/consulting-cost-panel';
 import { ConsultingCredentialsTab } from '@/components/dashboard/consulting-credentials-tab';
 import { ConsultingContactsPanel } from '@/components/dashboard/consulting-contacts-panel';
+import { ConsultingBilderPanel } from '@/components/dashboard/consulting-bilder-panel';
 import { EmptyState } from '@/components/shared/empty-state';
 import { useConsultingCompany } from '@/hooks/use-consulting-company';
 import { useConsultingCompanies } from '@/hooks/use-consulting-companies';
@@ -27,6 +28,7 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
   const [tab, setTab] = useState<Tab>('checkpoints');
   const [showCosts, setShowCosts] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
+  const [showBilder, setShowBilder] = useState(false);
 
   const company = companies?.find((c: ConsultingCompanyWithCounts) => c.slug === slug);
 
@@ -68,7 +70,7 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
     );
   }
 
-  const hasRightPanel = (showCosts && tab === 'checkpoints' && categories && categories.length > 0) || showContacts;
+  const hasRightPanel = (showCosts && tab === 'checkpoints' && categories && categories.length > 0) || showContacts || showBilder;
 
   return (
     <div className="w-full flex flex-col gap-5">
@@ -107,6 +109,15 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <Button
+            size="sm"
+            variant={showBilder ? 'default' : 'outline'}
+            onClick={() => setShowBilder((v) => !v)}
+            className="flex items-center gap-1.5"
+          >
+            <Image className="h-3.5 w-3.5" />
+            Bilder
+          </Button>
           <Button
             size="sm"
             variant={showContacts ? 'default' : 'outline'}
@@ -190,6 +201,13 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
 
         {hasRightPanel && (
           <div className="w-72 shrink-0 sticky top-4 flex flex-col gap-3">
+            {showBilder && (
+              <ConsultingBilderPanel
+                companyId={company?.id}
+                companyName={company?.name ?? slug}
+                onClose={() => setShowBilder(false)}
+              />
+            )}
             {showContacts && (
               <ConsultingContactsPanel
                 companyId={company?.id}

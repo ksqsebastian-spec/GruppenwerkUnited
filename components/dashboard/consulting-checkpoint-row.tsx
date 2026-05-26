@@ -157,6 +157,7 @@ export function ConsultingCheckpointRow({
           <input
             autoFocus
             value={labelDraft}
+            size={Math.max(labelDraft.length + 2, 12)}
             onChange={(e) => setLabelDraft(e.target.value)}
             onBlur={() => void handleSaveLabel()}
             onKeyDown={(e) => {
@@ -166,7 +167,7 @@ export function ConsultingCheckpointRow({
                 setEditingLabel(false);
               }
             }}
-            className="flex-1 text-[13px] text-[#1a1a1a] bg-transparent border-b border-[#000000] outline-none leading-snug"
+            className="text-[13px] text-[#1a1a1a] bg-transparent border-b border-[#000000] outline-none leading-snug"
           />
         ) : (
           <p
