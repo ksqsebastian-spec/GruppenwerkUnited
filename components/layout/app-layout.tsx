@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { Header } from './header';
 import { FuhrparkSubnav } from './fuhrpark-subnav';
+import { ConsultingSubnav } from './consulting-subnav';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { MascotCrab } from '@/components/shared/mascot-crab';
 
@@ -13,6 +14,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps): React.JSX.Element {
   const pathname = usePathname();
   const isInFuhrpark = pathname.startsWith('/fuhrpark');
+  const isInConsulting = pathname.startsWith('/consulting');
   return (
     <AuthGuard>
       <div className="min-h-screen bg-background">
@@ -21,6 +23,9 @@ export function AppLayout({ children }: AppLayoutProps): React.JSX.Element {
 
         {/* Fuhrpark Unter-Navigation */}
         {isInFuhrpark && <FuhrparkSubnav />}
+
+        {/* Consulting Unter-Navigation */}
+        {isInConsulting && <ConsultingSubnav />}
 
         {/* Content */}
         <main className="py-6">

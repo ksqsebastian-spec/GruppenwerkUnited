@@ -786,3 +786,72 @@ export interface LeadDatei {
   dateigroesse: number | null;
   created_at: string;
 }
+
+// ============================================================================
+// Consulting Dashboard
+// ============================================================================
+
+export type ConsultingStatus = 'green' | 'orange' | 'red';
+
+export interface ConsultingCompany {
+  id: string;
+  name: string;
+  slug: string;
+  color: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConsultingCategory {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ConsultingCheckpoint {
+  id: string;
+  category_id: string;
+  label: string;
+  description: string | null;
+  is_default: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ConsultingCheckpointStatus {
+  id: string;
+  company_id: string;
+  checkpoint_id: string;
+  status: ConsultingStatus;
+  notes: string | null;
+  responsible: string | null;
+  cost_monthly: number | null;
+  updated_at: string;
+  updated_by: string | null;
+}
+
+export interface ConsultingCompanyWithCounts extends ConsultingCompany {
+  green_count: number;
+  orange_count: number;
+  red_count: number;
+  total_count: number;
+  total_cost: number;
+  last_updated: string | null;
+}
+
+export interface ConsultingCategoryWithCheckpoints extends ConsultingCategory {
+  checkpoints: (ConsultingCheckpoint & { status_row: ConsultingCheckpointStatus | null })[];
+  green_count: number;
+  orange_count: number;
+  red_count: number;
+}
+
+export type ConsultingCompanyInsert = Omit<ConsultingCompany, 'id' | 'created_at' | 'updated_at'>;
+export type ConsultingCompanyUpdate = Partial<ConsultingCompanyInsert>;
+export type ConsultingCheckpointStatusUpdate = Partial<
+  Pick<ConsultingCheckpointStatus, 'status' | 'notes' | 'responsible' | 'cost_monthly'>
+>;
