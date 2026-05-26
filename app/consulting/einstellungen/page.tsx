@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ConsultingSettingsCategoryRow } from '@/components/dashboard/consulting-settings-category-row';
+import { ConsultingFieldTypesSection } from '@/components/dashboard/consulting-field-types-section';
 import {
   useConsultingCompanies,
   useDeleteConsultingCompany,
@@ -203,6 +204,9 @@ export default function ConsultingEinstellungen(): React.JSX.Element {
           </div>
         )}
       </section>
+
+      {/* ── Checkpoint-Felder ── */}
+      <ConsultingFieldTypesSection />
 
       {/* Dialog: Unternehmen */}
       <Dialog open={coDialog} onOpenChange={setCoDialog}>

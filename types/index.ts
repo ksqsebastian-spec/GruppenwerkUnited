@@ -812,6 +812,15 @@ export interface ConsultingCategory {
   created_at: string;
 }
 
+export interface ConsultingFieldType {
+  id: string;
+  key: string;
+  label: string;
+  is_enabled: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
 export interface ConsultingCheckpoint {
   id: string;
   category_id: string;
@@ -819,6 +828,7 @@ export interface ConsultingCheckpoint {
   description: string | null;
   is_default: boolean;
   sort_order: number;
+  active_fields: string[] | null;
   created_at: string;
 }
 
@@ -829,6 +839,7 @@ export interface ConsultingCheckpointStatus {
   status: ConsultingStatus;
   notes: string | null;
   responsible: string | null;
+  email: string | null;
   cost_monthly: number | null;
   updated_at: string;
   updated_by: string | null;
@@ -857,5 +868,5 @@ export interface ConsultingCategoryWithCheckpointsList extends ConsultingCategor
 export type ConsultingCompanyInsert = Omit<ConsultingCompany, 'id' | 'created_at' | 'updated_at'>;
 export type ConsultingCompanyUpdate = Partial<ConsultingCompanyInsert>;
 export type ConsultingCheckpointStatusUpdate = Partial<
-  Pick<ConsultingCheckpointStatus, 'status' | 'notes' | 'responsible' | 'cost_monthly'>
+  Pick<ConsultingCheckpointStatus, 'status' | 'notes' | 'responsible' | 'email' | 'cost_monthly'>
 >;

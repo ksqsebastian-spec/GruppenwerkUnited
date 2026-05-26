@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireSession } from '@/lib/auth/api';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { deleteConsultingCheckpoint } from '@/lib/database/consulting';
 
 export async function PATCH(
   req: NextRequest,
@@ -16,12 +15,9 @@ export async function PATCH(
     const supabase = createAdminClient();
     const update: Record<string, unknown> = {};
     if (body.label !== undefined) update.label = body.label;
-    if (body.description !== undefined) update.description = body.description;
-    if (body.active_fields !== undefined) update.active_fields = body.active_fields;
-    const { error } = await supabase
-      .from('consulting_checkpoints')
-      .update(update)
-      .eq('id', id);
+    if (body.is_enabled !== undefined) update.is_enabled = body.is_enabled;
+    if (body.sort_order !== undefined) update.sort_order = body.sort_order;
+    const { error } = await supabase.from('consulting_field_types').update(update).eq('id', id);
     if (error) throw new Error(error.message);
     return NextResponse.json({ ok: true });
   } catch (error) {
@@ -37,10 +33,8 @@ export async function DELETE(
   if (session instanceof NextResponse) return session;
 
   const { id } = await params;
-  try {
-    await deleteConsultingCheckpoint(id);
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
-  }
+  const supabase = createAdminClient();
+  const { error } = await supabase.from('consulting_field_types').delete().eq('id', id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
 }
