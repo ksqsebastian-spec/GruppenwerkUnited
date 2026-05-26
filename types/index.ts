@@ -861,6 +861,33 @@ export interface ConsultingCategoryWithCheckpoints extends ConsultingCategory {
   red_count: number;
 }
 
+export interface ConsultingCredential {
+  id: string;
+  company_id: string;
+  title: string;
+  url: string | null;
+  logo_url: string | null;
+  username: string | null;
+  password: string | null;
+  cost_monthly: number | null;
+  notes: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConsultingContact {
+  id: string;
+  company_id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  role: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ConsultingCategoryWithCheckpointsList extends ConsultingCategory {
   consulting_checkpoints: ConsultingCheckpoint[];
 }

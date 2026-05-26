@@ -3,15 +3,19 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Plus, Euro } from 'lucide-react';
+import { ArrowLeft, Plus, Euro, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConsultingStatusBadge } from '@/components/dashboard/consulting-status-badge';
 import { ConsultingCategorySection } from '@/components/dashboard/consulting-category-section';
 import { ConsultingCostPanel } from '@/components/dashboard/consulting-cost-panel';
+import { ConsultingCredentialsTab } from '@/components/dashboard/consulting-credentials-tab';
+import { ConsultingContactsPanel } from '@/components/dashboard/consulting-contacts-panel';
 import { EmptyState } from '@/components/shared/empty-state';
 import { useConsultingCompany } from '@/hooks/use-consulting-company';
 import { useConsultingCompanies } from '@/hooks/use-consulting-companies';
 import type { ConsultingCategoryWithCheckpoints, ConsultingCompanyWithCounts } from '@/types';
+
+type Tab = 'checkpoints' | 'zugaenge';
 
 export default function ConsultingCompanyPage(): React.JSX.Element {
   const params = useParams();
@@ -19,7 +23,10 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
 
   const { data: categories, isLoading, error } = useConsultingCompany(slug);
   const { data: companies } = useConsultingCompanies();
+
+  const [tab, setTab] = useState<Tab>('checkpoints');
   const [showCosts, setShowCosts] = useState(false);
+  const [showContacts, setShowContacts] = useState(false);
 
   const company = companies?.find((c: ConsultingCompanyWithCounts) => c.slug === slug);
 
@@ -61,6 +68,8 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
     );
   }
 
+  const hasRightPanel = (showCosts && tab === 'checkpoints' && categories && categories.length > 0) || showContacts;
+
   return (
     <div className="w-full flex flex-col gap-5">
       {/* Navigation */}
@@ -100,13 +109,24 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
         <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
-            variant={showCosts ? 'default' : 'outline'}
-            onClick={() => setShowCosts((v) => !v)}
+            variant={showContacts ? 'default' : 'outline'}
+            onClick={() => setShowContacts((v) => !v)}
             className="flex items-center gap-1.5"
           >
-            <Euro className="h-3.5 w-3.5" />
-            Kosten
+            <Users className="h-3.5 w-3.5" />
+            Ansprechpartner
           </Button>
+          {tab === 'checkpoints' && (
+            <Button
+              size="sm"
+              variant={showCosts ? 'default' : 'outline'}
+              onClick={() => setShowCosts((v) => !v)}
+              className="flex items-center gap-1.5"
+            >
+              <Euro className="h-3.5 w-3.5" />
+              Kosten
+            </Button>
+          )}
           <Link href="/consulting/einstellungen">
             <Button variant="outline" size="sm" className="flex items-center gap-1.5">
               <Plus className="h-4 w-4" />
@@ -116,36 +136,75 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
         </div>
       </div>
 
+      {/* Tab-Leiste */}
+      <div className="flex items-center gap-1 border-b border-[#f0f0f0]">
+        <button
+          type="button"
+          onClick={() => setTab('checkpoints')}
+          className={`px-4 py-2 text-[13px] font-medium border-b-2 transition-colors ${
+            tab === 'checkpoints'
+              ? 'border-[#000000] text-[#000000]'
+              : 'border-transparent text-[#a3a3a3] hover:text-[#000000]'
+          }`}
+        >
+          Checkpoints
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab('zugaenge')}
+          className={`px-4 py-2 text-[13px] font-medium border-b-2 transition-colors ${
+            tab === 'zugaenge'
+              ? 'border-[#000000] text-[#000000]'
+              : 'border-transparent text-[#a3a3a3] hover:text-[#000000]'
+          }`}
+        >
+          Zugänge
+        </button>
+      </div>
+
       {/* Main area */}
       <div className="flex gap-5 items-start">
         <div className="flex-1 min-w-0">
-          {!categories || categories.length === 0 ? (
-            <EmptyState
-              title="Keine Kategorien vorhanden"
-              description="In den Einstellungen können Kategorien und Checkpoints verwaltet werden."
-            />
+          {tab === 'checkpoints' ? (
+            !categories || categories.length === 0 ? (
+              <EmptyState
+                title="Keine Kategorien vorhanden"
+                description="In den Einstellungen können Kategorien und Checkpoints verwaltet werden."
+              />
+            ) : (
+              <div className="flex flex-col gap-2">
+                {categories.map((category, i) => (
+                  <ConsultingCategorySection
+                    key={category.id}
+                    category={category}
+                    companySlug={slug}
+                    colorIndex={i}
+                  />
+                ))}
+              </div>
+            )
           ) : (
-            <div className="flex flex-col gap-2">
-              {categories.map((category, i) => (
-                <ConsultingCategorySection
-                  key={category.id}
-                  category={category}
-                  companySlug={slug}
-                  colorIndex={i}
-                />
-              ))}
-            </div>
+            <ConsultingCredentialsTab companyId={company?.id} />
           )}
         </div>
 
-        {showCosts && categories && categories.length > 0 && (
-          <div className="w-72 shrink-0 sticky top-4">
-            <ConsultingCostPanel
-              mode="company"
-              categories={categories}
-              companyName={company?.name ?? slug}
-              onClose={() => setShowCosts(false)}
-            />
+        {hasRightPanel && (
+          <div className="w-72 shrink-0 sticky top-4 flex flex-col gap-3">
+            {showContacts && (
+              <ConsultingContactsPanel
+                companyId={company?.id}
+                companyName={company?.name ?? slug}
+                onClose={() => setShowContacts(false)}
+              />
+            )}
+            {showCosts && tab === 'checkpoints' && categories && categories.length > 0 && (
+              <ConsultingCostPanel
+                mode="company"
+                categories={categories}
+                companyName={company?.name ?? slug}
+                onClose={() => setShowCosts(false)}
+              />
+            )}
           </div>
         )}
       </div>
