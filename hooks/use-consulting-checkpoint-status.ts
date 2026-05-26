@@ -9,7 +9,7 @@ interface UpdateParams {
   companySlug: string;
 }
 
-export function useUpdateConsultingCheckpointStatus(): ReturnType<typeof useMutation> {
+export function useUpdateConsultingCheckpointStatus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, data }: UpdateParams): Promise<ConsultingCheckpointStatus> => {

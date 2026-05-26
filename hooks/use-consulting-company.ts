@@ -18,9 +18,7 @@ export function useConsultingCompany(
   });
 }
 
-export function useCreateConsultingCheckpoint(
-  companySlug: string
-): ReturnType<typeof useMutation> {
+export function useCreateConsultingCheckpoint(companySlug: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { category_id: string; label: string; apply_to_all: boolean }) => {
@@ -41,9 +39,7 @@ export function useCreateConsultingCheckpoint(
   });
 }
 
-export function useDeleteConsultingCheckpoint(
-  companySlug: string
-): ReturnType<typeof useMutation> {
+export function useDeleteConsultingCheckpoint(companySlug: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {

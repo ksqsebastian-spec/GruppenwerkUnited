@@ -33,7 +33,7 @@ function useCategoriesSettings(): ReturnType<typeof useQuery<ConsultingCategory[
   });
 }
 
-function useDeleteCategory(): ReturnType<typeof useMutation> {
+function useDeleteCategory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
@@ -46,7 +46,7 @@ function useDeleteCategory(): ReturnType<typeof useMutation> {
   });
 }
 
-function useCreateCategory(): ReturnType<typeof useMutation> {
+function useCreateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { name: string; icon: string | null }) => {

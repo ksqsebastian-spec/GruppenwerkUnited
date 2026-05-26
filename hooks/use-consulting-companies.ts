@@ -17,7 +17,7 @@ export function useConsultingCompanies(): ReturnType<
   });
 }
 
-export function useCreateConsultingCompany(): ReturnType<typeof useMutation> {
+export function useCreateConsultingCompany() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: ConsultingCompanyInsert) => {
@@ -37,7 +37,7 @@ export function useCreateConsultingCompany(): ReturnType<typeof useMutation> {
   });
 }
 
-export function useDeleteConsultingCompany(): ReturnType<typeof useMutation> {
+export function useDeleteConsultingCompany() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
