@@ -23,9 +23,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ConsultingCategoryWithCheckpointsList } from '@/types';
 
-function useCategoriesSettings(): ReturnType<
-  typeof useQuery<ConsultingCategoryWithCheckpointsList[]>
-> {
+function useCategoriesSettings() {
   return useQuery<ConsultingCategoryWithCheckpointsList[]>({
     queryKey: ['consulting-categories-settings'],
     queryFn: async () => {
@@ -36,7 +34,7 @@ function useCategoriesSettings(): ReturnType<
   });
 }
 
-function useCreateCategory(): ReturnType<typeof useMutation> {
+function useCreateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { name: string }) => {
