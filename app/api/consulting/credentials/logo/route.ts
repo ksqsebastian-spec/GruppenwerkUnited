@@ -4,7 +4,7 @@ import { requireSession } from '@/lib/auth/api';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    await requireSession(req);
+    await requireSession();
     const supabase = createAdminClient();
 
     const formData = await req.formData();
