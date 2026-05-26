@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { X, Plus, Trash2, Copy, Check, Pencil, FolderPlus } from 'lucide-react';
+import { X, Plus, Trash2, Copy, Check, Pencil, FolderPlus, ZoomIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -50,6 +50,7 @@ export function ConsultingBilderPanel({ companyId, companyName, onClose }: Props
   const [categoryDraft, setCategoryDraft] = useState('');
   const [confirmDeleteCategory, setConfirmDeleteCategory] = useState<string | null>(null);
   const [confirmDeleteImage, setConfirmDeleteImage] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const { data: images = [], isLoading } = useQuery<BilderItem[]>({
     queryKey: QUERY_KEY(companyId),
@@ -138,6 +139,16 @@ export function ConsultingBilderPanel({ companyId, companyName, onClose }: Props
   const existingCategories = categoryKeys.filter((k) => k !== '__none__');
 
   return (
+    <>
+    {/* Lightbox */}
+    {previewUrl && (
+      <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setPreviewUrl(null)}>
+        <button type="button" onClick={() => setPreviewUrl(null)} className="absolute top-4 right-4 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors">
+          <X className="h-5 w-5" />
+        </button>
+        <img src={previewUrl} alt="Vorschau" className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl" onClick={(e) => e.stopPropagation()} />
+      </div>
+    )}
     <div className="flex flex-col rounded-xl border border-[#e5e5e5] bg-white overflow-hidden max-h-[80vh]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#f0f0f0] shrink-0">
@@ -261,16 +272,19 @@ export function ConsultingBilderPanel({ companyId, companyName, onClose }: Props
                   {/* Images grid */}
                   <div className="px-4 pb-3 grid grid-cols-3 gap-2">
                     {items.map((img) => (
-                      <div key={img.id} className="group/img relative aspect-square rounded-lg overflow-hidden border border-[#e5e5e5] bg-[#f5f5f5]">
+                      <div key={img.id} className="group/img relative aspect-square rounded-lg overflow-hidden border border-[#e5e5e5] bg-[#f5f5f5] cursor-pointer" onClick={() => setPreviewUrl(img.url)}>
                         <img src={img.url} alt={img.name} className="h-full w-full object-contain p-1" title={img.name} />
                         <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/25 transition-colors flex items-start justify-end p-1 gap-1 opacity-0 group-hover/img:opacity-100">
+                          <button type="button" onClick={(e) => { e.stopPropagation(); setPreviewUrl(img.url); }} className="p-1 rounded bg-black/50 text-white hover:bg-black/80 transition-colors" title="Vorschau">
+                            <ZoomIn className="h-3 w-3" />
+                          </button>
                           <CopyUrlButton url={img.url} />
                           {confirmDeleteImage === img.id ? (
-                            <button type="button" onClick={() => void deleteMutation.mutateAsync({ image_id: img.id }).then(() => setConfirmDeleteImage(null))} disabled={deleteMutation.isPending} className="p-1 rounded bg-red-500 text-white hover:bg-red-600 transition-colors">
+                            <button type="button" onClick={(e) => { e.stopPropagation(); void deleteMutation.mutateAsync({ image_id: img.id }).then(() => setConfirmDeleteImage(null)); }} disabled={deleteMutation.isPending} className="p-1 rounded bg-red-500 text-white hover:bg-red-600 transition-colors">
                               <Trash2 className="h-3 w-3" />
                             </button>
                           ) : (
-                            <button type="button" onClick={() => setConfirmDeleteImage(img.id)} className="p-1 rounded bg-black/50 text-white hover:bg-black/80 transition-colors">
+                            <button type="button" onClick={(e) => { e.stopPropagation(); setConfirmDeleteImage(img.id); }} className="p-1 rounded bg-black/50 text-white hover:bg-black/80 transition-colors">
                               <Trash2 className="h-3 w-3" />
                             </button>
                           )}
@@ -285,5 +299,6 @@ export function ConsultingBilderPanel({ companyId, companyName, onClose }: Props
         )}
       </div>
     </div>
+    </>
   );
 }

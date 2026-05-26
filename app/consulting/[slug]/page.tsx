@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Plus, Euro, Users, Image } from 'lucide-react';
+import { ArrowLeft, Plus, Euro, Users, Image, Share2, AppWindow } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConsultingStatusBadge } from '@/components/dashboard/consulting-status-badge';
 import { ConsultingCategorySection } from '@/components/dashboard/consulting-category-section';
@@ -11,6 +11,8 @@ import { ConsultingCostPanel } from '@/components/dashboard/consulting-cost-pane
 import { ConsultingCredentialsTab } from '@/components/dashboard/consulting-credentials-tab';
 import { ConsultingContactsPanel } from '@/components/dashboard/consulting-contacts-panel';
 import { ConsultingBilderPanel } from '@/components/dashboard/consulting-bilder-panel';
+import { ConsultingSocialsPanel } from '@/components/dashboard/consulting-socials-panel';
+import { ConsultingSoftwarePanel } from '@/components/dashboard/consulting-software-panel';
 import { EmptyState } from '@/components/shared/empty-state';
 import { useConsultingCompany } from '@/hooks/use-consulting-company';
 import { useConsultingCompanies } from '@/hooks/use-consulting-companies';
@@ -29,6 +31,8 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
   const [showCosts, setShowCosts] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
   const [showBilder, setShowBilder] = useState(false);
+  const [showSocials, setShowSocials] = useState(false);
+  const [showSoftware, setShowSoftware] = useState(false);
 
   const company = companies?.find((c: ConsultingCompanyWithCounts) => c.slug === slug);
 
@@ -70,7 +74,7 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
     );
   }
 
-  const hasRightPanel = (showCosts && tab === 'checkpoints' && categories && categories.length > 0) || showContacts || showBilder;
+  const hasRightPanel = (showCosts && tab === 'checkpoints' && categories && categories.length > 0) || showContacts || showBilder || showSocials || showSoftware;
 
   return (
     <div className="w-full flex flex-col gap-5">
@@ -109,21 +113,19 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <Button
-            size="sm"
-            variant={showBilder ? 'default' : 'outline'}
-            onClick={() => setShowBilder((v) => !v)}
-            className="flex items-center gap-1.5"
-          >
+          <Button size="sm" variant={showSocials ? 'default' : 'outline'} onClick={() => setShowSocials((v) => !v)} className="flex items-center gap-1.5">
+            <Share2 className="h-3.5 w-3.5" />
+            Socials
+          </Button>
+          <Button size="sm" variant={showSoftware ? 'default' : 'outline'} onClick={() => setShowSoftware((v) => !v)} className="flex items-center gap-1.5">
+            <AppWindow className="h-3.5 w-3.5" />
+            Software
+          </Button>
+          <Button size="sm" variant={showBilder ? 'default' : 'outline'} onClick={() => setShowBilder((v) => !v)} className="flex items-center gap-1.5">
             <Image className="h-3.5 w-3.5" />
             Bilder
           </Button>
-          <Button
-            size="sm"
-            variant={showContacts ? 'default' : 'outline'}
-            onClick={() => setShowContacts((v) => !v)}
-            className="flex items-center gap-1.5"
-          >
+          <Button size="sm" variant={showContacts ? 'default' : 'outline'} onClick={() => setShowContacts((v) => !v)} className="flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5" />
             Ansprechpartner
           </Button>
@@ -201,6 +203,20 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
 
         {hasRightPanel && (
           <div className="w-72 shrink-0 sticky top-4 flex flex-col gap-3">
+            {showSocials && (
+              <ConsultingSocialsPanel
+                companyId={company?.id}
+                companyName={company?.name ?? slug}
+                onClose={() => setShowSocials(false)}
+              />
+            )}
+            {showSoftware && (
+              <ConsultingSoftwarePanel
+                companyId={company?.id}
+                companyName={company?.name ?? slug}
+                onClose={() => setShowSoftware(false)}
+              />
+            )}
             {showBilder && (
               <ConsultingBilderPanel
                 companyId={company?.id}
