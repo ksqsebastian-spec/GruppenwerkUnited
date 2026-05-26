@@ -12,22 +12,16 @@ export async function GET(_req: NextRequest, { params }: Params): Promise<NextRe
     const { id } = await params;
     const supabase = createAdminClient();
 
-    const { data, error } = await supabase.storage
-      .from('consulting-logos')
-      .list(`company/${id}`, { sortBy: { column: 'created_at', order: 'desc' } });
+    const { data, error } = await supabase
+      .from('consulting_company_images')
+      .select('*')
+      .eq('company_id', id)
+      .order('category', { nullsFirst: false })
+      .order('sort_order')
+      .order('created_at');
 
     if (error) throw new Error(error.message);
-
-    const files = (data ?? [])
-      .filter((f) => f.name !== '.emptyFolderPlaceholder')
-      .map((f) => {
-        const { data: { publicUrl } } = supabase.storage
-          .from('consulting-logos')
-          .getPublicUrl(`company/${id}/${f.name}`);
-        return { name: f.name, url: publicUrl, created_at: f.created_at };
-      });
-
-    return NextResponse.json(files);
+    return NextResponse.json(data ?? []);
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Fehler' },
@@ -44,6 +38,7 @@ export async function POST(req: NextRequest, { params }: Params): Promise<NextRe
 
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
+    const category = (formData.get('category') as string | null) || null;
 
     if (!file) {
       return NextResponse.json({ error: 'Keine Datei angegeben' }, { status: 400 });
@@ -60,23 +55,71 @@ export async function POST(req: NextRequest, { params }: Params): Promise<NextRe
     const ext = file.name.split('.').pop() ?? 'png';
     const timestamp = Date.now();
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/\.[^.]+$/, '');
-    const path = `company/${id}/${timestamp}_${safeName}.${ext}`;
+    const storagePath = `company/${id}/${timestamp}_${safeName}.${ext}`;
+    const displayName = file.name;
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const { error: uploadError } = await supabase.storage
       .from('consulting-logos')
-      .upload(path, buffer, { contentType: file.type, upsert: false });
+      .upload(storagePath, buffer, { contentType: file.type, upsert: false });
 
     if (uploadError) throw new Error('Upload fehlgeschlagen: ' + uploadError.message);
 
     const { data: { publicUrl } } = supabase.storage
       .from('consulting-logos')
-      .getPublicUrl(path);
+      .getPublicUrl(storagePath);
 
-    return NextResponse.json({ url: publicUrl, name: path.split('/').pop() }, { status: 201 });
+    const { data: record, error: insertError } = await supabase
+      .from('consulting_company_images')
+      .insert({ company_id: id, url: publicUrl, storage_path: storagePath, name: displayName, category })
+      .select()
+      .single();
+
+    if (insertError) throw new Error(insertError.message);
+
+    return NextResponse.json(record, { status: 201 });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Upload fehlgeschlagen' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(req: NextRequest, { params }: Params): Promise<NextResponse> {
+  try {
+    await requireSession();
+    const { id } = await params;
+    const supabase = createAdminClient();
+
+    const body = await req.json() as { image_id?: string; old_category?: string; new_category?: string | null; category?: string | null };
+
+    // Rename all images in a category
+    if (body.old_category !== undefined) {
+      const { error } = await supabase
+        .from('consulting_company_images')
+        .update({ category: body.new_category ?? null })
+        .eq('company_id', id)
+        .eq('category', body.old_category);
+      if (error) throw new Error(error.message);
+      return NextResponse.json({ ok: true });
+    }
+
+    // Update single image category
+    if (body.image_id) {
+      const { error } = await supabase
+        .from('consulting_company_images')
+        .update({ category: body.category ?? null })
+        .eq('id', body.image_id)
+        .eq('company_id', id);
+      if (error) throw new Error(error.message);
+      return NextResponse.json({ ok: true });
+    }
+
+    return NextResponse.json({ error: 'Ungültige Anfrage' }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Fehler' },
       { status: 500 }
     );
   }
@@ -88,13 +131,40 @@ export async function DELETE(req: NextRequest, { params }: Params): Promise<Next
     const { id } = await params;
     const supabase = createAdminClient();
 
-    const { name } = await req.json() as { name: string };
-    const path = `company/${id}/${name}`;
+    const body = await req.json() as { image_id?: string; category?: string };
 
-    const { error } = await supabase.storage.from('consulting-logos').remove([path]);
-    if (error) throw new Error(error.message);
+    // Delete all images in a category
+    if (body.category) {
+      const { data: images } = await supabase
+        .from('consulting_company_images')
+        .select('id, storage_path')
+        .eq('company_id', id)
+        .eq('category', body.category);
 
-    return new NextResponse(null, { status: 204 });
+      if (images?.length) {
+        await supabase.storage.from('consulting-logos').remove(images.map((i) => i.storage_path));
+        await supabase.from('consulting_company_images').delete().in('id', images.map((i) => i.id));
+      }
+      return new NextResponse(null, { status: 204 });
+    }
+
+    // Delete single image
+    if (body.image_id) {
+      const { data: img } = await supabase
+        .from('consulting_company_images')
+        .select('storage_path')
+        .eq('id', body.image_id)
+        .eq('company_id', id)
+        .single();
+
+      if (img) {
+        await supabase.storage.from('consulting-logos').remove([img.storage_path]);
+        await supabase.from('consulting_company_images').delete().eq('id', body.image_id);
+      }
+      return new NextResponse(null, { status: 204 });
+    }
+
+    return NextResponse.json({ error: 'Ungültige Anfrage' }, { status: 400 });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Fehler' },
