@@ -32,7 +32,7 @@ function getFieldValue(
   statusRow: ConsultingCheckpointStatus | null
 ): string | null {
   if (!statusRow) return null;
-  const val = (statusRow as Record<string, unknown>)[key];
+  const val = (statusRow as unknown as Record<string, unknown>)[key];
   if (val === null || val === undefined || val === '') return null;
   return String(val);
 }
