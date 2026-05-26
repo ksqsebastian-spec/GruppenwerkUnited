@@ -14,16 +14,19 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/shared/empty-state';
+import { ConsultingSettingsCategoryRow } from '@/components/dashboard/consulting-settings-category-row';
 import {
   useConsultingCompanies,
   useDeleteConsultingCompany,
   useCreateConsultingCompany,
 } from '@/hooks/use-consulting-companies';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { ConsultingCategory } from '@/types';
+import type { ConsultingCategoryWithCheckpointsList } from '@/types';
 
-function useCategoriesSettings(): ReturnType<typeof useQuery<ConsultingCategory[]>> {
-  return useQuery<ConsultingCategory[]>({
+function useCategoriesSettings(): ReturnType<
+  typeof useQuery<ConsultingCategoryWithCheckpointsList[]>
+> {
+  return useQuery<ConsultingCategoryWithCheckpointsList[]>({
     queryKey: ['consulting-categories-settings'],
     queryFn: async () => {
       const res = await fetch('/api/consulting/categories');
@@ -33,23 +36,10 @@ function useCategoriesSettings(): ReturnType<typeof useQuery<ConsultingCategory[
   });
 }
 
-function useDeleteCategory() {
+function useCreateCategory(): ReturnType<typeof useMutation> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/consulting/categories/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Löschen fehlgeschlagen');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['consulting-categories-settings'] });
-    },
-  });
-}
-
-function useCreateCategory() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: { name: string; icon: string | null }) => {
+    mutationFn: async (data: { name: string }) => {
       const res = await fetch('/api/consulting/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -68,7 +58,6 @@ export default function ConsultingEinstellungen(): React.JSX.Element {
   const { data: categories, isLoading: categoriesLoading } = useCategoriesSettings();
   const deleteCo = useDeleteConsultingCompany();
   const createCo = useCreateConsultingCompany();
-  const deleteCat = useDeleteCategory();
   const createCat = useCreateCategory();
 
   const [coDialog, setCoDialog] = useState(false);
@@ -77,16 +66,23 @@ export default function ConsultingEinstellungen(): React.JSX.Element {
 
   const [catDialog, setCatDialog] = useState(false);
   const [catName, setCatName] = useState('');
-  const [catIcon, setCatIcon] = useState('');
 
   const [pendingDeleteCo, setPendingDeleteCo] = useState<string | null>(null);
-  const [pendingDeleteCat, setPendingDeleteCat] = useState<string | null>(null);
 
   const handleCreateCo = async (): Promise<void> => {
     if (!coName.trim()) return;
-    const slug = coName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const slug = coName
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
     try {
-      await createCo.mutateAsync({ name: coName.trim(), slug, color: coColor, sort_order: (companies?.length ?? 0) + 1 });
+      await createCo.mutateAsync({
+        name: coName.trim(),
+        slug,
+        color: coColor,
+        sort_order: (companies?.length ?? 0) + 1,
+      });
       toast.success('Unternehmen angelegt');
       setCoDialog(false);
       setCoName('');
@@ -109,35 +105,22 @@ export default function ConsultingEinstellungen(): React.JSX.Element {
   const handleCreateCat = async (): Promise<void> => {
     if (!catName.trim()) return;
     try {
-      await createCat.mutateAsync({ name: catName.trim(), icon: catIcon.trim() || null });
+      await createCat.mutateAsync({ name: catName.trim() });
       toast.success('Kategorie angelegt');
       setCatDialog(false);
       setCatName('');
-      setCatIcon('');
     } catch {
       toast.error('Anlegen fehlgeschlagen');
     }
   };
 
-  const handleDeleteCat = async (id: string): Promise<void> => {
-    try {
-      await deleteCat.mutateAsync(id);
-      setPendingDeleteCat(null);
-      toast.success('Kategorie gelöscht');
-    } catch {
-      toast.error('Löschen fehlgeschlagen');
-    }
-  };
-
   return (
-    <div className="max-w-3xl mx-auto flex flex-col gap-8">
+    <div className="max-w-4xl flex flex-col gap-8">
       <div>
         <h1 className="text-xl font-semibold text-[#000000] tracking-tight">
           Consulting Einstellungen
         </h1>
-        <p className="text-xs text-[#a3a3a3] mt-1">
-          Unternehmen und Kategorien verwalten
-        </p>
+        <p className="text-xs text-[#a3a3a3] mt-1">Unternehmen und Kategorien verwalten</p>
       </div>
 
       {/* ── Unternehmen ── */}
@@ -215,43 +198,9 @@ export default function ConsultingEinstellungen(): React.JSX.Element {
         ) : !categories || categories.length === 0 ? (
           <EmptyState title="Keine Kategorien" />
         ) : (
-          <div className="rounded-xl border border-[#e5e5e5] divide-y divide-[#f0f0f0] overflow-hidden">
-            {categories.map((cat) => (
-              <div key={cat.id} className="flex items-center gap-3 px-4 py-3 bg-white">
-                <span className="text-base shrink-0">{cat.icon ?? '📋'}</span>
-                <span className="flex-1 text-sm text-[#000000]">{cat.name}</span>
-                <span className="text-xs text-[#a3a3a3] tabular-nums">#{cat.sort_order}</span>
-                {pendingDeleteCat === cat.id ? (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => void handleDeleteCat(cat.id)}
-                      disabled={deleteCat.isPending}
-                      className="h-7 text-xs"
-                    >
-                      Wirklich löschen
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setPendingDeleteCat(null)}
-                      className="h-7 text-xs"
-                    >
-                      Abbrechen
-                    </Button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setPendingDeleteCat(cat.id)}
-                    className="text-[#c0c0c0] hover:text-[#EF4444] transition-colors p-1 rounded"
-                    title="Löschen"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
+          <div className="flex flex-col gap-2">
+            {categories.map((cat, i) => (
+              <ConsultingSettingsCategoryRow key={cat.id} category={cat} colorIndex={i} />
             ))}
           </div>
         )}
@@ -289,8 +238,13 @@ export default function ConsultingEinstellungen(): React.JSX.Element {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCoDialog(false)}>Abbrechen</Button>
-            <Button onClick={() => void handleCreateCo()} disabled={createCo.isPending || !coName.trim()}>
+            <Button variant="outline" onClick={() => setCoDialog(false)}>
+              Abbrechen
+            </Button>
+            <Button
+              onClick={() => void handleCreateCo()}
+              disabled={createCo.isPending || !coName.trim()}
+            >
               {createCo.isPending ? 'Wird angelegt…' : 'Anlegen'}
             </Button>
           </DialogFooter>
@@ -310,24 +264,22 @@ export default function ConsultingEinstellungen(): React.JSX.Element {
                 id="set-cat-name"
                 value={catName}
                 onChange={(e) => setCatName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void handleCreateCat();
+                }}
                 placeholder="z.B. IT-Infrastruktur"
                 autoFocus
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="set-cat-icon">Icon (Emoji)</Label>
-              <Input
-                id="set-cat-icon"
-                value={catIcon}
-                onChange={(e) => setCatIcon(e.target.value)}
-                placeholder="z.B. 🖥️"
-                className="text-xl"
-              />
-            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCatDialog(false)}>Abbrechen</Button>
-            <Button onClick={() => void handleCreateCat()} disabled={createCat.isPending || !catName.trim()}>
+            <Button variant="outline" onClick={() => setCatDialog(false)}>
+              Abbrechen
+            </Button>
+            <Button
+              onClick={() => void handleCreateCat()}
+              disabled={createCat.isPending || !catName.trim()}
+            >
               {createCat.isPending ? 'Wird angelegt…' : 'Anlegen'}
             </Button>
           </DialogFooter>

@@ -9,17 +9,20 @@ import { Input } from '@/components/ui/input';
 import { ConsultingStatusBadge } from './consulting-status-badge';
 import { ConsultingCheckpointRow } from './consulting-checkpoint-row';
 import { useDeleteConsultingCheckpoint, useCreateConsultingCheckpoint } from '@/hooks/use-consulting-company';
+import { getCategoryColor } from '@/lib/consulting-colors';
 import type { ConsultingCategoryWithCheckpoints } from '@/types';
 
 interface ConsultingCategorySectionProps {
   category: ConsultingCategoryWithCheckpoints;
   companySlug: string;
+  colorIndex: number;
   defaultOpen?: boolean;
 }
 
 export function ConsultingCategorySection({
   category,
   companySlug,
+  colorIndex,
   defaultOpen = false,
 }: ConsultingCategorySectionProps): React.JSX.Element {
   const [open, setOpen] = useState(defaultOpen);
@@ -65,7 +68,10 @@ export function ConsultingCategorySection({
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#fafafa] transition-colors"
       >
-        <span className="text-lg shrink-0 leading-none">{category.icon ?? '📋'}</span>
+        <span
+          className="h-3.5 w-3.5 rounded-sm shrink-0"
+          style={{ backgroundColor: getCategoryColor(colorIndex) }}
+        />
         <span className="flex-1 text-[13px] font-semibold text-[#000000]">{category.name}</span>
         <div className="flex items-center gap-2 shrink-0">
           <ConsultingStatusBadge status="green" count={category.green_count} />

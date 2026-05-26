@@ -850,6 +850,10 @@ export interface ConsultingCategoryWithCheckpoints extends ConsultingCategory {
   red_count: number;
 }
 
+export interface ConsultingCategoryWithCheckpointsList extends ConsultingCategory {
+  consulting_checkpoints: ConsultingCheckpoint[];
+}
+
 export type ConsultingCompanyInsert = Omit<ConsultingCompany, 'id' | 'created_at' | 'updated_at'>;
 export type ConsultingCompanyUpdate = Partial<ConsultingCompanyInsert>;
 export type ConsultingCheckpointStatusUpdate = Partial<
