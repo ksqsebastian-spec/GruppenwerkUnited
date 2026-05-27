@@ -117,6 +117,15 @@ export const MODULES: ModuleConfig[] = [
     category: 'company',
     status: 'active',
   },
+  {
+    id: 'tickets',
+    name: 'Tickets',
+    description: 'Aufgaben-Tickets für Personen erstellen, zuweisen und nachverfolgen',
+    route: '/tickets',
+    icon: 'ClipboardList',
+    category: 'tool',
+    status: 'active',
+  },
 ];
 
 /**
