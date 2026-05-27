@@ -435,6 +435,16 @@
     border-radius: 5px;
   }
 
+  .wf-desc code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    font-weight: 600;
+    background: var(--tag-bg);
+    border: 1px solid var(--tag-border);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
   .wf-desc {
     font-size: 12.5px;
     color: var(--ink-3);
@@ -678,39 +688,39 @@
     <div class="section-title">Was kann ich Claude sagen?</div>
 
     <div class="workflow">
-      <div class="wf-header"><span class="wf-num">01</span><span class="wf-title">Neuer Kunde</span></div>
-      <div class="wf-example">"Neuer Kunde, Code ist SH-C3D4"</div>
-      <div class="wf-desc">Claude fragt nach dem Code, erstellt Ordner unter Kunden/.</div>
+      <div class="wf-header"><span class="wf-num">01</span><span class="wf-title">Angebot ablegen</span></div>
+      <div class="wf-example">"Leg das Angebot 2025-0042 für SH-C3D4 ab"</div>
+      <div class="wf-desc">Claude benennt die Datei korrekt um und speichert in <code>01_angebote/</code>.</div>
     </div>
 
     <div class="workflow">
-      <div class="wf-header"><span class="wf-num">02</span><span class="wf-title">Dokument ablegen</span></div>
+      <div class="wf-header"><span class="wf-num">02</span><span class="wf-title">Rechnung ablegen</span></div>
       <div class="wf-example">"Leg die Rechnung 2025-0042 für SH-C3D4 ab"</div>
-      <div class="wf-desc">Claude benennt die Datei korrekt um und speichert im Kundenordner.</div>
+      <div class="wf-desc">Claude speichert korrekt benannt in <code>03_rechnungen/</code>.</div>
     </div>
 
     <div class="workflow">
       <div class="wf-header"><span class="wf-num">03</span><span class="wf-title">Dokument erstellen</span></div>
       <div class="wf-example">"Mach ein Angebot für SH-E5F6"</div>
-      <div class="wf-desc">Claude lädt Vorlage + Briefpapier aus _DB/, füllt aus, speichert.</div>
+      <div class="wf-desc">Claude lädt Vorlage + Briefpapier aus <code>_kontext/</code>, füllt aus, speichert in <code>01_angebote/</code>.</div>
     </div>
 
     <div class="workflow">
       <div class="wf-header"><span class="wf-num">04</span><span class="wf-title">Preis nachschlagen</span></div>
       <div class="wf-example">"Was kostet eine Haustür?"</div>
-      <div class="wf-desc">Claude schaut in _DB/Preisliste.xlsx nach.</div>
+      <div class="wf-desc">Claude schaut in <code>_kontext/Preisliste.xlsx</code> nach.</div>
     </div>
 
     <div class="workflow">
       <div class="wf-header"><span class="wf-num">05</span><span class="wf-title">Dokument finden</span></div>
       <div class="wf-example">"Wo ist die Rechnung für SH-C3D4?"</div>
-      <div class="wf-desc">Claude sucht nach Code + Typkürzel und gibt den Pfad zurück.</div>
+      <div class="wf-desc">Claude sucht in <code>03_rechnungen/</code> nach Code + Typkürzel und gibt den Pfad zurück.</div>
     </div>
 
     <div class="workflow">
       <div class="wf-header"><span class="wf-num">06</span><span class="wf-title">Ablage einrichten</span></div>
       <div class="wf-example">"Richte die Ablage für Maler Hantke ein"</div>
-      <div class="wf-desc">Claude erstellt Stammordner + alle 4 Unterordner auf Google Drive.</div>
+      <div class="wf-desc">Claude erstellt Stammordner + alle 6 Unterordner (01–05 + _kontext) auf Google Drive.</div>
     </div>
 
     <div class="section-title" style="margin-top:28px">Beispiel-Dialog</div>
@@ -718,19 +728,19 @@
     <div class="dialog">
       <div class="dialog-line">
         <span class="dialog-speaker user">Du</span>
-        <span class="dialog-text">Neuer Kunde, Code ist <code>SH-F8G2</code></span>
+        <span class="dialog-text">Leg das Angebot 2026-0001 für <code>SH-F8G2</code> ab</span>
       </div>
       <div class="dialog-line">
         <span class="dialog-speaker claude">Claude</span>
-        <span class="dialog-text">✓ Ordner angelegt: <code>Kunden/2026_SH-F8G2/</code></span>
+        <span class="dialog-text">✓ Gespeichert: <code>01_angebote/ANG_2026-0001_SH-F8G2.pdf</code></span>
       </div>
       <div class="dialog-line">
         <span class="dialog-speaker user">Du</span>
-        <span class="dialog-text">Leg das Angebot 2026-0001 ab</span>
+        <span class="dialog-text">Jetzt die Rechnung dazu</span>
       </div>
       <div class="dialog-line">
         <span class="dialog-speaker claude">Claude</span>
-        <span class="dialog-text">✓ Gespeichert: <code>Kunden/2026_SH-F8G2/ANG_2026-0001_SH-F8G2.pdf</code></span>
+        <span class="dialog-text">✓ Gespeichert: <code>03_rechnungen/RE_2026-0001_SH-F8G2.pdf</code></span>
       </div>
       <div class="dialog-line">
         <span class="dialog-speaker user">Du</span>
@@ -738,7 +748,7 @@
       </div>
       <div class="dialog-line">
         <span class="dialog-speaker claude">Claude</span>
-        <span class="dialog-text"><code>Kunden/2026_SH-F8G2/RE_2026-0001_SH-F8G2.pdf</code></span>
+        <span class="dialog-text"><code>03_rechnungen/RE_2026-0001_SH-F8G2.pdf</code></span>
       </div>
     </div>
   </div>
@@ -832,34 +842,41 @@ function showTab(id, el) {
 const treeData = {
   name: '[Firma]_Ablage/', tag: 'Stammordner', open: true,
   children: [
-    { name: '_DB/', tag: 'Datenbank', open: false, children: [
+    { name: '01_angebote/', tag: 'Angebote & AB', open: true, children: [
+      { name: 'ANG_2025-0042_SH-C3D4_Fenster.pdf' },
+      { name: 'AB_2025-0042_SH-C3D4.pdf' },
+      { name: 'AUF_2025-0042_SH-C3D4.xlsx' },
+      { name: 'APR_2025-0042_SH-C3D4.pdf' },
+    ]},
+    { name: '02_ausschreibungen/', tag: 'VOB & privat', open: false, children: [
+      { name: '2025-VOB_Schulamt-Altona_Fenster/', children: [
+        { name: 'ANG_2025-0031_GW-CX9Y_Fenster.pdf' },
+        { name: 'PLAN_2025-0031_GW-CX9Y_Grundriss.pdf' },
+      ]},
+      { name: '2025-PRIV_Saga-Wandsbek_Tueren/' },
+    ]},
+    { name: '03_rechnungen/', tag: 'RE & GU', open: false, children: [
+      { name: 'RE_2025-0042_SH-C3D4.pdf' },
+      { name: 'GU_2025-0001_SH-C3D4.pdf' },
+      { name: 'LS_2025-0042_SH-C3D4.pdf' },
+    ]},
+    { name: '04_lieferanten/', tag: 'Eingangsrechnungen', open: false, children: [
+      { name: 'MISC_2025-0001_GW-Lieferant_Holz.pdf' },
+      { name: 'MISC_2025-0002_GW-Lieferant_Beschlaege.pdf' },
+    ]},
+    { name: '05_leads/', tag: 'Anfragen & Kontakte', open: false, children: [
+      { name: 'KOR_2025-0001_SH-E5F6_Anfrage-Fenster.pdf' },
+      { name: 'FOTO_2025-0001_SH-E5F6_Aufnahme.jpg' },
+    ]},
+    { name: '_kontext/', tag: 'KI-Kontext & Vorlagen', open: false, children: [
       { name: 'Preisliste.xlsx' },
       { name: 'Briefpapier.docx' },
       { name: 'AGB.pdf' },
       { name: 'Textbausteine.docx' },
-    ]},
-    { name: '_Vorlagen/', tag: 'Blanko-Vorlagen', open: false, children: [
       { name: 'VORLAGE_Angebot.docx' },
       { name: 'VORLAGE_Rechnung.docx' },
       { name: 'VORLAGE_Aufmass.xlsx' },
       { name: 'VORLAGE_Abnahmeprotokoll.docx' },
-      { name: 'VORLAGE_Lieferschein.docx' },
-    ]},
-    { name: 'Kunden/', tag: '80% aller Dateien', open: true, children: [
-      { name: '2025_SH-C3D4/', tag: 'Kundenordner', open: true, children: [
-        { name: 'ANG_2025-0042_SH-C3D4_Fenster.pdf' },
-        { name: 'AB_2025-0042_SH-C3D4.pdf' },
-        { name: 'RE_2025-0042_SH-C3D4.pdf' },
-        { name: 'AUF_2025-0042_SH-C3D4.xlsx' },
-        { name: 'FOTO_2025-0042_SH-C3D4_Vorher.jpg' },
-      ]},
-      { name: '2025_GW-CX9Y-QHJ7/', tag: '', open: false, children: [
-        { name: '...' },
-      ]},
-    ]},
-    { name: 'Ausschreibungen/', tag: 'VOB & privat', open: false, children: [
-      { name: '2025-VOB_Schulamt-Altona_Fenster/' },
-      { name: '2025-PRIV_Saga-Wandsbek_Tueren/' },
     ]},
   ]
 };
