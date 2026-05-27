@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   FileSearch,
   TrendingUp,
   Car,
@@ -14,6 +15,7 @@ import {
  * Der Key entspricht dem `icon`-Feld in ModuleConfig.
  */
 export const MODULE_ICONS: Record<string, React.ElementType> = {
+  BarChart3,
   FileSearch,
   TrendingUp,
   Car,

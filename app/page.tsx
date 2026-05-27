@@ -1,13 +1,43 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Wrench, Clock, LogOut } from 'lucide-react';
+import { Wrench, Clock, LogOut, Settings, X, Check } from 'lucide-react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { MODULES, MODULE_ICONS, type ModuleConfig } from '@/lib/modules';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { DataExportButton } from '@/components/shared/data-export-button';
+
+const HIDDEN_MODULES_KEY = 'werkbank_hidden_modules';
+
+function useHiddenModules(): [Set<string>, (id: string) => void] {
+  const [hidden, setHidden] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set();
+    try {
+      const stored = localStorage.getItem(HIDDEN_MODULES_KEY);
+      return stored ? new Set(JSON.parse(stored) as string[]) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const toggle = (id: string): void => {
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      localStorage.setItem(HIDDEN_MODULES_KEY, JSON.stringify([...next]));
+      return next;
+    });
+  };
+
+  return [hidden, toggle];
+}
 
 function ModuleCard({ module }: { module: ModuleConfig }): React.JSX.Element {
   const Icon = MODULE_ICONS[module.icon] ?? Wrench;
@@ -41,9 +71,81 @@ function ModuleCard({ module }: { module: ModuleConfig }): React.JSX.Element {
   return <Link href={module.route}>{inner}</Link>;
 }
 
+interface AnpassenPanelProps {
+  allModules: ModuleConfig[];
+  hidden: Set<string>;
+  onToggle: (id: string) => void;
+  onClose: () => void;
+}
+
+function AnpassenPanel({ allModules, hidden, onToggle, onClose }: AnpassenPanelProps): React.JSX.Element {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent): void {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose();
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-end pt-20 pr-4 pointer-events-none">
+      <div
+        ref={ref}
+        className="pointer-events-auto w-64 bg-white border border-[#e5e5e5] rounded-2xl shadow-lg overflow-hidden"
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#e5e5e5]">
+          <p className="text-[13px] font-semibold text-[#000000]">Module anzeigen</p>
+          <button
+            onClick={onClose}
+            className="h-6 w-6 flex items-center justify-center rounded-lg text-[#a3a3a3] hover:text-[#000000] hover:bg-[#f5f5f5] transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <div className="py-2 max-h-80 overflow-y-auto">
+          {allModules.map((mod) => {
+            const Icon = MODULE_ICONS[mod.icon] ?? Wrench;
+            const sichtbar = !hidden.has(mod.id);
+            return (
+              <button
+                key={mod.id}
+                onClick={() => onToggle(mod.id)}
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#f5f5f5] transition-colors text-left"
+              >
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#f5f5f5] shrink-0">
+                  <Icon className="h-3.5 w-3.5 text-[#000000]" />
+                </div>
+                <span className="flex-1 text-[13px] font-medium text-[#000000]">{mod.name}</span>
+                <div
+                  className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                    sichtbar ? 'bg-[#000000] border-[#000000]' : 'bg-white border-[#d4d4d4]'
+                  }`}
+                >
+                  {sichtbar && <Check className="h-2.5 w-2.5 text-white" />}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <div className="px-4 py-3 border-t border-[#e5e5e5]">
+          <p className="text-[11px] text-[#a3a3a3] leading-relaxed">
+            Ausgeblendete Module sind weiterhin über die Navigation erreichbar.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function WerkbankDashboard(): React.JSX.Element {
   const { company, signOut } = useAuth();
   const router = useRouter();
+  const [hiddenModules, toggleHiddenModule] = useHiddenModules();
+  const [anpassenOffen, setAnpassenOffen] = useState(false);
 
   const allowedModules = company?.allowedModules;
   const visibleModules = MODULES.filter((m) => {
@@ -52,6 +154,8 @@ export default function WerkbankDashboard(): React.JSX.Element {
     if (Array.isArray(allowedModules)) return allowedModules.includes(m.id);
     return false;
   });
+
+  const angezeigteModule = visibleModules.filter((m) => !hiddenModules.has(m.id));
 
   const handleSignOut = async (): Promise<void> => {
     try {
@@ -81,6 +185,14 @@ export default function WerkbankDashboard(): React.JSX.Element {
           <div className="flex items-center gap-2 shrink-0">
             <DataExportButton companyName={company?.companyName ?? ''} />
             <button
+              onClick={() => setAnpassenOffen((v) => !v)}
+              title="Module anpassen"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#e5e5e5] text-sm font-medium text-[#737373] hover:bg-[#f5f5f5] hover:text-[#000000] transition-colors"
+            >
+              <Settings className="h-3.5 w-3.5" />
+              Anpassen
+            </button>
+            <button
               onClick={handleSignOut}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#e5e5e5] text-sm font-medium text-[#737373] hover:bg-[#f5f5f5] hover:text-[#000000] transition-colors"
             >
@@ -91,18 +203,33 @@ export default function WerkbankDashboard(): React.JSX.Element {
         </div>
 
         {/* Modul-Grid */}
-        {visibleModules.length === 0 ? (
+        {angezeigteModule.length === 0 ? (
           <div className="text-center py-16 text-sm text-[#737373]">
-            Keine Module verfügbar.
+            Alle Module ausgeblendet.{' '}
+            <button
+              onClick={() => setAnpassenOffen(true)}
+              className="underline hover:text-[#000000] transition-colors"
+            >
+              Module anzeigen
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-            {visibleModules.map((mod) => (
+            {angezeigteModule.map((mod) => (
               <ModuleCard key={mod.id} module={mod} />
             ))}
           </div>
         )}
       </div>
+
+      {anpassenOffen && (
+        <AnpassenPanel
+          allModules={visibleModules}
+          hidden={hiddenModules}
+          onToggle={toggleHiddenModule}
+          onClose={() => setAnpassenOffen(false)}
+        />
+      )}
     </AppLayout>
   );
 }

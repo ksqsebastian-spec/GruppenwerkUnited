@@ -33,6 +33,15 @@ export interface ModuleConfig {
 
 export const MODULES: ModuleConfig[] = [
   {
+    id: 'consulting',
+    name: 'Consulting',
+    description: 'Beratungs-Dashboard für alle Gruppenwerk-Unternehmen',
+    route: '/consulting',
+    icon: 'BarChart3',
+    category: 'tool',
+    status: 'active',
+  },
+  {
     id: 'vob',
     name: 'VOB Monitor',
     description: 'Öffentliche Ausschreibungen überwachen und analysieren',
