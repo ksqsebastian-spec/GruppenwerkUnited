@@ -45,10 +45,10 @@ function PlatformIcon({ platform, url }: { platform: string; url: string | null 
   return <img src={src} alt={platform} className="h-5 w-5 rounded-sm shrink-0 object-contain" onError={() => setErr(true)} />;
 }
 
-interface Social { id: string; platform: string; url: string | null; email: string | null; password: string | null; sort_order: number }
+interface Social { id: string; platform: string; url: string | null; email: string | null; password: string | null; nutzer: string | null; sort_order: number }
 interface Props { companyId: string | undefined; companyName: string; onClose: () => void }
-type FormData = { platform: string; url: string; email: string; password: string };
-const emptyForm = (): FormData => ({ platform: 'website', url: '', email: '', password: '' });
+type FormData = { platform: string; url: string; email: string; password: string; nutzer: string };
+const emptyForm = (): FormData => ({ platform: 'website', url: '', email: '', password: '', nutzer: '' });
 
 export function ConsultingSocialsPanel({ companyId, companyName, onClose }: Props): React.JSX.Element {
   const queryClient = useQueryClient();
@@ -77,7 +77,7 @@ export function ConsultingSocialsPanel({ companyId, companyName, onClose }: Prop
     staleTime: 2 * 60_000,
   });
 
-  const createM = useMutation({ mutationFn: async (d: Omit<Social, 'id' | 'sort_order'>) => { const res = await fetch(`/api/consulting/companies/${companyId}/socials`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) }); if (!res.ok) throw new Error(); }, onSuccess: invalidate });
+  const createM = useMutation({ mutationFn: async (d: Omit<Social, 'id' | 'sort_order'>) => { const res = await fetch(`/api/consulting/companies/${companyId}/socials`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) }); if (!res.ok) { const body = await res.json() as { error?: string }; throw new Error(body.error ?? 'Fehler'); } }, onSuccess: invalidate });
   const updateM = useMutation({ mutationFn: async ({ id, data }: { id: string; data: Partial<Social> }) => { const res = await fetch(`/api/consulting/companies/${companyId}/socials/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); if (!res.ok) throw new Error(); }, onSuccess: invalidate });
   const deleteM = useMutation({ mutationFn: async (id: string) => { const res = await fetch(`/api/consulting/companies/${companyId}/socials/${id}`, { method: 'DELETE' }); if (!res.ok) throw new Error(); }, onSuccess: invalidate });
 
@@ -89,7 +89,7 @@ export function ConsultingSocialsPanel({ companyId, companyName, onClose }: Prop
   const handleAdd = async (): Promise<void> => {
     if (!addForm.platform) return;
     try {
-      await createM.mutateAsync({ platform: addForm.platform, url: addForm.url.trim() || null, email: addForm.email.trim() || null, password: addForm.password.trim() || null });
+      await createM.mutateAsync({ platform: addForm.platform, url: addForm.url.trim() || null, email: addForm.email.trim() || null, password: addForm.password.trim() || null, nutzer: addForm.nutzer.trim() || null });
       setAdding(false); setAddForm(emptyForm()); toast.success('Hinzugefügt');
     } catch { toast.error('Anlegen fehlgeschlagen'); }
   };
@@ -97,7 +97,7 @@ export function ConsultingSocialsPanel({ companyId, companyName, onClose }: Prop
   const handleUpdate = async (): Promise<void> => {
     if (!editingId) return;
     try {
-      await updateM.mutateAsync({ id: editingId, data: { platform: editForm.platform, url: editForm.url.trim() || null, email: editForm.email.trim() || null, password: editForm.password.trim() || null } });
+      await updateM.mutateAsync({ id: editingId, data: { platform: editForm.platform, url: editForm.url.trim() || null, email: editForm.email.trim() || null, password: editForm.password.trim() || null, nutzer: editForm.nutzer.trim() || null } });
       setEditingId(null); toast.success('Gespeichert');
     } catch { toast.error('Speichern fehlgeschlagen'); }
   };
@@ -142,6 +142,7 @@ export function ConsultingSocialsPanel({ companyId, companyName, onClose }: Prop
                   {PLATFORMS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
                 </select>
                 <input value={editForm.url} onChange={(e) => setEditForm((f) => ({ ...f, url: e.target.value }))} placeholder="URL" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
+                <input value={editForm.nutzer} onChange={(e) => setEditForm((f) => ({ ...f, nutzer: e.target.value }))} placeholder="Nutzer (Person)" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
                 <input value={editForm.email} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))} placeholder="E-Mail" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
                 <input value={editForm.password} onChange={(e) => setEditForm((f) => ({ ...f, password: e.target.value }))} placeholder="Passwort" type="text" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
                 <div className="flex gap-2">
@@ -158,6 +159,7 @@ export function ConsultingSocialsPanel({ companyId, companyName, onClose }: Prop
                     {s.url && <a href={s.url.startsWith('http') ? s.url : `https://${s.url}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[#a3a3a3] hover:text-[#3B82F6] transition-colors"><ExternalLink className="h-3 w-3" /></a>}
                   </div>
                   {s.url && <p className="text-[11px] text-[#3B82F6] truncate">{s.url.replace(/^https?:\/\//, '')}</p>}
+                  {s.nutzer && <p className="text-[11px] text-[#a3a3a3] mt-0.5">{s.nutzer}</p>}
                   {s.email && <p className="text-[11px] text-[#737373] mt-0.5">{s.email}</p>}
                   {s.password && (
                     <div className="flex items-center gap-1 mt-0.5">
@@ -175,7 +177,7 @@ export function ConsultingSocialsPanel({ companyId, companyName, onClose }: Prop
                     </div>
                   ) : (
                     <>
-                      <button type="button" onClick={() => { setEditForm({ platform: s.platform, url: s.url ?? '', email: s.email ?? '', password: s.password ?? '' }); setEditingId(s.id); }} className="p-1 rounded text-[#a3a3a3] hover:text-[#000] hover:bg-[#f5f5f5]"><Pencil className="h-3 w-3" /></button>
+                      <button type="button" onClick={() => { setEditForm({ platform: s.platform, url: s.url ?? '', email: s.email ?? '', password: s.password ?? '', nutzer: s.nutzer ?? '' }); setEditingId(s.id); }} className="p-1 rounded text-[#a3a3a3] hover:text-[#000] hover:bg-[#f5f5f5]"><Pencil className="h-3 w-3" /></button>
                       <button type="button" onClick={() => setConfirmDelete(s.id)} className="p-1 rounded text-[#c0c0c0] hover:text-[#EF4444] hover:bg-red-50"><Trash2 className="h-3 w-3" /></button>
                     </>
                   )}
@@ -191,6 +193,7 @@ export function ConsultingSocialsPanel({ companyId, companyName, onClose }: Prop
               {PLATFORMS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
             </select>
             <input value={addForm.url} onChange={(e) => setAddForm((f) => ({ ...f, url: e.target.value }))} placeholder="URL" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
+            <input value={addForm.nutzer} onChange={(e) => setAddForm((f) => ({ ...f, nutzer: e.target.value }))} placeholder="Nutzer (Person, optional)" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
             <input value={addForm.email} onChange={(e) => setAddForm((f) => ({ ...f, email: e.target.value }))} placeholder="E-Mail (optional)" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
             <input value={addForm.password} onChange={(e) => setAddForm((f) => ({ ...f, password: e.target.value }))} placeholder="Passwort (optional)" type="text" onKeyDown={(e) => { if (e.key === 'Enter') void handleAdd(); if (e.key === 'Escape') { setAdding(false); setAddForm(emptyForm()); } }} className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
             <div className="flex gap-2 mt-1">
