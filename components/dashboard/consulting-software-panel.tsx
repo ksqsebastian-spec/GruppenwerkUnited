@@ -8,40 +8,58 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 const SESSION_KEY = 'consulting_credentials_unlocked';
 const MASTER_PASSWORD = 'admin';
 
+const SOFTWARE_PRESETS: { name: string; url: string; domain: string }[] = [
+  { name: 'Adobe Acrobat',         url: 'https://acrobat.adobe.com',       domain: 'adobe.com' },
+  { name: 'Hero Handwerksoftware', url: 'https://www.hero-software.de',    domain: 'hero-software.de' },
+  { name: 'Lexware',               url: 'https://www.lexware.de',           domain: 'lexware.de' },
+  { name: 'DocuWare',              url: 'https://www.docuware.com',         domain: 'docuware.com' },
+  { name: 'Claude (Anthropic)',    url: 'https://claude.ai',                domain: 'claude.ai' },
+  { name: 'ChatGPT (OpenAI)',      url: 'https://chat.openai.com',          domain: 'openai.com' },
+  { name: 'Microsoft 365',         url: 'https://www.microsoft365.com',     domain: 'microsoft.com' },
+  { name: 'Google Workspace',      url: 'https://workspace.google.com',     domain: 'google.com' },
+  { name: 'DATEV',                 url: 'https://www.datev.de',             domain: 'datev.de' },
+  { name: 'Slack',                 url: 'https://slack.com',                domain: 'slack.com' },
+  { name: 'Notion',                url: 'https://www.notion.so',            domain: 'notion.so' },
+  { name: 'Dropbox',               url: 'https://www.dropbox.com',          domain: 'dropbox.com' },
+  { name: 'sevDesk',               url: 'https://sevdesk.de',               domain: 'sevdesk.de' },
+  { name: 'WISO',                  url: 'https://www.wiso-software.de',     domain: 'wiso-software.de' },
+];
+
 interface Software {
   id: string;
   name: string;
   url: string | null;
   logo_url: string | null;
+  logo_domain: string | null;
   price_monthly: number | null;
   username: string | null;
   password: string | null;
   notes: string | null;
+  person: string | null;
   sort_order: number;
 }
 
 interface Props { companyId: string | undefined; companyName: string; onClose: () => void }
-type FormData = { name: string; url: string; price_monthly: string; username: string; password: string; notes: string };
-const emptyForm = (): FormData => ({ name: '', url: '', price_monthly: '', username: '', password: '', notes: '' });
+type FormData = { name: string; url: string; price_monthly: string; username: string; password: string; notes: string; person: string; logo_domain: string };
+const emptyForm = (): FormData => ({ name: '', url: '', price_monthly: '', username: '', password: '', notes: '', person: '', logo_domain: '' });
 
 function SoftwareLogo({ sw }: { sw: Software }): React.JSX.Element {
   const [clearbitErr, setClearbitErr] = useState(false);
   const [faviconErr, setFaviconErr] = useState(false);
 
+  const domain = sw.logo_domain
+    || (sw.url ? (() => { try { return new URL(sw.url!.startsWith('http') ? sw.url! : `https://${sw.url}`).hostname; } catch { return null; } })() : null);
+
   if (sw.logo_url && !clearbitErr) {
     return <img src={sw.logo_url} alt={sw.name} className="h-6 w-6 rounded-sm shrink-0 object-contain" onError={() => setClearbitErr(true)} />;
   }
 
-  const domain = sw.url ? (() => { try { return new URL(sw.url!.startsWith('http') ? sw.url! : `https://${sw.url}`).hostname; } catch { return null; } })() : null;
-
-  if (domain && !faviconErr) {
-    const clearbitSrc = `https://logo.clearbit.com/${domain}`;
-    return <img src={clearbitSrc} alt={sw.name} className="h-6 w-6 rounded-sm shrink-0 object-contain" onError={() => { setClearbitErr(true); setFaviconErr(false); }} />;
+  if (domain && !clearbitErr) {
+    return <img src={`https://logo.clearbit.com/${domain}`} alt={sw.name} className="h-6 w-6 rounded-sm shrink-0 object-contain" onError={() => setClearbitErr(true)} />;
   }
 
   if (domain && clearbitErr && !faviconErr) {
-    const faviconSrc = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`;
-    return <img src={faviconSrc} alt={sw.name} className="h-5 w-5 rounded-sm shrink-0 object-contain" onError={() => setFaviconErr(true)} />;
+    return <img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`} alt={sw.name} className="h-5 w-5 rounded-sm shrink-0 object-contain" onError={() => setFaviconErr(true)} />;
   }
 
   return (
@@ -79,7 +97,7 @@ export function ConsultingSoftwarePanel({ companyId, companyName, onClose }: Pro
   });
 
   const createM = useMutation({
-    mutationFn: async (d: Omit<Software, 'id' | 'sort_order' | 'logo_url'>) => {
+    mutationFn: async (d: Record<string, unknown>) => {
       const res = await fetch(`/api/consulting/companies/${companyId}/software`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
       if (!res.ok) throw new Error();
     },
@@ -87,7 +105,7 @@ export function ConsultingSoftwarePanel({ companyId, companyName, onClose }: Pro
   });
 
   const updateM = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<Software> }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
       const res = await fetch(`/api/consulting/companies/${companyId}/software/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       if (!res.ok) throw new Error();
     },
@@ -107,19 +125,21 @@ export function ConsultingSoftwarePanel({ companyId, companyName, onClose }: Pro
     else toast.error('Falsches Passwort');
   };
 
-  const formToPayload = (f: FormData) => ({
+  const formToPayload = (f: FormData): Record<string, unknown> => ({
     name: f.name.trim(),
     url: f.url.trim() || null,
     price_monthly: f.price_monthly ? Number(f.price_monthly) : null,
     username: f.username.trim() || null,
     password: f.password.trim() || null,
     notes: f.notes.trim() || null,
+    person: f.person.trim() || null,
+    logo_domain: f.logo_domain.trim() || null,
   });
 
   const handleAdd = async (): Promise<void> => {
     if (!addForm.name.trim()) return;
     try {
-      await createM.mutateAsync(formToPayload(addForm) as Omit<Software, 'id' | 'sort_order' | 'logo_url'>);
+      await createM.mutateAsync(formToPayload(addForm));
       setAdding(false); setAddForm(emptyForm()); toast.success('Hinzugefügt');
     } catch { toast.error('Anlegen fehlgeschlagen'); }
   };
@@ -132,7 +152,37 @@ export function ConsultingSoftwarePanel({ companyId, companyName, onClose }: Pro
     } catch { toast.error('Speichern fehlgeschlagen'); }
   };
 
+  const handlePresetSelect = (presetName: string, setter: (fn: (f: FormData) => FormData) => void): void => {
+    if (!presetName) return;
+    const preset = SOFTWARE_PRESETS.find((p) => p.name === presetName);
+    if (preset) setter((f) => ({ ...f, name: preset.name, url: preset.url, logo_domain: preset.domain }));
+  };
+
   const toggleShowPw = (id: string): void => setShowPasswords((p) => ({ ...p, [id]: !p[id] }));
+
+  const renderForm = (form: FormData, setter: (fn: (f: FormData) => FormData) => void, onSave: () => void, onCancel: () => void, saving: boolean): React.JSX.Element => (
+    <div className="flex flex-col gap-1.5">
+      <select
+        value=""
+        onChange={(e) => handlePresetSelect(e.target.value, setter)}
+        className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 bg-white text-[#a3a3a3]"
+      >
+        <option value="">Aus Vorlage wählen…</option>
+        {SOFTWARE_PRESETS.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}
+      </select>
+      <input autoFocus value={form.name} onChange={(e) => setter((f) => ({ ...f, name: e.target.value }))} placeholder="Name *" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
+      <input value={form.url} onChange={(e) => setter((f) => ({ ...f, url: e.target.value }))} placeholder="URL" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
+      <input value={form.price_monthly} onChange={(e) => setter((f) => ({ ...f, price_monthly: e.target.value }))} placeholder="Preis/Monat (€)" type="number" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
+      <input value={form.username} onChange={(e) => setter((f) => ({ ...f, username: e.target.value }))} placeholder="Benutzername" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
+      <input value={form.password} onChange={(e) => setter((f) => ({ ...f, password: e.target.value }))} placeholder="Passwort" type="text" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
+      <input value={form.person} onChange={(e) => setter((f) => ({ ...f, person: e.target.value }))} placeholder="Verwendet von (Person)" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
+      <input value={form.notes} onChange={(e) => setter((f) => ({ ...f, notes: e.target.value }))} placeholder="Notizen" onKeyDown={(e) => { if (e.key === 'Enter') onSave(); if (e.key === 'Escape') onCancel(); }} className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
+      <div className="flex gap-2 mt-1">
+        <button type="button" onClick={onSave} disabled={saving || !form.name.trim()} className="text-[12px] font-medium text-white bg-[#000] hover:bg-[#333] rounded px-3 py-1 disabled:opacity-50">Speichern</button>
+        <button type="button" onClick={onCancel} className="text-[12px] text-[#a3a3a3] hover:text-[#000] px-2 py-1">Abbrechen</button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col rounded-xl border border-[#e5e5e5] bg-white overflow-hidden">
@@ -167,18 +217,13 @@ export function ConsultingSoftwarePanel({ companyId, companyName, onClose }: Pro
         {software.map((sw) => (
           <div key={sw.id} className="px-4 py-2.5 group">
             {editingId === sw.id ? (
-              <div className="flex flex-col gap-1.5">
-                <input autoFocus value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="Name *" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
-                <input value={editForm.url} onChange={(e) => setEditForm((f) => ({ ...f, url: e.target.value }))} placeholder="URL" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
-                <input value={editForm.price_monthly} onChange={(e) => setEditForm((f) => ({ ...f, price_monthly: e.target.value }))} placeholder="Preis/Monat (€)" type="number" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
-                <input value={editForm.username} onChange={(e) => setEditForm((f) => ({ ...f, username: e.target.value }))} placeholder="Benutzername" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
-                <input value={editForm.password} onChange={(e) => setEditForm((f) => ({ ...f, password: e.target.value }))} placeholder="Passwort" type="text" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
-                <input value={editForm.notes} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Notizen" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => void handleUpdate()} className="p-1 rounded text-[#22C55E] hover:bg-green-50"><Check className="h-3.5 w-3.5" /></button>
-                  <button type="button" onClick={() => setEditingId(null)} className="p-1 rounded text-[#a3a3a3] hover:bg-[#f5f5f5]"><XIcon className="h-3.5 w-3.5" /></button>
-                </div>
-              </div>
+              renderForm(
+                editForm,
+                setEditForm,
+                () => void handleUpdate(),
+                () => setEditingId(null),
+                updateM.isPending
+              )
             ) : (
               <div className="flex items-start gap-2.5">
                 <SoftwareLogo sw={sw} />
@@ -194,6 +239,7 @@ export function ConsultingSoftwarePanel({ companyId, companyName, onClose }: Pro
                       <a href={sw.url.startsWith('http') ? sw.url : `https://${sw.url}`} target="_blank" rel="noopener noreferrer" className="text-[11px] text-[#3B82F6] hover:underline truncate">{sw.url.replace(/^https?:\/\//, '')}</a>
                     )}
                   </div>
+                  {sw.person && <p className="text-[11px] text-[#a3a3a3] mt-0.5">{sw.person}</p>}
                   {sw.username && <p className="text-[11px] text-[#737373] mt-0.5">{sw.username}</p>}
                   {sw.password && (
                     <div className="flex items-center gap-1 mt-0.5">
@@ -212,7 +258,7 @@ export function ConsultingSoftwarePanel({ companyId, companyName, onClose }: Pro
                     </div>
                   ) : (
                     <>
-                      <button type="button" onClick={() => { setEditForm({ name: sw.name, url: sw.url ?? '', price_monthly: sw.price_monthly != null ? String(sw.price_monthly) : '', username: sw.username ?? '', password: sw.password ?? '', notes: sw.notes ?? '' }); setEditingId(sw.id); }} className="p-1 rounded text-[#a3a3a3] hover:text-[#000] hover:bg-[#f5f5f5]"><Pencil className="h-3 w-3" /></button>
+                      <button type="button" onClick={() => { setEditForm({ name: sw.name, url: sw.url ?? '', price_monthly: sw.price_monthly != null ? String(sw.price_monthly) : '', username: sw.username ?? '', password: sw.password ?? '', notes: sw.notes ?? '', person: sw.person ?? '', logo_domain: sw.logo_domain ?? '' }); setEditingId(sw.id); }} className="p-1 rounded text-[#a3a3a3] hover:text-[#000] hover:bg-[#f5f5f5]"><Pencil className="h-3 w-3" /></button>
                       <button type="button" onClick={() => setConfirmDelete(sw.id)} className="p-1 rounded text-[#c0c0c0] hover:text-[#EF4444] hover:bg-red-50"><Trash2 className="h-3 w-3" /></button>
                     </>
                   )}
@@ -223,17 +269,14 @@ export function ConsultingSoftwarePanel({ companyId, companyName, onClose }: Pro
         ))}
 
         {adding && (
-          <div className="px-4 py-3 bg-[#fafafa] flex flex-col gap-1.5">
-            <input autoFocus value={addForm.name} onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))} placeholder="Name *" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
-            <input value={addForm.url} onChange={(e) => setAddForm((f) => ({ ...f, url: e.target.value }))} placeholder="URL" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
-            <input value={addForm.price_monthly} onChange={(e) => setAddForm((f) => ({ ...f, price_monthly: e.target.value }))} placeholder="Preis/Monat (€)" type="number" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
-            <input value={addForm.username} onChange={(e) => setAddForm((f) => ({ ...f, username: e.target.value }))} placeholder="Benutzername" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
-            <input value={addForm.password} onChange={(e) => setAddForm((f) => ({ ...f, password: e.target.value }))} placeholder="Passwort" type="text" onKeyDown={(e) => { if (e.key === 'Enter') void handleAdd(); if (e.key === 'Escape') { setAdding(false); setAddForm(emptyForm()); } }} className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
-            <input value={addForm.notes} onChange={(e) => setAddForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Notizen" className="text-[12px] border border-[#e5e5e5] rounded px-2 py-1 outline-none focus:border-[#000]" />
-            <div className="flex gap-2 mt-1">
-              <button type="button" onClick={() => void handleAdd()} disabled={createM.isPending || !addForm.name.trim()} className="text-[12px] font-medium text-white bg-[#000] hover:bg-[#333] rounded px-3 py-1 disabled:opacity-50">Hinzufügen</button>
-              <button type="button" onClick={() => { setAdding(false); setAddForm(emptyForm()); }} className="text-[12px] text-[#a3a3a3] hover:text-[#000] px-2 py-1">Abbrechen</button>
-            </div>
+          <div className="px-4 py-3 bg-[#fafafa]">
+            {renderForm(
+              addForm,
+              setAddForm,
+              () => void handleAdd(),
+              () => { setAdding(false); setAddForm(emptyForm()); },
+              createM.isPending
+            )}
           </div>
         )}
       </div>

@@ -9,18 +9,21 @@ const SESSION_KEY = 'consulting_credentials_unlocked';
 const MASTER_PASSWORD = 'admin';
 
 const PLATFORMS: { value: string; label: string; domain: string }[] = [
-  { value: 'website',   label: 'Website',     domain: '' },
-  { value: 'instagram', label: 'Instagram',   domain: 'instagram.com' },
-  { value: 'twitter',   label: 'Twitter / X', domain: 'x.com' },
-  { value: 'facebook',  label: 'Facebook',    domain: 'facebook.com' },
-  { value: 'linkedin',  label: 'LinkedIn',    domain: 'linkedin.com' },
-  { value: 'youtube',   label: 'YouTube',     domain: 'youtube.com' },
-  { value: 'tiktok',    label: 'TikTok',      domain: 'tiktok.com' },
-  { value: 'pinterest', label: 'Pinterest',   domain: 'pinterest.com' },
-  { value: 'xing',      label: 'Xing',        domain: 'xing.com' },
-  { value: 'kununu',    label: 'kununu',       domain: 'kununu.com' },
-  { value: 'google',    label: 'Google',      domain: 'google.com' },
-  { value: 'other',     label: 'Sonstiges',   domain: '' },
+  { value: 'website',   label: 'Website',              domain: '' },
+  { value: 'instagram', label: 'Instagram',            domain: 'instagram.com' },
+  { value: 'twitter',   label: 'Twitter / X',          domain: 'x.com' },
+  { value: 'facebook',  label: 'Facebook',             domain: 'facebook.com' },
+  { value: 'linkedin',  label: 'LinkedIn',             domain: 'linkedin.com' },
+  { value: 'youtube',   label: 'YouTube',              domain: 'youtube.com' },
+  { value: 'tiktok',    label: 'TikTok',               domain: 'tiktok.com' },
+  { value: 'pinterest', label: 'Pinterest',            domain: 'pinterest.com' },
+  { value: 'xing',      label: 'Xing',                 domain: 'xing.com' },
+  { value: 'kununu',    label: 'kununu',               domain: 'kununu.com' },
+  { value: 'google',    label: 'Google',               domain: 'google.com' },
+  { value: 'gtm',       label: 'Google Tag Manager',   domain: 'tagmanager.google.com' },
+  { value: 'ga',        label: 'Google Analytics',     domain: 'analytics.google.com' },
+  { value: 'gsc',       label: 'Google Search Console',domain: 'search.google.com' },
+  { value: 'other',     label: 'Sonstiges',            domain: '' },
 ];
 
 function getPlatformDomain(platform: string, url: string | null): string {
@@ -105,7 +108,7 @@ export function ConsultingSocialsPanel({ companyId, companyName, onClose }: Prop
     <div className="flex flex-col rounded-xl border border-[#e5e5e5] bg-white overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#f0f0f0]">
         <div>
-          <h3 className="text-[13px] font-semibold text-[#000000]">Socials</h3>
+          <h3 className="text-[13px] font-semibold text-[#000000]">Web</h3>
           <p className="text-[11px] text-[#a3a3a3]">{companyName}</p>
         </div>
         <div className="flex items-center gap-1">
@@ -128,7 +131,7 @@ export function ConsultingSocialsPanel({ companyId, companyName, onClose }: Prop
       <div className="divide-y divide-[#f0f0f0]">
         {isLoading && <div className="px-4 py-3 text-[12px] text-[#a3a3a3]">Wird geladen…</div>}
         {!isLoading && socials.length === 0 && !adding && (
-          <div className="px-4 py-4 text-[12px] text-[#a3a3a3] text-center">Noch keine Socials.</div>
+          <div className="px-4 py-4 text-[12px] text-[#a3a3a3] text-center">Noch keine Web-Einträge.</div>
         )}
 
         {socials.map((s) => (

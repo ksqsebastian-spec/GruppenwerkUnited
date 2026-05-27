@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Plus, Euro, Users, Image, Share2, AppWindow } from 'lucide-react';
+import { ArrowLeft, Plus, Euro, Users, Image, Globe, AppWindow, SlidersHorizontal, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ConsultingStatusBadge } from '@/components/dashboard/consulting-status-badge';
 import { ConsultingCategorySection } from '@/components/dashboard/consulting-category-section';
 import { ConsultingCostPanel } from '@/components/dashboard/consulting-cost-panel';
@@ -20,6 +21,27 @@ import type { ConsultingCategoryWithCheckpoints, ConsultingCompanyWithCounts } f
 
 type Tab = 'checkpoints' | 'zugaenge';
 
+interface PanelState {
+  web: boolean;
+  software: boolean;
+  bilder: boolean;
+  contacts: boolean;
+  costs: boolean;
+}
+
+const STORAGE_KEY = 'consulting_panels';
+
+const defaultPanels: PanelState = { web: false, software: false, bilder: false, contacts: false, costs: false };
+
+function loadPanels(): PanelState {
+  if (typeof window === 'undefined') return defaultPanels;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return { ...defaultPanels, ...JSON.parse(stored) as Partial<PanelState> };
+  } catch { /* ignore */ }
+  return defaultPanels;
+}
+
 export default function ConsultingCompanyPage(): React.JSX.Element {
   const params = useParams();
   const slug = typeof params.slug === 'string' ? params.slug : String(params.slug ?? '');
@@ -28,11 +50,18 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
   const { data: companies } = useConsultingCompanies();
 
   const [tab, setTab] = useState<Tab>('checkpoints');
-  const [showCosts, setShowCosts] = useState(false);
-  const [showContacts, setShowContacts] = useState(false);
-  const [showBilder, setShowBilder] = useState(false);
-  const [showSocials, setShowSocials] = useState(false);
-  const [showSoftware, setShowSoftware] = useState(false);
+  const [panels, setPanels] = useState<PanelState>(defaultPanels);
+  const [panelPickerOpen, setPanelPickerOpen] = useState(false);
+
+  useEffect(() => { setPanels(loadPanels()); }, []);
+
+  const togglePanel = (key: keyof PanelState): void => {
+    setPanels((prev: PanelState) => {
+      const next = { ...prev, [key]: !prev[key] };
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
 
   const company = companies?.find((c: ConsultingCompanyWithCounts) => c.slug === slug);
 
@@ -74,7 +103,17 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
     );
   }
 
-  const hasRightPanel = (showCosts && tab === 'checkpoints' && categories && categories.length > 0) || showContacts || showBilder || showSocials || showSoftware;
+  const activePanels = [
+    panels.web && { key: 'web' as const, icon: <Globe className="h-3.5 w-3.5" /> },
+    panels.software && { key: 'software' as const, icon: <AppWindow className="h-3.5 w-3.5" /> },
+    panels.bilder && { key: 'bilder' as const, icon: <Image className="h-3.5 w-3.5" /> },
+    panels.contacts && { key: 'contacts' as const, icon: <Users className="h-3.5 w-3.5" /> },
+    panels.costs && tab === 'checkpoints' && { key: 'costs' as const, icon: <Euro className="h-3.5 w-3.5" /> },
+  ].filter(Boolean) as { key: keyof PanelState; icon: React.JSX.Element }[];
+
+  const hasRightPanel =
+    (panels.costs && tab === 'checkpoints' && categories && categories.length > 0) ||
+    panels.contacts || panels.bilder || panels.web || panels.software;
 
   return (
     <div className="w-full flex flex-col gap-5">
@@ -113,33 +152,52 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <Button size="sm" variant={showSocials ? 'default' : 'outline'} onClick={() => setShowSocials((v) => !v)} className="flex items-center gap-1.5">
-            <Share2 className="h-3.5 w-3.5" />
-            Socials
-          </Button>
-          <Button size="sm" variant={showSoftware ? 'default' : 'outline'} onClick={() => setShowSoftware((v) => !v)} className="flex items-center gap-1.5">
-            <AppWindow className="h-3.5 w-3.5" />
-            Software
-          </Button>
-          <Button size="sm" variant={showBilder ? 'default' : 'outline'} onClick={() => setShowBilder((v) => !v)} className="flex items-center gap-1.5">
-            <Image className="h-3.5 w-3.5" />
-            Bilder
-          </Button>
-          <Button size="sm" variant={showContacts ? 'default' : 'outline'} onClick={() => setShowContacts((v) => !v)} className="flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5" />
-            Ansprechpartner
-          </Button>
-          {tab === 'checkpoints' && (
+          {/* Active panel quick-toggle chips */}
+          {activePanels.map(({ key, icon }) => (
             <Button
+              key={key}
               size="sm"
-              variant={showCosts ? 'default' : 'outline'}
-              onClick={() => setShowCosts((v) => !v)}
-              className="flex items-center gap-1.5"
+              variant="default"
+              onClick={() => togglePanel(key)}
+              className="px-2"
+              title={key}
             >
-              <Euro className="h-3.5 w-3.5" />
-              Kosten
+              {icon}
             </Button>
-          )}
+          ))}
+
+          {/* Panel picker */}
+          <Popover open={panelPickerOpen} onOpenChange={setPanelPickerOpen}>
+            <PopoverTrigger asChild>
+              <Button size="sm" variant="outline" className="px-2" title="Panels anpassen">
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-48 p-2">
+              <p className="text-[11px] font-medium text-[#a3a3a3] uppercase tracking-wide px-2 py-1 mb-1">Panels</p>
+              {(
+                [
+                  { key: 'web' as const, label: 'Web', icon: <Globe className="h-3.5 w-3.5" /> },
+                  { key: 'software' as const, label: 'Software', icon: <AppWindow className="h-3.5 w-3.5" /> },
+                  { key: 'bilder' as const, label: 'Bilder', icon: <Image className="h-3.5 w-3.5" /> },
+                  { key: 'contacts' as const, label: 'Ansprechpartner', icon: <Users className="h-3.5 w-3.5" /> },
+                  ...(tab === 'checkpoints' ? [{ key: 'costs' as const, label: 'Kosten', icon: <Euro className="h-3.5 w-3.5" /> }] : []),
+                ] as { key: keyof PanelState; label: string; icon: React.JSX.Element }[]
+              ).map(({ key, label, icon }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => togglePanel(key)}
+                  className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-[13px] hover:bg-[#f5f5f5] transition-colors text-left"
+                >
+                  <span className={panels[key] ? 'text-[#000]' : 'text-[#c0c0c0]'}>{icon}</span>
+                  <span className={panels[key] ? 'text-[#000] font-medium' : 'text-[#737373]'}>{label}</span>
+                  {panels[key] && <Check className="h-3 w-3 text-[#000] ml-auto" />}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+
           <Link href="/consulting/einstellungen">
             <Button variant="outline" size="sm" className="flex items-center gap-1.5">
               <Plus className="h-4 w-4" />
@@ -203,40 +261,40 @@ export default function ConsultingCompanyPage(): React.JSX.Element {
 
         {hasRightPanel && (
           <div className="w-72 shrink-0 sticky top-4 flex flex-col gap-3">
-            {showSocials && (
+            {panels.web && (
               <ConsultingSocialsPanel
                 companyId={company?.id}
                 companyName={company?.name ?? slug}
-                onClose={() => setShowSocials(false)}
+                onClose={() => togglePanel('web')}
               />
             )}
-            {showSoftware && (
+            {panels.software && (
               <ConsultingSoftwarePanel
                 companyId={company?.id}
                 companyName={company?.name ?? slug}
-                onClose={() => setShowSoftware(false)}
+                onClose={() => togglePanel('software')}
               />
             )}
-            {showBilder && (
+            {panels.bilder && (
               <ConsultingBilderPanel
                 companyId={company?.id}
                 companyName={company?.name ?? slug}
-                onClose={() => setShowBilder(false)}
+                onClose={() => togglePanel('bilder')}
               />
             )}
-            {showContacts && (
+            {panels.contacts && (
               <ConsultingContactsPanel
                 companyId={company?.id}
                 companyName={company?.name ?? slug}
-                onClose={() => setShowContacts(false)}
+                onClose={() => togglePanel('contacts')}
               />
             )}
-            {showCosts && tab === 'checkpoints' && categories && categories.length > 0 && (
+            {panels.costs && tab === 'checkpoints' && categories && categories.length > 0 && (
               <ConsultingCostPanel
                 mode="company"
                 categories={categories}
                 companyName={company?.name ?? slug}
-                onClose={() => setShowCosts(false)}
+                onClose={() => togglePanel('costs')}
               />
             )}
           </div>
