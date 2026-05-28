@@ -1,10 +1,11 @@
-import { supabase } from '@/lib/supabase/client';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { Company, CompanyInsert, CompanyUpdate } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
 const COMPANY_COLUMNS = 'id, name, created_at';
 
 export async function fetchCompanies(): Promise<Company[]> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('companies')
     .select(COMPANY_COLUMNS)
@@ -19,6 +20,7 @@ export async function fetchCompanies(): Promise<Company[]> {
 }
 
 export async function createCompany(company: CompanyInsert): Promise<Company> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('companies')
     .insert(company)
@@ -34,6 +36,7 @@ export async function createCompany(company: CompanyInsert): Promise<Company> {
 }
 
 export async function updateCompany(id: string, updates: CompanyUpdate): Promise<Company> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('companies')
     .update(updates)
@@ -54,6 +57,7 @@ export async function updateCompany(id: string, updates: CompanyUpdate): Promise
  * Gibt die UUID zurück. Wird beim ersten Zugriff eines neuen Mandanten aufgerufen.
  */
 export async function getOrCreateFuhrparkCompany(name: string): Promise<string> {
+  const supabase = createAdminClient();
   const { data: existing } = await supabase
     .from('companies')
     .select('id')
@@ -86,6 +90,7 @@ export async function getOrCreateFuhrparkCompany(name: string): Promise<string> 
 }
 
 export async function deleteCompany(id: string): Promise<void> {
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from('companies')
     .delete()

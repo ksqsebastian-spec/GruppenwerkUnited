@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type {
   AutomatisierungsKnoten,
   AutomatisierungsKnotenInsert,
@@ -13,6 +13,7 @@ import type {
 export async function fetchAutomatisierungsknoten(
   companyId: string
 ): Promise<AutomatisierungsKnoten[]> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('automation_nodes')
     .select('*')
@@ -35,6 +36,7 @@ export async function createAutomatisierungsknoten(
   companyId: string,
   input: Omit<AutomatisierungsKnotenInsert, 'company'>
 ): Promise<AutomatisierungsKnoten> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('automation_nodes')
     .insert({ ...input, company: companyId })
@@ -57,6 +59,7 @@ export async function updateAutomatisierungsknoten(
   id: string,
   updates: AutomatisierungsKnotenUpdate
 ): Promise<AutomatisierungsKnoten> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('automation_nodes')
     .update(updates)
@@ -78,14 +81,17 @@ export async function updateAutomatisierungsknoten(
  * Kein Toast — wird häufig aufgerufen, soll nicht stören.
  */
 export async function updateKnotenPosition(
+  companyId: string,
   id: string,
   x: number,
   y: number
 ): Promise<void> {
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from('automation_nodes')
     .update({ position_x: x, position_y: y })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('company', companyId);
 
   if (error) {
     console.error('Fehler beim Speichern der Knotenposition:', error);
@@ -100,6 +106,7 @@ export async function deleteAutomatisierungsknoten(
   companyId: string,
   id: string
 ): Promise<void> {
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from('automation_nodes')
     .delete()
