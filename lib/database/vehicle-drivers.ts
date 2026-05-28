@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { VehicleDriver, VehicleDriverInsert } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
@@ -19,6 +19,7 @@ const VEHICLE_DRIVER_BOTH = `
 `;
 
 async function assertVehicleBelongsToTenant(vehicleId: string, tenantCompanyId: string): Promise<void> {
+  const supabase = createAdminClient();
   const { data } = await supabase
     .from('vehicles')
     .select('id')
@@ -29,6 +30,7 @@ async function assertVehicleBelongsToTenant(vehicleId: string, tenantCompanyId: 
 }
 
 async function assertDriverBelongsToTenant(driverId: string, tenantCompanyId: string): Promise<void> {
+  const supabase = createAdminClient();
   const { data } = await supabase
     .from('drivers')
     .select('id')
@@ -39,6 +41,7 @@ async function assertDriverBelongsToTenant(driverId: string, tenantCompanyId: st
 }
 
 export async function fetchVehicleDrivers(vehicleId: string, tenantCompanyId?: string | null): Promise<VehicleDriver[]> {
+  const supabase = createAdminClient();
   if (tenantCompanyId) {
     await assertVehicleBelongsToTenant(vehicleId, tenantCompanyId);
   }
@@ -58,6 +61,7 @@ export async function fetchVehicleDrivers(vehicleId: string, tenantCompanyId?: s
 }
 
 export async function fetchDriverVehicles(driverId: string, tenantCompanyId?: string | null): Promise<VehicleDriver[]> {
+  const supabase = createAdminClient();
   if (tenantCompanyId) {
     await assertDriverBelongsToTenant(driverId, tenantCompanyId);
   }
@@ -80,6 +84,7 @@ export async function assignDriverToVehicle(
   data: VehicleDriverInsert,
   tenantCompanyId?: string | null
 ): Promise<VehicleDriver> {
+  const supabase = createAdminClient();
   if (tenantCompanyId) {
     await Promise.all([
       assertVehicleBelongsToTenant(data.vehicle_id, tenantCompanyId),
@@ -117,6 +122,7 @@ export async function unassignDriverFromVehicle(
   driverId: string,
   tenantCompanyId?: string | null
 ): Promise<void> {
+  const supabase = createAdminClient();
   if (tenantCompanyId) {
     await assertVehicleBelongsToTenant(vehicleId, tenantCompanyId);
   }
@@ -138,6 +144,7 @@ export async function setPrimaryDriver(
   driverId: string,
   tenantCompanyId?: string | null
 ): Promise<void> {
+  const supabase = createAdminClient();
   if (tenantCompanyId) {
     await assertVehicleBelongsToTenant(vehicleId, tenantCompanyId);
   }

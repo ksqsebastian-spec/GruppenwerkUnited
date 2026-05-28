@@ -17,7 +17,9 @@ export async function fetchLeads(companyId: string, filter: LeadFilter = {}): Pr
     .order('created_at', { ascending: false });
 
   if (filter.search) {
-    const s = `%${filter.search}%`;
+    // PostgREST-Metazeichen entfernen, um Filter-Injection zu verhindern
+    const clean = filter.search.replace(/[%,()\\]/g, ' ').trim();
+    const s = `%${clean}%`;
     query = query.or(
       `vorname.ilike.${s},nachname.ilike.${s},email.ilike.${s},firma.ilike.${s},position.ilike.${s}`
     );
@@ -90,12 +92,13 @@ export async function upsertLeads(companyId: string, rows: Omit<LeadInsert, 'com
 
 // ── Kommentare ────────────────────────────────────────────────────────────────
 
-export async function fetchKommentare(leadId: string): Promise<LeadKommentar[]> {
+export async function fetchKommentare(leadId: string, companyId: string): Promise<LeadKommentar[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('lead_kommentare')
     .select('*')
     .eq('lead_id', leadId)
+    .eq('company', companyId)
     .order('created_at', { ascending: true });
   if (error) throw new Error('Kommentare konnten nicht geladen werden');
   return (data ?? []) as LeadKommentar[];
@@ -112,20 +115,25 @@ export async function createKommentar(leadId: string, companyId: string, text: s
   return data as LeadKommentar;
 }
 
-export async function deleteKommentar(id: string): Promise<void> {
+export async function deleteKommentar(id: string, companyId: string): Promise<void> {
   const supabase = createAdminClient();
-  const { error } = await supabase.from('lead_kommentare').delete().eq('id', id);
+  const { error } = await supabase
+    .from('lead_kommentare')
+    .delete()
+    .eq('id', id)
+    .eq('company', companyId);
   if (error) throw new Error('Kommentar konnte nicht gelöscht werden');
 }
 
 // ── Dateianhänge ──────────────────────────────────────────────────────────────
 
-export async function fetchDateien(leadId: string): Promise<LeadDatei[]> {
+export async function fetchDateien(leadId: string, companyId: string): Promise<LeadDatei[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('lead_dateien')
     .select('*')
     .eq('lead_id', leadId)
+    .eq('company', companyId)
     .order('created_at', { ascending: false });
   if (error) throw new Error('Dateien konnten nicht geladen werden');
   return (data ?? []) as LeadDatei[];
@@ -146,9 +154,13 @@ export async function createDateiEintrag(
   return data as LeadDatei;
 }
 
-export async function deleteDateiEintrag(id: string): Promise<void> {
+export async function deleteDateiEintrag(id: string, companyId: string): Promise<void> {
   const supabase = createAdminClient();
-  const { error } = await supabase.from('lead_dateien').delete().eq('id', id);
+  const { error } = await supabase
+    .from('lead_dateien')
+    .delete()
+    .eq('id', id)
+    .eq('company', companyId);
   if (error) throw new Error('Datei-Eintrag konnte nicht gelöscht werden');
 }
 

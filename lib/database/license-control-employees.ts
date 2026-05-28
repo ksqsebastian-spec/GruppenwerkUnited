@@ -2,7 +2,7 @@
  * Mitarbeiter-CRUD und -Status-Berechnung für die Führerscheinkontrolle.
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 import { calculateCheckStatus } from './license-control-helpers';
 import { fetchLicenseSettings } from './license-control-settings';
@@ -37,6 +37,7 @@ export async function fetchLicenseEmployees(
   filters?: LicenseCheckEmployeeFilters
 ): Promise<LicenseCheckEmployee[]> {
   // Warntage werden aus den Einstellungen geladen — nur 1× pro Aufruf, nicht pro Mitarbeiter.
+  const supabase = createAdminClient();
   const settings = await fetchLicenseSettings();
 
   let query = supabase
@@ -47,8 +48,10 @@ export async function fetchLicenseEmployees(
   if (filters?.companyId) query = query.eq('company_id', filters.companyId);
   if (filters?.status) query = query.eq('status', filters.status);
   if (filters?.search) {
+    // Sicherheit: PostgREST-Metazeichen entfernen, um Filter-Injection zu verhindern
+    const safe = filters.search.replace(/[%,()\\]/g, ' ').trim();
     query = query.or(
-      `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,personnel_number.ilike.%${filters.search}%`
+      `first_name.ilike.%${safe}%,last_name.ilike.%${safe}%,personnel_number.ilike.%${safe}%`
     );
   }
 
@@ -84,6 +87,7 @@ export async function fetchLicenseEmployees(
 }
 
 export async function fetchLicenseEmployee(id: string): Promise<LicenseCheckEmployee | null> {
+  const supabase = createAdminClient();
   const settings = await fetchLicenseSettings();
 
   const { data, error } = await supabase
@@ -120,6 +124,7 @@ export async function fetchLicenseEmployee(id: string): Promise<LicenseCheckEmpl
 export async function createLicenseEmployee(
   employee: LicenseCheckEmployeeInsert
 ): Promise<LicenseCheckEmployee> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('license_check_employees')
     .insert(employee)
@@ -138,6 +143,7 @@ export async function updateLicenseEmployee(
   id: string,
   updates: LicenseCheckEmployeeUpdate
 ): Promise<LicenseCheckEmployee> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('license_check_employees')
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -154,6 +160,7 @@ export async function updateLicenseEmployee(
 }
 
 export async function archiveLicenseEmployee(id: string): Promise<void> {
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from('license_check_employees')
     .update({ status: 'archived', updated_at: new Date().toISOString() })
@@ -172,6 +179,7 @@ export async function assertLicenseEmployeeInScope(
   employeeId: string,
   tenantCompanyId: string
 ): Promise<boolean> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('license_check_employees')
     .select('id')
@@ -193,6 +201,7 @@ export async function assertLicenseEmployeesInScope(
   tenantCompanyId: string
 ): Promise<boolean> {
   if (employeeIds.length === 0) return true;
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('license_check_employees')
     .select('id')

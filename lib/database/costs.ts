@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { Cost, CostInsert, CostUpdate, CostFilters, CostType } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
@@ -15,6 +15,7 @@ export interface CostQueryFilters extends CostFilters {
 }
 
 export async function fetchCost(id: string, tenantCompanyId?: string | null): Promise<Cost> {
+  const supabase = createAdminClient();
   let query = supabase.from('costs').select(COST_COLUMNS).eq('id', id);
 
   if (tenantCompanyId) {
@@ -32,6 +33,7 @@ export async function fetchCost(id: string, tenantCompanyId?: string | null): Pr
 }
 
 export async function fetchCostTypes(): Promise<CostType[]> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('cost_types')
     .select('id, name, icon')
@@ -46,6 +48,7 @@ export async function fetchCostTypes(): Promise<CostType[]> {
 }
 
 export async function fetchCosts(filters?: CostQueryFilters): Promise<Cost[]> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('costs')
     .select(COST_COLUMNS)
@@ -89,6 +92,7 @@ export async function fetchCostsThisMonth(tenantCompanyId?: string | null): Prom
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
+  const supabase = createAdminClient();
   let query = supabase
     .from('costs')
     .select('amount, vehicle:vehicles!inner(company_id)')
@@ -110,6 +114,7 @@ export async function fetchCostsThisMonth(tenantCompanyId?: string | null): Prom
 }
 
 async function assertVehicleBelongsToTenant(vehicleId: string, tenantCompanyId: string): Promise<void> {
+  const supabase = createAdminClient();
   const { data } = await supabase
     .from('vehicles')
     .select('id')
@@ -120,6 +125,7 @@ async function assertVehicleBelongsToTenant(vehicleId: string, tenantCompanyId: 
 }
 
 export async function createCost(cost: CostInsert, tenantCompanyId?: string | null): Promise<Cost> {
+  const supabase = createAdminClient();
   if (tenantCompanyId && cost.vehicle_id) {
     await assertVehicleBelongsToTenant(cost.vehicle_id, tenantCompanyId);
   }
@@ -154,6 +160,7 @@ export async function createCost(cost: CostInsert, tenantCompanyId?: string | nu
 }
 
 export async function updateCost(id: string, cost: CostUpdate, tenantCompanyId?: string | null): Promise<Cost> {
+  const supabase = createAdminClient();
   if (tenantCompanyId) {
     await fetchCost(id, tenantCompanyId); // wirft, wenn nicht im Scope
   }
@@ -188,6 +195,7 @@ export async function updateCost(id: string, cost: CostUpdate, tenantCompanyId?:
 }
 
 export async function deleteCost(id: string, tenantCompanyId?: string | null): Promise<void> {
+  const supabase = createAdminClient();
   if (tenantCompanyId) {
     await fetchCost(id, tenantCompanyId);
   }

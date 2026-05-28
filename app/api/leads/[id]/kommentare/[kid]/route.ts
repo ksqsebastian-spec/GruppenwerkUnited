@@ -11,7 +11,7 @@ export async function DELETE(
 
   const { kid } = await params;
   try {
-    await deleteKommentar(kid);
+    await deleteKommentar(kid, session.companyId);
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 });

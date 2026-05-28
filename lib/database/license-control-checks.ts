@@ -2,7 +2,7 @@
  * Führerschein-Kontrollen + Fahrer-mit-Status für die Führerscheinkontrolle.
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 import { calculateCheckStatus } from './license-control-helpers';
 import { fetchLicenseSettings } from './license-control-settings';
@@ -37,6 +37,7 @@ const CHECK_WITH_RELATIONS = `
 export async function fetchDriversWithLicenseStatus(
   filters?: LicenseDriverFilters
 ): Promise<DriverWithLicenseStatus[]> {
+  const supabase = createAdminClient();
   const settings = await fetchLicenseSettings();
 
   let query = supabase
@@ -47,8 +48,10 @@ export async function fetchDriversWithLicenseStatus(
   if (filters?.companyId) query = query.eq('company_id', filters.companyId);
   if (filters?.status) query = query.eq('status', filters.status);
   if (filters?.search) {
+    // Sicherheit: PostgREST-Metazeichen entfernen, um Filter-Injection zu verhindern
+    const safe = filters.search.replace(/[%,()\\]/g, ' ').trim();
     query = query.or(
-      `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`
+      `first_name.ilike.%${safe}%,last_name.ilike.%${safe}%`
     );
   }
 
@@ -90,6 +93,7 @@ export async function updateDriverInspectorFlag(
   driverId: string,
   isInspector: boolean
 ): Promise<Driver> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('drivers')
     .update({ is_license_inspector: isInspector, updated_at: new Date().toISOString() })
@@ -106,6 +110,7 @@ export async function updateDriverInspectorFlag(
 }
 
 export async function fetchLicenseChecksByDriver(driverId: string): Promise<LicenseCheck[]> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('license_checks')
     .select(CHECK_WITH_RELATIONS)
@@ -121,6 +126,7 @@ export async function fetchLicenseChecksByDriver(driverId: string): Promise<Lice
 }
 
 export async function fetchLicenseChecks(employeeId: string): Promise<LicenseCheck[]> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('license_checks')
     .select(CHECK_WITH_RELATIONS)
@@ -136,6 +142,7 @@ export async function fetchLicenseChecks(employeeId: string): Promise<LicenseChe
 }
 
 export async function createLicenseCheck(check: LicenseCheckInsert): Promise<LicenseCheck> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('license_checks')
     .insert(check)
@@ -160,6 +167,7 @@ export async function createBatchLicenseChecks(
   driverIds: string[],
   checkData: Omit<LicenseCheckInsert, 'driver_id' | 'employee_id'>
 ): Promise<LicenseCheck[]> {
+  const supabase = createAdminClient();
   const checks = driverIds.map((driverId) => ({
     ...checkData,
     driver_id: driverId,
@@ -183,6 +191,7 @@ export async function createBatchLicenseChecks(
 }
 
 export async function deleteLicenseCheck(id: string): Promise<void> {
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from('license_checks')
     .delete()
