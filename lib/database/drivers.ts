@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { Driver, DriverInsert, DriverUpdate } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
@@ -23,6 +23,7 @@ export async function fetchDrivers(filters?: {
   companyId?: string;
   status?: 'active' | 'archived';
 }): Promise<Driver[]> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('drivers')
     .select(DRIVER_LIST_COLUMNS)
@@ -47,6 +48,7 @@ export async function fetchDrivers(filters?: {
 }
 
 export async function fetchDriver(id: string, tenantCompanyId?: string | null): Promise<Driver | null> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('drivers')
     .select(DRIVER_DETAIL_COLUMNS)
@@ -70,6 +72,7 @@ export async function fetchDriver(id: string, tenantCompanyId?: string | null): 
 }
 
 export async function createDriver(driver: DriverInsert): Promise<Driver> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('drivers')
     .insert(driver)
@@ -85,6 +88,7 @@ export async function createDriver(driver: DriverInsert): Promise<Driver> {
 }
 
 export async function updateDriver(id: string, updates: DriverUpdate, tenantCompanyId?: string | null): Promise<Driver> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('drivers')
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -103,6 +107,7 @@ export async function updateDriver(id: string, updates: DriverUpdate, tenantComp
 }
 
 export async function archiveDriver(id: string, tenantCompanyId?: string | null): Promise<void> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('drivers')
     .update({ status: 'archived', updated_at: new Date().toISOString() })
@@ -123,6 +128,7 @@ export async function archiveDriver(id: string, tenantCompanyId?: string | null)
  * bei Sub-Resource-Routen (z. B. UVV-Unterweisungen) verwendet.
  */
 export async function assertDriverInScope(driverId: string, tenantCompanyId: string): Promise<boolean> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('drivers')
     .select('id')
@@ -142,6 +148,7 @@ export async function assertDriverInScope(driverId: string, tenantCompanyId: str
  */
 export async function assertDriversInScope(driverIds: string[], tenantCompanyId: string): Promise<boolean> {
   if (driverIds.length === 0) return true;
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('drivers')
     .select('id')

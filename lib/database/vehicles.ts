@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { Vehicle, VehicleInsert, VehicleUpdate, VehicleFilters } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
@@ -32,6 +32,7 @@ const VEHICLE_DETAIL_COLUMNS = `
  * nicht von Client-Parametern. Siehe lib/auth/fuhrpark-scope.ts.
  */
 export async function fetchVehicles(filters?: VehicleFilters): Promise<Vehicle[]> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('vehicles')
     .select(VEHICLE_LIST_COLUMNS)
@@ -50,8 +51,10 @@ export async function fetchVehicles(filters?: VehicleFilters): Promise<Vehicle[]
   }
 
   if (filters?.search) {
+    // Sicherheit: PostgREST-Metazeichen entfernen, um Filter-Injection zu verhindern
+    const safe = filters.search.replace(/[%,()\\]/g, ' ').trim();
     query = query.or(
-      `license_plate.ilike.%${filters.search}%,brand.ilike.%${filters.search}%,model.ilike.%${filters.search}%`
+      `license_plate.ilike.%${safe}%,brand.ilike.%${safe}%,model.ilike.%${safe}%`
     );
   }
 
@@ -70,6 +73,7 @@ export async function fetchVehicles(filters?: VehicleFilters): Promise<Vehicle[]
  * Bei gesetztem `tenantCompanyId` wird zusätzlich auf Eigentümerschaft geprüft.
  */
 export async function fetchVehicle(id: string, tenantCompanyId?: string | null): Promise<Vehicle | null> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('vehicles')
     .select(VEHICLE_DETAIL_COLUMNS)
@@ -96,6 +100,7 @@ export async function fetchVehicle(id: string, tenantCompanyId?: string | null):
  * Erstellt ein neues Fahrzeug.
  */
 export async function createVehicle(vehicle: VehicleInsert): Promise<Vehicle> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('vehicles')
     .insert(vehicle)
@@ -117,6 +122,7 @@ export async function createVehicle(vehicle: VehicleInsert): Promise<Vehicle> {
  * Aktualisiert ein Fahrzeug. Bei gesetztem tenantCompanyId wird auf Eigentümerschaft geprüft.
  */
 export async function updateVehicle(id: string, updates: VehicleUpdate, tenantCompanyId?: string | null): Promise<Vehicle> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('vehicles')
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -140,6 +146,7 @@ export async function updateVehicle(id: string, updates: VehicleUpdate, tenantCo
  * Archiviert ein Fahrzeug (nicht löschen!).
  */
 export async function archiveVehicle(id: string, tenantCompanyId?: string | null): Promise<void> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('vehicles')
     .update({ status: 'archived', updated_at: new Date().toISOString() })
@@ -159,6 +166,7 @@ export async function archiveVehicle(id: string, tenantCompanyId?: string | null
  * Löscht ein Fahrzeug dauerhaft.
  */
 export async function deleteVehicle(id: string, tenantCompanyId?: string | null): Promise<void> {
+  const supabase = createAdminClient();
   let query = supabase.from('vehicles').delete().eq('id', id);
   if (tenantCompanyId) query = query.eq('company_id', tenantCompanyId);
 
@@ -183,6 +191,7 @@ export async function syncLeasingAppointment(
   leasingEndDate: string | null,
   isLeased: boolean
 ): Promise<void> {
+  const supabase = createAdminClient();
   // Prüfen ob bereits ein Leasing-Rückgabe-Termin existiert
   const { data: existingAppointment } = await supabase
     .from('appointments')
@@ -234,6 +243,7 @@ export async function syncLeasingCost(
   leasingRate: number | null | undefined,
   isLeased: boolean
 ): Promise<void> {
+  const supabase = createAdminClient();
   if (!isLeased || !leasingRate || leasingRate <= 0) {
     return;
   }

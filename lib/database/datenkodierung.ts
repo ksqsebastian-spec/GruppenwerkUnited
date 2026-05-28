@@ -1,9 +1,10 @@
-import { supabase } from '@/lib/supabase/client';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { generateCode } from '@/lib/datenkodierung/code-generator';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 import type { Datenkodierung, DatenkodierungInsert } from '@/types';
 
 export async function fetchAllTags(companyId: string): Promise<string[]> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('datenkodierungen')
     .select('tags')
@@ -16,6 +17,7 @@ export async function fetchAllTags(companyId: string): Promise<string[]> {
 }
 
 export async function fetchDatenkodierungen(companyId: string, search?: string, tag?: string): Promise<Datenkodierung[]> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('datenkodierungen')
     .select('*')
@@ -23,7 +25,9 @@ export async function fetchDatenkodierungen(companyId: string, search?: string, 
     .order('created_at', { ascending: false });
 
   if (search && search.trim().length > 0) {
-    const term = `%${search.trim()}%`;
+    // Sicherheit: PostgREST-Metazeichen entfernen, um Filter-Injection zu verhindern
+    const safe = search.replace(/[%,()\\]/g, ' ').trim();
+    const term = `%${safe}%`;
     query = query.or(`code.ilike.${term},name.ilike.${term},adresse.ilike.${term}`);
   }
 
@@ -42,6 +46,7 @@ export async function fetchDatenkodierungen(companyId: string, search?: string, 
 }
 
 export async function createDatenkodierung(companyId: string, input: DatenkodierungInsert): Promise<Datenkodierung> {
+  const supabase = createAdminClient();
   for (let attempt = 0; attempt < 3; attempt++) {
     const code = generateCode();
 
@@ -65,6 +70,7 @@ export async function createDatenkodierung(companyId: string, input: Datenkodier
 }
 
 export async function updateDatenkodierungTags(companyId: string, id: string, tags: string[]): Promise<Datenkodierung> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('datenkodierungen')
     .update({ tags })
@@ -82,6 +88,7 @@ export async function updateDatenkodierungTags(companyId: string, id: string, ta
 }
 
 export async function deleteDatenkodierung(companyId: string, id: string): Promise<void> {
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from('datenkodierungen')
     .delete()

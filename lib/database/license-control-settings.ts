@@ -2,7 +2,7 @@
  * Einstellungen + Prüfer der Führerscheinkontrolle.
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 import type {
   LicenseCheckSettings,
@@ -19,6 +19,7 @@ const SETTINGS_COLUMNS = 'id, check_interval_months, warning_days_before, update
 const INSPECTOR_COLUMNS = 'id, name, email, status, created_at';
 
 export async function fetchLicenseSettings(): Promise<LicenseCheckSettings> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('license_check_settings')
     .select(SETTINGS_COLUMNS)
@@ -35,6 +36,7 @@ export async function fetchLicenseSettings(): Promise<LicenseCheckSettings> {
 export async function updateLicenseSettings(
   updates: LicenseCheckSettingsUpdate
 ): Promise<LicenseCheckSettings> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('license_check_settings')
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -53,6 +55,7 @@ export async function updateLicenseSettings(
 export async function fetchLicenseInspectors(
   status?: 'active' | 'archived'
 ): Promise<LicenseCheckInspector[]> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('license_check_inspectors')
     .select(INSPECTOR_COLUMNS)
@@ -75,6 +78,7 @@ export async function fetchLicenseInspectors(
 export async function createLicenseInspector(
   inspector: LicenseCheckInspectorInsert
 ): Promise<LicenseCheckInspector> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('license_check_inspectors')
     .insert(inspector)
@@ -93,6 +97,7 @@ export async function updateLicenseInspector(
   id: string,
   updates: LicenseCheckInspectorUpdate
 ): Promise<LicenseCheckInspector> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('license_check_inspectors')
     .update(updates)
@@ -109,6 +114,7 @@ export async function updateLicenseInspector(
 }
 
 export async function archiveLicenseInspector(id: string): Promise<void> {
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from('license_check_inspectors')
     .update({ status: 'archived' })

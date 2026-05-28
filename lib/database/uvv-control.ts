@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { addMonths, differenceInDays, format } from 'date-fns';
 import type {
   UvvSettings,
@@ -56,6 +56,7 @@ export function calculateNextUvvCheckDue(checkDate: string, intervalMonths: numb
  * Lädt die UVV-Einstellungen
  */
 export async function fetchUvvSettings(): Promise<UvvSettings> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('uvv_settings')
     .select('*')
@@ -75,6 +76,7 @@ export async function fetchUvvSettings(): Promise<UvvSettings> {
 export async function updateUvvSettings(
   updates: UvvSettingsUpdate
 ): Promise<UvvSettings> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('uvv_settings')
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -100,6 +102,7 @@ export async function updateUvvSettings(
 export async function fetchUvvInstructors(
   status?: 'active' | 'archived'
 ): Promise<UvvInstructor[]> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('uvv_instructors')
     .select('*')
@@ -125,6 +128,7 @@ export async function fetchUvvInstructors(
 export async function createUvvInstructor(
   instructor: UvvInstructorInsert
 ): Promise<UvvInstructor> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('uvv_instructors')
     .insert(instructor)
@@ -146,6 +150,7 @@ export async function updateUvvInstructor(
   id: string,
   updates: UvvInstructorUpdate
 ): Promise<UvvInstructor> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('uvv_instructors')
     .update(updates)
@@ -165,6 +170,7 @@ export async function updateUvvInstructor(
  * Archiviert einen Unterweisenden
  */
 export async function archiveUvvInstructor(id: string): Promise<void> {
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from('uvv_instructors')
     .update({ status: 'archived' })
@@ -187,6 +193,7 @@ export async function fetchDriversWithUvvStatus(
   filters?: UvvDriverFilters
 ): Promise<DriverWithUvvStatus[]> {
   // Zuerst Einstellungen laden für Warntage
+  const supabase = createAdminClient();
   const settings = await fetchUvvSettings();
 
   // Fahrer laden mit UVV-Checks
@@ -215,8 +222,10 @@ export async function fetchDriversWithUvvStatus(
   }
 
   if (filters?.search) {
+    // Sicherheit: PostgREST-Metazeichen entfernen, um Filter-Injection zu verhindern
+    const safe = filters.search.replace(/[%,()\\]/g, ' ').trim();
     query = query.or(
-      `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`
+      `first_name.ilike.%${safe}%,last_name.ilike.%${safe}%`
     );
   }
 
@@ -257,6 +266,7 @@ export async function fetchDriversWithUvvStatus(
  * Lädt einen einzelnen Fahrer mit UVV-Status
  */
 export async function fetchDriverWithUvvStatus(id: string): Promise<DriverWithUvvStatus | null> {
+  const supabase = createAdminClient();
   const settings = await fetchUvvSettings();
 
   const { data, error } = await supabase
@@ -310,6 +320,7 @@ export async function fetchDriverWithUvvStatus(id: string): Promise<DriverWithUv
  * Lädt alle UVV-Unterweisungen für einen Fahrer (inkl. Dokumente)
  */
 export async function fetchUvvChecks(driverId: string): Promise<UvvCheck[]> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('uvv_checks')
     .select(`
@@ -332,6 +343,7 @@ export async function fetchUvvChecks(driverId: string): Promise<UvvCheck[]> {
  * Erstellt eine neue UVV-Unterweisung
  */
 export async function createUvvCheck(check: UvvCheckInsert): Promise<UvvCheck> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('uvv_checks')
     .insert(check)
@@ -356,6 +368,7 @@ export async function createBatchUvvChecks(
   driverIds: string[],
   checkData: Omit<UvvCheckInsert, 'driver_id'>
 ): Promise<UvvCheck[]> {
+  const supabase = createAdminClient();
   const checks = driverIds.map((driverId) => ({
     ...checkData,
     driver_id: driverId,
@@ -381,6 +394,7 @@ export async function createBatchUvvChecks(
  * Löscht eine UVV-Unterweisung
  */
 export async function deleteUvvCheck(id: string): Promise<void> {
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from('uvv_checks')
     .delete()

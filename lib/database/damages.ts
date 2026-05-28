@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { Damage, DamageInsert, DamageUpdate, DamageFilters, DamageStatus } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
@@ -21,6 +21,7 @@ export interface DamageQueryFilters extends DamageFilters {
  * Lädt alle Schäden. tenantCompanyId MUSS aus Session kommen, nicht aus Request.
  */
 export async function fetchDamages(filters?: DamageQueryFilters): Promise<Damage[]> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('damages')
     .select(DAMAGE_COLUMNS)
@@ -50,6 +51,7 @@ export async function fetchDamages(filters?: DamageQueryFilters): Promise<Damage
 }
 
 export async function fetchDamage(id: string, tenantCompanyId?: string | null): Promise<Damage | null> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('damages')
     .select(DAMAGE_COLUMNS)
@@ -76,6 +78,7 @@ export async function fetchDamage(id: string, tenantCompanyId?: string | null): 
  * Zählt offene Schäden. Optional auf Tenant gefiltert.
  */
 export async function countOpenDamages(tenantCompanyId?: string | null): Promise<number> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('damages')
     .select('id, vehicle:vehicles!inner(company_id)', { count: 'exact', head: true })
@@ -99,6 +102,7 @@ export async function countOpenDamages(tenantCompanyId?: string | null): Promise
  * Verifiziert, dass ein Fahrzeug zur Tenant-Firma gehört, bevor Damage erstellt wird.
  */
 async function assertVehicleBelongsToTenant(vehicleId: string, tenantCompanyId: string): Promise<void> {
+  const supabase = createAdminClient();
   const { data } = await supabase
     .from('vehicles')
     .select('id')
@@ -111,6 +115,7 @@ async function assertVehicleBelongsToTenant(vehicleId: string, tenantCompanyId: 
 }
 
 export async function createDamage(damage: DamageInsert, tenantCompanyId?: string | null): Promise<Damage> {
+  const supabase = createAdminClient();
   if (tenantCompanyId && damage.vehicle_id) {
     await assertVehicleBelongsToTenant(damage.vehicle_id, tenantCompanyId);
   }
@@ -130,6 +135,7 @@ export async function createDamage(damage: DamageInsert, tenantCompanyId?: strin
 }
 
 export async function updateDamage(id: string, updates: DamageUpdate, tenantCompanyId?: string | null): Promise<Damage> {
+  const supabase = createAdminClient();
   // Bei Tenant-Scope erst Ownership prüfen
   if (tenantCompanyId) {
     const existing = await fetchDamage(id, tenantCompanyId);
@@ -152,6 +158,7 @@ export async function updateDamage(id: string, updates: DamageUpdate, tenantComp
 }
 
 export async function updateDamageStatus(id: string, status: DamageStatus, tenantCompanyId?: string | null): Promise<void> {
+  const supabase = createAdminClient();
   if (tenantCompanyId) {
     const existing = await fetchDamage(id, tenantCompanyId);
     if (!existing) throw new Error(ERROR_MESSAGES.DAMAGE_NOT_FOUND);
@@ -169,6 +176,7 @@ export async function updateDamageStatus(id: string, status: DamageStatus, tenan
 }
 
 export async function deleteDamage(id: string, tenantCompanyId?: string | null): Promise<void> {
+  const supabase = createAdminClient();
   if (tenantCompanyId) {
     const existing = await fetchDamage(id, tenantCompanyId);
     if (!existing) throw new Error(ERROR_MESSAGES.DAMAGE_NOT_FOUND);

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { Appointment, AppointmentInsert, AppointmentUpdate, AppointmentFilters, UpcomingAppointments } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
 
@@ -14,6 +14,7 @@ export interface AppointmentQueryFilters extends AppointmentFilters {
 }
 
 export async function fetchAppointment(id: string, tenantCompanyId?: string | null): Promise<Appointment> {
+  const supabase = createAdminClient();
   let query = supabase.from('appointments').select(APPOINTMENT_COLUMNS).eq('id', id);
 
   if (tenantCompanyId) {
@@ -31,6 +32,7 @@ export async function fetchAppointment(id: string, tenantCompanyId?: string | nu
 }
 
 export async function fetchAppointments(filters?: AppointmentQueryFilters): Promise<Appointment[]> {
+  const supabase = createAdminClient();
   let query = supabase
     .from('appointments')
     .select(APPOINTMENT_COLUMNS)
@@ -84,6 +86,7 @@ export async function fetchUpcomingAppointments(tenantCompanyId?: string | null)
   const in30Days = new Date(today);
   in30Days.setDate(today.getDate() + 30);
 
+  const supabase = createAdminClient();
   let query = supabase
     .from('appointments')
     .select(APPOINTMENT_COLUMNS)
@@ -118,6 +121,7 @@ export async function fetchUpcomingAppointments(tenantCompanyId?: string | null)
 }
 
 async function assertVehicleBelongsToTenant(vehicleId: string, tenantCompanyId: string): Promise<void> {
+  const supabase = createAdminClient();
   const { data } = await supabase
     .from('vehicles')
     .select('id')
@@ -128,6 +132,7 @@ async function assertVehicleBelongsToTenant(vehicleId: string, tenantCompanyId: 
 }
 
 export async function createAppointment(appointment: AppointmentInsert, tenantCompanyId?: string | null): Promise<Appointment> {
+  const supabase = createAdminClient();
   if (tenantCompanyId && appointment.vehicle_id) {
     await assertVehicleBelongsToTenant(appointment.vehicle_id, tenantCompanyId);
   }
@@ -147,6 +152,7 @@ export async function createAppointment(appointment: AppointmentInsert, tenantCo
 }
 
 export async function updateAppointment(id: string, updates: AppointmentUpdate, tenantCompanyId?: string | null): Promise<Appointment> {
+  const supabase = createAdminClient();
   if (tenantCompanyId) {
     await fetchAppointment(id, tenantCompanyId);
   }
@@ -167,6 +173,7 @@ export async function updateAppointment(id: string, updates: AppointmentUpdate, 
 }
 
 export async function completeAppointment(id: string, tenantCompanyId?: string | null): Promise<void> {
+  const supabase = createAdminClient();
   if (tenantCompanyId) {
     await fetchAppointment(id, tenantCompanyId);
   }
@@ -187,6 +194,7 @@ export async function completeAppointment(id: string, tenantCompanyId?: string |
 }
 
 export async function deleteAppointment(id: string, tenantCompanyId?: string | null): Promise<void> {
+  const supabase = createAdminClient();
   if (tenantCompanyId) {
     await fetchAppointment(id, tenantCompanyId);
   }
