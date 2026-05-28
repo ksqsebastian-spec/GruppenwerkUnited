@@ -27,42 +27,42 @@ export const COMPANY_CONFIGS: CompanyConfig[] = [
   {
     id: 'seehafer',
     name: 'Seehafer Elemente',
-    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob', 'leads', 'automationen', 'fuhrpark', 'consulting'],
+    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob', 'leads', 'automationen', 'fuhrpark', 'consulting', 'tickets'],
     isAdmin: false,
     passwordEnvKey: 'SEEHAFER_PASSWORD',
   },
   {
     id: 'brink',
     name: 'Tischlerei Brink',
-    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob', 'leads', 'automationen', 'fuhrpark', 'consulting'],
+    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob', 'leads', 'automationen', 'fuhrpark', 'consulting', 'tickets'],
     isAdmin: false,
     passwordEnvKey: 'BRINK_PASSWORD',
   },
   {
     id: 'hantke',
     name: 'Malerei Hantke',
-    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob', 'leads', 'automationen', 'fuhrpark', 'consulting'],
+    modules: ['roi', 'recruiting', 'affiliate', 'datenkodierung', 'vob', 'leads', 'automationen', 'fuhrpark', 'consulting', 'tickets'],
     isAdmin: false,
     passwordEnvKey: 'HANTKE_PASSWORD',
   },
   {
     id: 'gruppenwerk',
     name: 'Gruppenwerk',
-    modules: ['vob', 'fuhrpark', 'leads', 'automationen', 'consulting'],
+    modules: ['vob', 'fuhrpark', 'leads', 'automationen', 'consulting', 'tickets'],
     isAdmin: false,
     passwordEnvKey: 'GRUPPENWERK_PASSWORD',
   },
   {
     id: 'werner',
     name: 'Werner',
-    modules: ['vob', 'consulting'],
+    modules: ['vob', 'consulting', 'tickets'],
     isAdmin: false,
     passwordEnvKey: 'WERNER_PASSWORD',
   },
   {
     id: 'mehlig',
     name: 'Tischlerei Mehlig',
-    modules: ['affiliate', 'recruiting', 'roi', 'vob', 'fuhrpark', 'leads', 'automationen', 'consulting'],
+    modules: ['affiliate', 'recruiting', 'roi', 'vob', 'fuhrpark', 'leads', 'automationen', 'consulting', 'tickets'],
     isAdmin: false,
     passwordEnvKey: 'MEHLIG_PASSWORD',
   },
@@ -79,6 +79,7 @@ export const ROUTE_TO_MODULE: Record<string, string> = {
   '/leads': 'leads',
   '/automationen': 'automationen',
   '/consulting': 'consulting',
+  '/tickets': 'tickets',
 };
 
 /**

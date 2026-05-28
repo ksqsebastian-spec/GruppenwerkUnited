@@ -788,6 +788,54 @@ export interface LeadDatei {
 }
 
 // ============================================================================
+// Ticket-System / Todos
+// ============================================================================
+
+export type TicketUrgency = 'niedrig' | 'mittel' | 'hoch';
+
+export type TicketStatus = 'offen' | 'in_arbeit' | 'erledigt';
+
+export interface Person {
+  id: string;
+  company: string;
+  name: string;
+  email: string | null;
+  rolle: string | null;
+  created_at: string;
+}
+
+export type PersonInsert = Omit<Person, 'id' | 'created_at'>;
+export type PersonUpdate = Partial<Omit<PersonInsert, 'company'>>;
+
+export interface Ticket {
+  id: string;
+  title: string;
+  description: string | null;
+  assignee_person_id: string | null;
+  firma: string | null;
+  urgency: TicketUrgency;
+  status: TicketStatus;
+  due_date: string | null;
+  created_by_company: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type TicketInsert = Omit<Ticket, 'id' | 'created_by_company' | 'created_at' | 'updated_at'>;
+export type TicketUpdate = Partial<TicketInsert>;
+
+export interface TicketDatei {
+  id: string;
+  ticket_id: string;
+  company: string;
+  dateiname: string;
+  dateipfad: string;
+  dateityp: string | null;
+  dateigroesse: number | null;
+  created_at: string;
+}
+
+// ============================================================================
 // Consulting Dashboard
 // ============================================================================
 

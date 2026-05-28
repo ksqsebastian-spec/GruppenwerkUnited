@@ -7,6 +7,7 @@ import {
   Share2,
   ShieldCheck,
   Star,
+  ClipboardList,
   Wrench,
 } from 'lucide-react';
 
@@ -23,5 +24,6 @@ export const MODULE_ICONS: Record<string, React.ElementType> = {
   Share2,
   ShieldCheck,
   Star,
+  ClipboardList,
   Wrench,
 };
