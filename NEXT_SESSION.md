@@ -66,6 +66,10 @@ Diese 2 Tabellen sind noch anon-lesbar, weil clientseitiger Code direkt darauf z
 - E2E/CI grün.
 - Final: kurzer Statusbericht (was erledigt, was — falls überhaupt — noch manuell offen).
 
+## SCHRITT 5 — Diese Datei löschen
+
+Wenn alle Schritte abgeschlossen sind, **diese Datei (`NEXT_SESSION.md`) löschen**, committen und pushen. Sie ist nur ein Übergabe-Auftrag und gehört nicht dauerhaft ins Repo.
+
 ---
 
 ## Constraints (CLAUDE.md — verbindlich)
