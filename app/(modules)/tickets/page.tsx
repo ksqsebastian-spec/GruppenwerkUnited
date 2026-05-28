@@ -14,7 +14,7 @@ import { WerBinIchAuswahl } from '@/components/tickets/wer-bin-ich-auswahl';
 import { useTickets } from '@/hooks/use-tickets';
 import { usePersonen } from '@/hooks/use-personen';
 import { useAktuellePerson } from '@/hooks/use-aktuelle-person';
-import { URGENCY_ORDER } from '@/lib/tickets/config';
+import { URGENCY_ORDER, FIRMEN } from '@/lib/tickets/config';
 import { cn } from '@/lib/utils';
 import type { Ticket } from '@/types';
 
@@ -28,6 +28,7 @@ const TABS: { id: Ansicht; label: string }[] = [
 
 export default function TicketsPage(): React.JSX.Element {
   const [ansicht, setAnsicht] = useState<Ansicht>('alle');
+  const [firmaFilter, setFirmaFilter] = useState('');
   const [erstellenOffen, setErstellenOffen] = useState(false);
   const [personenOffen, setPersonenOffen] = useState(false);
   const [ausgewaehlt, setAusgewaehlt] = useState<Ticket | null>(null);
@@ -43,12 +44,19 @@ export default function TicketsPage(): React.JSX.Element {
     } else if (ansicht === 'andere') {
       list = tickets.filter((t) => t.assignee_person_id !== aktuellePerson);
     }
+    if (firmaFilter) {
+      list = list.filter((t) => t.firma === firmaFilter);
+    }
     return [...list].sort((a, b) => {
       if (a.status === 'erledigt' && b.status !== 'erledigt') return 1;
       if (b.status === 'erledigt' && a.status !== 'erledigt') return -1;
+      // Primär nach Firma gruppieren, dann nach Dringlichkeit
+      const fa = a.firma ?? '';
+      const fb = b.firma ?? '';
+      if (fa !== fb) return fa.localeCompare(fb, 'de');
       return URGENCY_ORDER[a.urgency] - URGENCY_ORDER[b.urgency];
     });
-  }, [tickets, ansicht, aktuellePerson]);
+  }, [tickets, ansicht, aktuellePerson, firmaFilter]);
 
   // aktuelles Ticket aus der Liste lesen, damit Detail-Dialog Updates live zeigt
   const aktuellesTicket = ausgewaehlt ? tickets.find((t) => t.id === ausgewaehlt.id) ?? null : null;
@@ -88,22 +96,36 @@ export default function TicketsPage(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Filter-Tabs */}
-      <div className="flex items-center gap-1 border-b border-[#f0f0f0]">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setAnsicht(t.id)}
-            className={cn(
-              'px-4 py-2 text-[13px] font-medium border-b-2 transition-colors',
-              ansicht === t.id
-                ? 'border-[#000] text-[#000]'
-                : 'border-transparent text-[#a3a3a3] hover:text-[#000]',
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
+      {/* Filter-Tabs + Firmen-Filter */}
+      <div className="flex items-end justify-between gap-4 border-b border-[#f0f0f0] flex-wrap">
+        <div className="flex items-center gap-1">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setAnsicht(t.id)}
+              className={cn(
+                'px-4 py-2 text-[13px] font-medium border-b-2 transition-colors',
+                ansicht === t.id
+                  ? 'border-[#000] text-[#000]'
+                  : 'border-transparent text-[#a3a3a3] hover:text-[#000]',
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <select
+          value={firmaFilter}
+          onChange={(e) => setFirmaFilter(e.target.value)}
+          className="mb-1.5 h-8 rounded-lg border border-[#e5e5e5] px-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#000]"
+        >
+          <option value="">Alle Firmen</option>
+          {FIRMEN.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {ansicht === 'fuer_mich' && !aktuellePerson ? (
