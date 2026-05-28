@@ -11,7 +11,6 @@ import { MobileNav } from './mobile-nav';
 import { FuhrparkSubnav } from './fuhrpark-subnav';
 import { ConsultingSubnav } from './consulting-subnav';
 import { AuthGuard } from '@/components/auth/auth-guard';
-import { MascotCrab } from '@/components/shared/mascot-crab';
 import { cn } from '@/lib/utils';
 
 interface AppLayoutProps {
@@ -71,9 +70,6 @@ export function AppLayout({ children }: AppLayoutProps): React.JSX.Element {
             <div className="px-4 sm:px-6 lg:px-8">{children}</div>
           </main>
         </div>
-
-        {/* Bett-Icon */}
-        <MascotCrab />
       </div>
     </AuthGuard>
   );
