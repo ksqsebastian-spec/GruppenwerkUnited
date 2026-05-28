@@ -12,13 +12,13 @@ export async function DELETE(
 
   const { id, did } = await params;
   try {
-    const dateien = await fetchDateien(id);
+    const dateien = await fetchDateien(id, session.companyId);
     const datei = dateien.find((d) => d.id === did);
     if (!datei) return NextResponse.json({ error: 'Datei nicht gefunden' }, { status: 404 });
 
     const supabase = createAdminClient();
     await supabase.storage.from('lead-dateien').remove([datei.dateipfad]);
-    await deleteDateiEintrag(did);
+    await deleteDateiEintrag(did, session.companyId);
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
@@ -35,7 +35,7 @@ export async function GET(
 
   const { id, did } = await params;
   try {
-    const dateien = await fetchDateien(id);
+    const dateien = await fetchDateien(id, session.companyId);
     const datei = dateien.find((d) => d.id === did);
     if (!datei) return NextResponse.json({ error: 'Datei nicht gefunden' }, { status: 404 });
 

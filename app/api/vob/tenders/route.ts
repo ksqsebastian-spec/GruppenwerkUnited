@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireSession } from '@/lib/auth/api'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -7,6 +8,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * Verwendet den Admin-Client um das vob-Schema sicher abzufragen.
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const session = await requireSession()
+  if (session instanceof NextResponse) return session
+
   try {
     const { searchParams } = new URL(request.url)
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10))

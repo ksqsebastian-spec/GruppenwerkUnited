@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireSession } from '@/lib/auth/api'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -7,6 +8,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * Gibt alle aktiven Unternehmen oder ein einzelnes Unternehmen zurück.
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const session = await requireSession()
+  if (session instanceof NextResponse) return session
+
   try {
     const { searchParams } = new URL(request.url)
     const slug = searchParams.get('slug')

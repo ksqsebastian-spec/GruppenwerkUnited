@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { requireSession } from '@/lib/auth/api'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -6,6 +7,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * Gibt alle VOB-Scans in absteigender Reihenfolge zurück.
  */
 export async function GET(): Promise<NextResponse> {
+  const session = await requireSession()
+  if (session instanceof NextResponse) return session
+
   try {
     const supabase = createAdminClient()
 

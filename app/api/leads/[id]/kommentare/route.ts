@@ -11,7 +11,7 @@ export async function GET(
 
   const { id } = await params;
   try {
-    const data = await fetchKommentare(id);
+    const data = await fetchKommentare(id, session.companyId);
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 });
