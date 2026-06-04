@@ -31,6 +31,7 @@ export const ALL_MODULES: string[] = [
   'fuhrpark',
   'consulting',
   'tickets',
+  'kunden',
 ];
 
 export const COMPANY_CONFIGS: CompanyConfig[] = [
@@ -104,6 +105,7 @@ export const ROUTE_TO_MODULE: Record<string, string> = {
   '/automationen': 'automationen',
   '/consulting': 'consulting',
   '/tickets': 'tickets',
+  '/kunden': 'kunden',
 };
 
 /**

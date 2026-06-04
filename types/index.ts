@@ -945,3 +945,65 @@ export type ConsultingCompanyUpdate = Partial<ConsultingCompanyInsert>;
 export type ConsultingCheckpointStatusUpdate = Partial<
   Pick<ConsultingCheckpointStatus, 'status' | 'notes' | 'responsible' | 'email' | 'cost_monthly'>
 >;
+
+// ============================================================================
+// Kunden (Customer-Portal)
+// ============================================================================
+
+export type CustomerStatus = 'aktiv' | 'inaktiv' | 'prospect' | 'archiviert';
+
+export interface Customer {
+  id: string;
+  company: string;
+  firmenname: string;
+  ansprechpartner: string | null;
+  email: string | null;
+  telefon: string | null;
+  adresse: string | null;
+  status: CustomerStatus;
+  notizen: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CustomerInsert = Omit<Customer, 'id' | 'company' | 'created_at' | 'updated_at'>;
+export type CustomerUpdate = Partial<CustomerInsert>;
+
+export interface CustomerKommentar {
+  id: string;
+  customer_id: string;
+  company: string;
+  text: string;
+  created_at: string;
+}
+
+export interface CustomerDatei {
+  id: string;
+  customer_id: string;
+  company: string;
+  dateiname: string;
+  dateipfad: string;
+  dateityp: string | null;
+  dateigroesse: number | null;
+  created_at: string;
+}
+
+export interface CustomerPrompt {
+  id: string;
+  company: string;
+  name: string;
+  beschreibung: string | null;
+  kategorie: string | null;
+  template: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CustomerPromptInsert = Omit<CustomerPrompt, 'id' | 'company' | 'created_at' | 'updated_at'>;
+export type CustomerPromptUpdate = Partial<CustomerPromptInsert>;
+
+/** Ergebnis des Prompt-Renderings: gefüllter Text + nicht aufgelöste Platzhalter. */
+export interface CustomerPromptRendered {
+  prompt: string;
+  missing_placeholders: string[];
+}
