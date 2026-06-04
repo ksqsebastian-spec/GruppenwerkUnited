@@ -176,7 +176,8 @@ export function PromptTokenEditor({
 }: PromptTokenEditorProps): React.JSX.Element {
   const editorRef = useRef<HTMLDivElement>(null);
   // Verhindert, dass externe value-Änderungen während des Tippens den Inhalt überschreiben
-  const lastEmittedRef = useRef<string>(value);
+  const lastEmittedRef = useRef<string>('');
+  const initializedRef = useRef(false);
 
   const handleSerializeAndEmit = (): void => {
     const div = editorRef.current;
@@ -190,9 +191,11 @@ export function PromptTokenEditor({
   useEffect(() => {
     const div = editorRef.current;
     if (!div) return;
-    if (value === lastEmittedRef.current) return; // intern verursachte Änderung — DOM steht bereits richtig
+    // Beim ersten Mount immer aufbauen; danach nur, wenn die Änderung NICHT aus dem Editor selbst stammt
+    if (initializedRef.current && value === lastEmittedRef.current) return;
     buildContent(div, value, customerFields, datenkodierungen, handleSerializeAndEmit);
     lastEmittedRef.current = value;
+    initializedRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, customerFields, datenkodierungen]);
 

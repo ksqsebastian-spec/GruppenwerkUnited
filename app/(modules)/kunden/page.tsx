@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Briefcase, Plus, Sparkles } from 'lucide-react';
+import { Briefcase, Download, Plus, Sparkles } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { ErrorState } from '@/components/shared/error-state';
 import { EmptyState } from '@/components/shared/empty-state';
 import { KundenTabelle } from '@/components/kunden/kunden-tabelle';
 import { KundeFormDialog } from '@/components/kunden/kunde-form-dialog';
+import { LeadsImportDialog } from '@/components/kunden/leads-import-dialog';
 import { STATUS_OPTIONS } from '@/components/kunden/kunde-status-badge';
 import { useKunden } from '@/hooks/use-kunden';
 import type { CustomerStatus } from '@/types';
@@ -21,6 +22,7 @@ type StatusFilter = CustomerStatus | 'alle';
 
 export default function KundenPage(): React.JSX.Element {
   const [neu, setNeu] = useState(false);
+  const [importOffen, setImportOffen] = useState(false);
   const [suche, setSuche] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('alle');
 
@@ -50,6 +52,9 @@ export default function KundenPage(): React.JSX.Element {
               <Link href="/kunden/prompts">
                 <Sparkles className="mr-2 h-4 w-4" /> Vorlagen
               </Link>
+            </Button>
+            <Button variant="outline" onClick={() => setImportOffen(true)}>
+              <Download className="mr-2 h-4 w-4" /> Aus Leads übernehmen
             </Button>
             <Button onClick={() => setNeu(true)}>
               <Plus className="mr-2 h-4 w-4" /> Neuer Kunde
@@ -107,6 +112,7 @@ export default function KundenPage(): React.JSX.Element {
       )}
 
       <KundeFormDialog open={neu} onOpenChange={setNeu} />
+      <LeadsImportDialog open={importOffen} onOpenChange={setImportOffen} />
     </div>
   );
 }

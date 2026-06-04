@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Edit, File as FileIcon, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Edit, File as FileIcon, Plus, Sparkles, Trash2, Wand2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,10 +10,12 @@ import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ErrorState } from '@/components/shared/error-state';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { KundenPromptFormDialog } from '@/components/kunden/kunden-prompt-form-dialog';
+import { KundenPromptWizardDialog } from '@/components/kunden/kunden-prompt-wizard-dialog';
 import { useKundenPrompts, useDeleteKundenPrompt } from '@/hooks/use-kunden';
 import type { CustomerPrompt } from '@/types';
 
 export default function KundenPromptsPage(): React.JSX.Element {
+  const [wizard, setWizard] = useState(false);
   const [neu, setNeu] = useState(false);
   const [edit, setEdit] = useState<CustomerPrompt | null>(null);
   const [loeschenId, setLoeschenId] = useState<string | null>(null);
@@ -37,9 +39,14 @@ export default function KundenPromptsPage(): React.JSX.Element {
         description="Pro Anwendungsfall (Rechnung, Mahnung, Angebot …) ein Anweisungs-Text + optional eine Datei-Vorlage. Beim Generieren auf der Kundenseite werden Kundendaten automatisch eingefügt."
         backHref="/kunden"
         actions={
-          <Button onClick={() => setNeu(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Eigene Vorlage
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setNeu(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Leer anlegen
+            </Button>
+            <Button onClick={() => setWizard(true)}>
+              <Wand2 className="mr-2 h-4 w-4" /> Geführt anlegen
+            </Button>
+          </div>
         }
       />
 
@@ -55,8 +62,8 @@ export default function KundenPromptsPage(): React.JSX.Element {
               Hier erscheint deine Vorlagen-Bibliothek. Beim ersten Aufruf werden die
               Standard-Vorlagen automatisch angelegt — falls nichts zu sehen ist, lade die Seite neu.
             </p>
-            <Button onClick={() => setNeu(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Eigene Vorlage anlegen
+            <Button onClick={() => setWizard(true)}>
+              <Wand2 className="mr-2 h-4 w-4" /> Geführt anlegen
             </Button>
           </div>
         ) : (
@@ -109,6 +116,7 @@ export default function KundenPromptsPage(): React.JSX.Element {
         )}
       </section>
 
+      <KundenPromptWizardDialog open={wizard} onOpenChange={setWizard} />
       <KundenPromptFormDialog open={neu} onOpenChange={setNeu} />
       <KundenPromptFormDialog
         open={!!edit}

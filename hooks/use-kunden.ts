@@ -327,6 +327,34 @@ export function useRenderKundenPrompt(customerId: string): UseMutationResult<Cus
   });
 }
 
+export interface LeadImportErgebnis {
+  created: number;
+  skipped: number;
+  errors: string[];
+}
+
+export function useImportLeadsAlsKunden(): UseMutationResult<LeadImportErgebnis, Error, string[]> {
+  const qc = useQueryClient();
+  return useMutation<LeadImportErgebnis, Error, string[]>({
+    mutationFn: async (leadIds) => {
+      const res = await fetch('/api/kunden/import-leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead_ids: leadIds }),
+      });
+      if (!res.ok) return jsonOrError(res, 'Übernahme fehlgeschlagen');
+      return res.json() as Promise<LeadImportErgebnis>;
+    },
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: [QK_CUSTOMERS] });
+      const text = `${r.created} übernommen, ${r.skipped} übersprungen`;
+      if (r.errors.length > 0) toast.warning(`${text} · ${r.errors.length} Fehler`);
+      else toast.success(text);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
 export async function getKundenDateiDownloadUrl(customerId: string, did: string): Promise<string> {
   const res = await fetch(`/api/kunden/${customerId}/dateien/${did}`);
   if (!res.ok) {
