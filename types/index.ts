@@ -1021,4 +1021,12 @@ export type CustomerPromptUpdate = Partial<CustomerPromptInsert>;
 export interface CustomerPromptRendered {
   prompt: string;
   missing_placeholders: string[];
+  /** Wenn der Prompt mit Datenkodierung erzeugt wurde: Code↔Klartext-Mapping. */
+  encoded?: boolean;
+  mapping?: Array<{
+    code: string;
+    field: string;
+    label: string;
+    value: string;
+  }>;
 }

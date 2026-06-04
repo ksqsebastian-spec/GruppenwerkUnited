@@ -2,19 +2,20 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Check, Copy, Download, File as FileIcon, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Download, File as FileIcon, Loader2, Lock, ShieldCheck, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import {
   useKundenPrompts,
   useRenderKundenPrompt,
   getKundenPromptVorlageDownloadUrl,
 } from '@/hooks/use-kunden';
-import type { CustomerPrompt } from '@/types';
+import type { CustomerPrompt, CustomerPromptRendered } from '@/types';
 
 interface KundenPromptRunnerProps {
   customerId: string;
@@ -24,19 +25,41 @@ interface Ergebnis {
   prompt: CustomerPrompt;
   text: string;
   missing: string[];
+  encoded: boolean;
+  mapping: NonNullable<CustomerPromptRendered['mapping']>;
+  /** Signierte URL der Vorlage-Datei (für Drag & Download). */
+  vorlageUrl: string | null;
 }
 
 export function KundenPromptRunner({ customerId }: KundenPromptRunnerProps): React.JSX.Element {
   const [ergebnis, setErgebnis] = useState<Ergebnis | null>(null);
+  const [encode, setEncode] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [copiedMapping, setCopiedMapping] = useState(false);
 
   const { data: prompts = [], isLoading } = useKundenPrompts();
   const render = useRenderKundenPrompt(customerId);
 
   const handleCardClick = async (prompt: CustomerPrompt): Promise<void> => {
     try {
-      const result = await render.mutateAsync(prompt.id);
-      setErgebnis({ prompt, text: result.prompt, missing: result.missing_placeholders });
+      const result = await render.mutateAsync({ promptId: prompt.id, encode });
+      // Signed URL parallel laden, falls eine Vorlage-Datei hängt
+      let vorlageUrl: string | null = null;
+      if (prompt.vorlage_dateipfad) {
+        try {
+          vorlageUrl = await getKundenPromptVorlageDownloadUrl(prompt.id);
+        } catch {
+          // URL-Fehler ist nicht-blockierend — Download-Button fängt das auf
+        }
+      }
+      setErgebnis({
+        prompt,
+        text: result.prompt,
+        missing: result.missing_placeholders,
+        encoded: !!result.encoded,
+        mapping: result.mapping ?? [],
+        vorlageUrl,
+      });
       setCopied(false);
     } catch {
       // Toast vom Hook
@@ -55,10 +78,23 @@ export function KundenPromptRunner({ customerId }: KundenPromptRunnerProps): Rea
     }
   };
 
-  const handleVorlageHerunterladen = async (): Promise<void> => {
+  const handleCopyMapping = async (): Promise<void> => {
+    if (!ergebnis || ergebnis.mapping.length === 0) return;
+    const text = ergebnis.mapping.map((m) => `${m.code} = ${m.value}  (${m.label})`).join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedMapping(true);
+      toast.success('Code-Mapping kopiert');
+      window.setTimeout(() => setCopiedMapping(false), 2000);
+    } catch {
+      toast.error('Kopieren fehlgeschlagen');
+    }
+  };
+
+  const handleDownload = async (): Promise<void> => {
     if (!ergebnis?.prompt.vorlage_dateiname) return;
     try {
-      const url = await getKundenPromptVorlageDownloadUrl(ergebnis.prompt.id);
+      const url = ergebnis.vorlageUrl ?? (await getKundenPromptVorlageDownloadUrl(ergebnis.prompt.id));
       const a = document.createElement('a');
       a.href = url;
       a.target = '_blank';
@@ -72,11 +108,28 @@ export function KundenPromptRunner({ customerId }: KundenPromptRunnerProps): Rea
     }
   };
 
+  /**
+   * Chrome / Edge: macht die Datei direkt aus dem Browser zu einer Anwendung
+   * draggable. Wir setzen das `DownloadURL`-DataTransfer-Format, damit der
+   * Browser beim Drop die Datei holt und an die Zielanwendung übergibt — so
+   * lässt sich die Vorlage z.B. direkt in Claude.ai ziehen.
+   */
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>): void => {
+    if (!ergebnis?.vorlageUrl || !ergebnis.prompt.vorlage_dateiname) return;
+    const mime = ergebnis.prompt.vorlage_dateityp || 'application/octet-stream';
+    const url = new URL(ergebnis.vorlageUrl, window.location.href).toString();
+    e.dataTransfer.effectAllowed = 'copy';
+    // DownloadURL-Format: "<mime>:<filename>:<absolute url>"
+    e.dataTransfer.setData('DownloadURL', `${mime}:${ergebnis.prompt.vorlage_dateiname}:${url}`);
+    e.dataTransfer.setData('text/uri-list', url);
+    e.dataTransfer.setData('text/plain', url);
+  };
+
   if (isLoading) return <LoadingSpinner size="sm" text="Vorlagen werden geladen…" />;
 
   // ── Ergebnis-Ansicht ────────────────────────────────────────────────────────
   if (ergebnis) {
-    const { prompt, text, missing } = ergebnis;
+    const { prompt, text, missing, encoded, mapping, vorlageUrl } = ergebnis;
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-2">
@@ -84,9 +137,17 @@ export function KundenPromptRunner({ customerId }: KundenPromptRunnerProps): Rea
             <ArrowLeft className="mr-2 h-4 w-4" />
             Zurück zur Auswahl
           </Button>
-          <span className="text-sm text-muted-foreground">
-            {prompt.kategorie ? `${prompt.kategorie} — ${prompt.name}` : prompt.name}
-          </span>
+          <div className="flex items-center gap-2">
+            {encoded && (
+              <Badge variant="outline" className="border-emerald-400 text-emerald-700 dark:border-emerald-700 dark:text-emerald-300">
+                <ShieldCheck className="mr-1 h-3 w-3" />
+                Kundendaten verschlüsselt
+              </Badge>
+            )}
+            <span className="text-sm text-muted-foreground">
+              {prompt.kategorie ? `${prompt.kategorie} — ${prompt.name}` : prompt.name}
+            </span>
+          </div>
         </div>
 
         {missing.length > 0 && (
@@ -116,15 +177,48 @@ export function KundenPromptRunner({ customerId }: KundenPromptRunnerProps): Rea
             <p className="text-xs text-muted-foreground">
               Den kopierten Text in das ChatGPT- oder Claude-Eingabefeld einfügen.
             </p>
+
+            {encoded && mapping.length > 0 && (
+              <div className="mt-3 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-xs text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-100">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="flex items-center gap-1 font-medium">
+                    <Lock className="h-3.5 w-3.5" /> Code → Klartext (nur für dich)
+                  </p>
+                  <Button size="sm" variant="outline" onClick={handleCopyMapping}>
+                    {copiedMapping ? <Check className="mr-1 h-3 w-3" /> : <Copy className="mr-1 h-3 w-3" />}
+                    Mapping kopieren
+                  </Button>
+                </div>
+                <p className="mt-1 mb-2">
+                  In der KI-Antwort die Codes durch die echten Werte ersetzen.
+                </p>
+                <ul className="space-y-0.5 font-mono">
+                  {mapping.map((m) => (
+                    <li key={m.code}>
+                      <span className="font-medium">{m.code}</span>
+                      <span className="text-emerald-700/70 dark:text-emerald-300/70"> = </span>
+                      {m.value}
+                      <span className="text-emerald-700/70 dark:text-emerald-300/70"> ({m.label})</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* Vorlage-Datei */}
           <div className="space-y-2">
-            <span className="text-sm font-medium">Schritt 2 — Vorlage anhängen</span>
+            <span className="text-sm font-medium">Schritt 2 — Vorlage in den Chat ziehen</span>
             {prompt.vorlage_dateiname ? (
-              <div className="flex flex-col gap-3 rounded-md border border-border bg-card p-4">
+              <div
+                draggable={!!vorlageUrl}
+                onDragStart={handleDragStart}
+                className={`flex flex-col gap-3 rounded-md border-2 border-dashed border-primary/40 bg-card p-4 transition-colors hover:border-primary ${
+                  vorlageUrl ? 'cursor-grab active:cursor-grabbing' : 'opacity-60'
+                }`}
+              >
                 <div className="flex items-center gap-2">
-                  <FileIcon className="h-8 w-8 text-muted-foreground" />
+                  <FileIcon className="h-8 w-8 text-primary" />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{prompt.vorlage_dateiname}</p>
                     {prompt.vorlage_dateigroesse != null && (
@@ -134,12 +228,13 @@ export function KundenPromptRunner({ customerId }: KundenPromptRunnerProps): Rea
                     )}
                   </div>
                 </div>
-                <Button onClick={handleVorlageHerunterladen}>
-                  <Download className="mr-2 h-4 w-4" /> Herunterladen
-                </Button>
                 <p className="text-xs text-muted-foreground">
-                  Heruntergeladene Datei per Drag&amp;Drop in den KI-Chat ziehen.
+                  <strong>Direkt in den KI-Chat ziehen.</strong> Falls dein Browser das nicht unterstützt,
+                  herunterladen und manuell anhängen.
                 </p>
+                <Button variant="outline" size="sm" onClick={handleDownload}>
+                  <Download className="mr-2 h-4 w-4" /> Stattdessen herunterladen
+                </Button>
               </div>
             ) : (
               <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 text-center text-xs text-muted-foreground">
@@ -174,7 +269,7 @@ export function KundenPromptRunner({ customerId }: KundenPromptRunnerProps): Rea
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <p className="text-sm text-muted-foreground">
           Wähle einen Anwendungsfall — die Kundendaten werden automatisch eingefügt.
         </p>
@@ -183,9 +278,32 @@ export function KundenPromptRunner({ customerId }: KundenPromptRunnerProps): Rea
         </Button>
       </div>
 
+      <label
+        htmlFor="encode-toggle"
+        className="flex cursor-pointer items-start gap-3 rounded-md border border-emerald-300 bg-emerald-50/40 p-3 dark:border-emerald-800 dark:bg-emerald-950/20"
+      >
+        <Checkbox
+          id="encode-toggle"
+          checked={encode}
+          onCheckedChange={(v) => setEncode(v === true)}
+          className="mt-0.5"
+        />
+        <div className="flex-1 text-sm">
+          <span className="flex items-center gap-1 font-medium">
+            <ShieldCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+            Kundendaten vor der KI verschlüsseln (empfohlen)
+          </span>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Firmenname, Ansprechpartner &amp; Co. werden durch eindeutige Codes ersetzt — die KI
+            sieht nie die echten Daten. Codes &amp; Mapping landen automatisch in deiner
+            „Datenkodierung".
+          </p>
+        </div>
+      </label>
+
       <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {prompts.map((p) => {
-          const isPending = render.isPending && render.variables === p.id;
+          const isPending = render.isPending && render.variables?.promptId === p.id;
           return (
             <li key={p.id}>
               <button

@@ -312,16 +312,25 @@ export async function getKundenPromptVorlageDownloadUrl(promptId: string): Promi
   return data.url;
 }
 
-export function useRenderKundenPrompt(customerId: string): UseMutationResult<CustomerPromptRendered, Error, string> {
-  return useMutation<CustomerPromptRendered, Error, string>({
-    mutationFn: async (promptId) => {
+export function useRenderKundenPrompt(
+  customerId: string,
+): UseMutationResult<CustomerPromptRendered, Error, { promptId: string; encode?: boolean }> {
+  const qc = useQueryClient();
+  return useMutation<CustomerPromptRendered, Error, { promptId: string; encode?: boolean }>({
+    mutationFn: async ({ promptId, encode }) => {
       const res = await fetch(`/api/kunden/${customerId}/render-prompt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt_id: promptId }),
+        body: JSON.stringify({ prompt_id: promptId, encode: !!encode }),
       });
       if (!res.ok) return jsonOrError(res, 'Prompt konnte nicht erzeugt werden');
       return res.json() as Promise<CustomerPromptRendered>;
+    },
+    onSuccess: (result) => {
+      // Wenn neue Datenkodierungs-Einträge angelegt wurden, deren Cache invalidieren
+      if (result.encoded && result.mapping && result.mapping.length > 0) {
+        qc.invalidateQueries({ queryKey: ['datenkodierungen'] });
+      }
     },
     onError: (e) => toast.error(e.message),
   });
