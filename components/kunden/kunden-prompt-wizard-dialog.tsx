@@ -135,8 +135,8 @@ export function KundenPromptWizardDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-3xl overflow-hidden">
-        <form onSubmit={handleSubmit} className="flex h-full flex-col overflow-hidden">
+      <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
+        <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Wand2 className="h-5 w-5" /> Vorlage anlegen — geführt
@@ -146,9 +146,9 @@ export function KundenPromptWizardDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid flex-1 gap-6 overflow-y-auto pb-2 pr-1 md:grid-cols-[1fr_280px]">
+          <div className="grid gap-6 py-4 md:grid-cols-[1fr_280px]">
             {/* ── Eingaben ─────────────────────────────────────────────────────── */}
-            <div className="space-y-5">
+            <div className="min-w-0 space-y-5">
               {/* 1. Was möchtest du erstellen? */}
               <div>
                 <Label className="text-sm font-medium">1. Was möchtest du erstellen?</Label>
@@ -322,20 +322,19 @@ export function KundenPromptWizardDialog({
             </div>
 
             {/* ── Vorschau ─────────────────────────────────────────────────────── */}
-            <aside className="space-y-2">
+            <aside className="min-w-0 space-y-2 md:sticky md:top-0 md:self-start">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">Vorschau</Label>
-              <pre className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-md border border-border bg-muted/40 p-3 text-xs">
+              <pre className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-border bg-muted/40 p-3 text-xs">
                 {vorschau}
               </pre>
               <p className="text-xs text-muted-foreground">
-                So sieht der Prompt-Text aus. Beim Klick auf einen Kunden werden die
-                {' '}<code className="rounded bg-muted px-1">{'{{…}}'}</code>{' '}
-                automatisch durch echte Werte ersetzt.
+                So sieht der Prompt-Text aus. Beim Klick auf einen Kunden werden die echten
+                Werte automatisch eingesetzt.
               </p>
             </aside>
           </div>
 
-          <DialogFooter className="border-t pt-3">
+          <DialogFooter className="sticky bottom-0 border-t bg-background pt-3">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
               Abbrechen
             </Button>

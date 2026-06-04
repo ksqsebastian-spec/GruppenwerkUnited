@@ -97,7 +97,7 @@ export function LeadsImportDialog({ open, onOpenChange }: LeadsImportDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-hidden">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Aus Leads übernehmen</DialogTitle>
           <DialogDescription>
@@ -106,7 +106,7 @@ export function LeadsImportDialog({ open, onOpenChange }: LeadsImportDialogProps
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 overflow-y-auto">
+        <div className="space-y-3 py-4">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -169,7 +169,7 @@ export function LeadsImportDialog({ open, onOpenChange }: LeadsImportDialogProps
           )}
         </div>
 
-        <DialogFooter className="border-t pt-3">
+        <DialogFooter className="sticky bottom-0 border-t bg-background pt-3">
           <span className="mr-auto text-xs text-muted-foreground">
             {ausgewaehlt.size} ausgewählt
           </span>
