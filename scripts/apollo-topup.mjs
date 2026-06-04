@@ -97,7 +97,7 @@ async function apolloFetch(path, body, attempt = 1) {
 }
 
 const searchPage = (keywords, page) =>
-  apolloFetch('/mixed_people/search', {
+  apolloFetch('/mixed_people/api_search', {
     ...COMMON_SEARCH,
     q_organization_keyword_tags: keywords,
     page,
@@ -189,10 +189,13 @@ async function topUpTenant(tenant) {
   }
   console.log(`[${tenant}] Top-Up: ${needed} neue Leads gesucht`);
 
-  // 1. Suchergebnisse einsammeln (50% Puffer für Misses/Duplikate)
+  // 1. Suchergebnisse einsammeln (50% Puffer für Misses/Duplikate).
+  // START_PAGE überspringt vordere Treffer (nützlich, wenn zwei Mandanten dasselbe
+  // Suchprofil nutzen und unterschiedliche Kontakte erhalten sollen).
+  const startPage = Number(process.env.START_PAGE ?? 1);
   const targetCandidates = Math.ceil(needed * 1.5);
   const ids = new Set();
-  for (let page = 1; ids.size < targetCandidates && page <= 50; page++) {
+  for (let page = startPage; ids.size < targetCandidates && page <= startPage + 50; page++) {
     const res = await searchPage(cfg.keywords, page);
     const got = res.people ?? [];
     if (got.length === 0) break;
