@@ -13,6 +13,21 @@ export interface StarterPrompt {
   template: string;
 }
 
+/**
+ * Lucide-Icon-Name je Kategorie. Wird in der Dokument-erstellen-UI verwendet,
+ * damit jede Kachel visuell eindeutig ist.
+ */
+export const KATEGORIE_ICON: Record<string, string> = {
+  Rechnung: 'Receipt',
+  Mahnung: 'AlertTriangle',
+  Angebot: 'FileText',
+  Bestätigung: 'CheckCircle2',
+  Lieferschein: 'Truck',
+  Gutschrift: 'BadgePercent',
+  Korrespondenz: 'Mail',
+  Sonstiges: 'FilePlus',
+};
+
 export const STARTER_PROMPTS: StarterPrompt[] = [
   {
     name: 'Rechnung erstellen',

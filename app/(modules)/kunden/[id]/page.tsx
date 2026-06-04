@@ -95,7 +95,7 @@ export default function KundeDetailPage({ params }: KundeDetailPageProps): React
       <Tabs defaultValue="prompts">
         <TabsList>
           <TabsTrigger value="prompts">
-            <Sparkles className="mr-2 h-4 w-4" /> Prompts
+            <Sparkles className="mr-2 h-4 w-4" /> Dokument erstellen
           </TabsTrigger>
           <TabsTrigger value="dateien">
             <FileText className="mr-2 h-4 w-4" /> Dateien
@@ -105,7 +105,7 @@ export default function KundeDetailPage({ params }: KundeDetailPageProps): React
           </TabsTrigger>
         </TabsList>
         <TabsContent value="prompts" className="pt-4">
-          <KundenPromptRunner customerId={id} />
+          <KundenPromptRunner customerId={id} kundenname={kunde.firmenname} />
         </TabsContent>
         <TabsContent value="dateien" className="pt-4">
           <KundenDateienPanel customerId={id} />
