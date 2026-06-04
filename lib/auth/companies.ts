@@ -17,8 +17,9 @@ export interface CompanyConfig {
 }
 
 /**
- * Vollständige Modul-Liste. Jede Firma (außer Admin, der ohnehin '*' hat)
- * erhält Zugriff auf alle Module.
+ * Modul-Liste für reguläre Firmen. Admin behält '*' und sieht weiterhin alles —
+ * inklusive Modulen, die hier ausgelassen werden (z.B. 'automationen', das vor
+ * dem Go-Live für Endkunden ausgeblendet wurde).
  */
 export const ALL_MODULES: string[] = [
   'roi',
@@ -27,7 +28,6 @@ export const ALL_MODULES: string[] = [
   'datenkodierung',
   'vob',
   'leads',
-  'automationen',
   'fuhrpark',
   'consulting',
   'tickets',
