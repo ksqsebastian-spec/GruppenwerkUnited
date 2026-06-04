@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { File as FileIcon, Loader2, Trash2, Upload } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -15,13 +15,21 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useCreateKundenPrompt, useUpdateKundenPrompt } from '@/hooks/use-kunden';
+import {
+  useCreateKundenPrompt,
+  useUpdateKundenPrompt,
+  useUploadKundenPromptVorlage,
+  useRemoveKundenPromptVorlage,
+} from '@/hooks/use-kunden';
 import type { CustomerPrompt } from '@/types';
+import type { StarterPrompt } from '@/lib/kunden/starter-prompts';
 
 interface KundenPromptFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vorlage?: CustomerPrompt | null;
+  /** Wenn gesetzt, wird das Formular mit dem Starter-Inhalt vorbefüllt (nur beim Anlegen). */
+  starter?: StarterPrompt | null;
 }
 
 interface FormState {
@@ -33,30 +41,44 @@ interface FormState {
 
 const empty: FormState = { name: '', beschreibung: '', kategorie: '', template: '' };
 
+function formStateAus(quelle: CustomerPrompt | StarterPrompt): FormState {
+  return {
+    name: quelle.name,
+    beschreibung: quelle.beschreibung ?? '',
+    kategorie: quelle.kategorie ?? '',
+    template: quelle.template,
+  };
+}
+
 export function KundenPromptFormDialog({
   open,
   onOpenChange,
   vorlage,
+  starter,
 }: KundenPromptFormDialogProps): React.JSX.Element {
   const isEdit = !!vorlage;
   const create = useCreateKundenPrompt();
   const update = useUpdateKundenPrompt();
+  const uploadVorlage = useUploadKundenPromptVorlage();
+  const removeVorlage = useRemoveKundenPromptVorlage();
+
   const [form, setForm] = useState<FormState>(empty);
+  const [datei, setDatei] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
-      setForm(
-        vorlage
-          ? {
-              name: vorlage.name,
-              beschreibung: vorlage.beschreibung ?? '',
-              kategorie: vorlage.kategorie ?? '',
-              template: vorlage.template,
-            }
-          : empty,
-      );
+      if (vorlage) {
+        setForm(formStateAus(vorlage));
+      } else if (starter) {
+        setForm(formStateAus(starter));
+      } else {
+        setForm(empty);
+      }
+      setDatei(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
-  }, [open, vorlage]);
+  }, [open, vorlage, starter]);
 
   const onChange = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -71,31 +93,42 @@ export function KundenPromptFormDialog({
       template: form.template.trim(),
     };
     try {
-      if (isEdit && vorlage) {
-        await update.mutateAsync({ id: vorlage.id, updates: payload });
-      } else {
-        await create.mutateAsync(payload);
+      const gespeichert = isEdit && vorlage
+        ? await update.mutateAsync({ id: vorlage.id, updates: payload })
+        : await create.mutateAsync(payload);
+      // Optional anschließend die Vorlage-Datei hochladen
+      if (datei) {
+        await uploadVorlage.mutateAsync({ id: gespeichert.id, file: datei });
       }
       onOpenChange(false);
+    } catch {
+      // Toasts vom Hook
+    }
+  };
+
+  const handleEntferneVorhandeneVorlage = async (): Promise<void> => {
+    if (!vorlage) return;
+    try {
+      await removeVorlage.mutateAsync(vorlage.id);
     } catch {
       // Toast vom Hook
     }
   };
 
-  const isPending = create.isPending || update.isPending;
+  const isPending = create.isPending || update.isPending || uploadVorlage.isPending || removeVorlage.isPending;
   const valid = form.name.trim().length > 0 && form.template.trim().length > 0;
+  const aktuelleVorlageName = vorlage?.vorlage_dateiname;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{isEdit ? 'Vorlage bearbeiten' : 'Neue Prompt-Vorlage'}</DialogTitle>
             <DialogDescription>
               Platzhalter: <code className="rounded bg-muted px-1">{'{{customer.firmenname}}'}</code>,{' '}
               <code className="rounded bg-muted px-1">{'{{customer.adresse}}'}</code> u.a. für Kundendaten;{' '}
-              <code className="rounded bg-muted px-1">{'{{MWST}}'}</code>,{' '}
-              <code className="rounded bg-muted px-1">{'{{RNR_PRAEFIX}}'}</code> u.a. für Datenkodierungen.
+              <code className="rounded bg-muted px-1">{'{{MWST}}'}</code> u.a. für Datenkodierungen.
             </DialogDescription>
           </DialogHeader>
 
@@ -120,7 +153,7 @@ export function KundenPromptFormDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="template">
-                Vorlage <span className="text-red-500">*</span>
+                Prompt-Text <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 id="template"
@@ -130,8 +163,61 @@ export function KundenPromptFormDialog({
                 maxLength={20000}
                 className="font-mono text-sm"
                 required
-                placeholder={`Erstelle eine Rechnung für {{customer.firmenname}}.\nAdresse: {{customer.adresse}}\nRechnungsnummer-Präfix: {{RNR_PRAEFIX}}\nMwSt: {{MWST}}\n…`}
+                placeholder="Erstelle eine Rechnung für {{customer.firmenname}}…"
               />
+              <p className="text-xs text-muted-foreground">
+                Dieser Text wird beim Generieren mit den Kundendaten und Datenkodierungen befüllt
+                und kann ins ChatGPT- oder Claude-Eingabefeld kopiert werden.
+              </p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Vorlage-Datei (optional)</Label>
+              <p className="text-xs text-muted-foreground">
+                Z.B. eine Word- oder PDF-Datei mit dem Briefkopf, die im KI-Chat per Drag&amp;Drop
+                hinzugefügt wird. Max. 10 MB. Erlaubt: PDF, DOC(X), XLS(X), Bilder, TXT, MD, CSV.
+              </p>
+              {aktuelleVorlageName && !datei && (
+                <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 p-2">
+                  <span className="flex items-center gap-2 text-sm">
+                    <FileIcon className="h-4 w-4 text-muted-foreground" />
+                    {aktuelleVorlageName}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleEntferneVorhandeneVorlage}
+                    disabled={isPending}
+                    aria-label="Vorlage entfernen"
+                  >
+                    <Trash2 className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isPending}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  {datei ? 'Andere Datei wählen' : aktuelleVorlageName ? 'Datei ersetzen' : 'Datei wählen'}
+                </Button>
+                {datei && (
+                  <span className="truncate text-xs text-muted-foreground">
+                    Auswahl: {datei.name}
+                  </span>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => setDatei(e.target.files?.[0] ?? null)}
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.txt,.csv,.md"
+                />
+              </div>
             </div>
           </div>
 

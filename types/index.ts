@@ -995,11 +995,26 @@ export interface CustomerPrompt {
   beschreibung: string | null;
   kategorie: string | null;
   template: string;
+  /** Optionaler Datei-Anhang (z.B. .docx als Vorlage zum Drag&Drop in Claude) */
+  vorlage_dateipfad: string | null;
+  vorlage_dateiname: string | null;
+  vorlage_dateityp: string | null;
+  vorlage_dateigroesse: number | null;
   created_at: string;
   updated_at: string;
 }
 
-export type CustomerPromptInsert = Omit<CustomerPrompt, 'id' | 'company' | 'created_at' | 'updated_at'>;
+export type CustomerPromptInsert = Omit<
+  CustomerPrompt,
+  | 'id'
+  | 'company'
+  | 'created_at'
+  | 'updated_at'
+  | 'vorlage_dateipfad'
+  | 'vorlage_dateiname'
+  | 'vorlage_dateityp'
+  | 'vorlage_dateigroesse'
+>;
 export type CustomerPromptUpdate = Partial<CustomerPromptInsert>;
 
 /** Ergebnis des Prompt-Renderings: gefüllter Text + nicht aufgelöste Platzhalter. */

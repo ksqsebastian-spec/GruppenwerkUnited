@@ -268,6 +268,50 @@ export function useDeleteKundenPrompt(): UseMutationResult<void, Error, string> 
   });
 }
 
+export function useUploadKundenPromptVorlage(): UseMutationResult<CustomerPrompt, Error, { id: string; file: File }> {
+  const qc = useQueryClient();
+  return useMutation<CustomerPrompt, Error, { id: string; file: File }>({
+    mutationFn: async ({ id, file }) => {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch(`/api/kunden/prompts/${id}/vorlage`, { method: 'POST', body: form });
+      if (!res.ok) return jsonOrError(res, 'Vorlage-Datei konnte nicht hochgeladen werden');
+      return res.json() as Promise<CustomerPrompt>;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QK_PROMPTS] });
+      toast.success('Vorlage hochgeladen');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export function useRemoveKundenPromptVorlage(): UseMutationResult<CustomerPrompt, Error, string> {
+  const qc = useQueryClient();
+  return useMutation<CustomerPrompt, Error, string>({
+    mutationFn: async (id) => {
+      const res = await fetch(`/api/kunden/prompts/${id}/vorlage`, { method: 'DELETE' });
+      if (!res.ok) return jsonOrError(res, 'Anhang konnte nicht entfernt werden');
+      return res.json() as Promise<CustomerPrompt>;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QK_PROMPTS] });
+      toast.success('Anhang entfernt');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export async function getKundenPromptVorlageDownloadUrl(promptId: string): Promise<string> {
+  const res = await fetch(`/api/kunden/prompts/${promptId}/vorlage`);
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? 'Download-Link konnte nicht erstellt werden');
+  }
+  const data = (await res.json()) as { url: string };
+  return data.url;
+}
+
 export function useRenderKundenPrompt(customerId: string): UseMutationResult<CustomerPromptRendered, Error, string> {
   return useMutation<CustomerPromptRendered, Error, string>({
     mutationFn: async (promptId) => {

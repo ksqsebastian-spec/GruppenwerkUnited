@@ -119,6 +119,17 @@ CREATE TRIGGER update_customer_prompts_updated_at
 
 ALTER TABLE customer_prompts ENABLE ROW LEVEL SECURITY;
 
+-- ── Service-Role-Zugriff ─────────────────────────────────────────────────────
+-- Neue Tabellen müssen explizit für service_role freigegeben werden, damit der
+-- Admin-Client (mit Service-Role-Key) lesen/schreiben kann. anon/authenticated
+-- bleiben absichtlich außen vor — der Zugriff läuft ausschließlich über die
+-- /api/kunden-Routen.
+
+GRANT ALL ON TABLE customers           TO service_role;
+GRANT ALL ON TABLE customer_kommentare TO service_role;
+GRANT ALL ON TABLE customer_dateien    TO service_role;
+GRANT ALL ON TABLE customer_prompts    TO service_role;
+
 -- ── Storage-Bucket für Datei-Uploads ─────────────────────────────────────────
 
 INSERT INTO storage.buckets (id, name, public)
