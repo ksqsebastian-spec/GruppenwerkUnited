@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin';
+import { STARTER_PROMPTS } from '@/lib/kunden/starter-prompts';
 import type {
   Customer,
   CustomerInsert,
@@ -231,16 +232,41 @@ export async function getDateiDownloadUrl(
 
 // ── Prompt-Vorlagen ──────────────────────────────────────────────────────────
 
+/**
+ * Lädt alle Prompt-Vorlagen eines Mandanten.
+ *
+ * Beim allerersten Zugriff (noch keine Vorlagen) werden die kuratierten
+ * Schnellstart-Vorlagen einmalig in die DB übernommen — der Benutzer hat
+ * sofort eine sinnvolle Bibliothek. Per UNIQUE-Constraint sind Duplikate
+ * ausgeschlossen.
+ */
 export async function fetchPrompts(companyId: string): Promise<CustomerPrompt[]> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from('customer_prompts')
-    .select('*')
-    .eq('company', companyId)
-    .order('kategorie', { ascending: true, nullsFirst: false })
-    .order('name', { ascending: true });
-  if (error) throw new Error('Prompt-Vorlagen konnten nicht geladen werden');
-  return (data ?? []) as CustomerPrompt[];
+
+  const fetchSorted = async (): Promise<CustomerPrompt[]> => {
+    const { data, error } = await supabase
+      .from('customer_prompts')
+      .select('*')
+      .eq('company', companyId)
+      .order('kategorie', { ascending: true, nullsFirst: false })
+      .order('name', { ascending: true });
+    if (error) throw new Error('Prompt-Vorlagen konnten nicht geladen werden');
+    return (data ?? []) as CustomerPrompt[];
+  };
+
+  const first = await fetchSorted();
+  if (first.length > 0) return first;
+
+  // Erstzugriff: Schnellstart-Bibliothek anlegen (idempotent dank UNIQUE)
+  const rows = STARTER_PROMPTS.map((s) => ({
+    company: companyId,
+    name: s.name,
+    beschreibung: s.beschreibung,
+    kategorie: s.kategorie,
+    template: s.template,
+  }));
+  await supabase.from('customer_prompts').upsert(rows, { onConflict: 'company,name', ignoreDuplicates: true });
+  return fetchSorted();
 }
 
 export async function fetchPrompt(id: string, companyId: string): Promise<CustomerPrompt | null> {
@@ -473,14 +499,14 @@ export async function renderPrompt(
   const dkMap = new Map<string, string>();
   for (const row of datenkodierungen) dkMap.set(row.code.toUpperCase(), row.name);
 
-  const customerFields: Record<string, string | null> = {
-    firmenname: customer.firmenname,
-    ansprechpartner: customer.ansprechpartner,
-    email: customer.email,
-    telefon: customer.telefon,
-    adresse: customer.adresse,
-    notizen: customer.notizen,
-    status: customer.status,
+  const customerFields: Record<string, { value: string | null; label: string }> = {
+    firmenname:      { value: customer.firmenname,      label: 'Firmenname' },
+    ansprechpartner: { value: customer.ansprechpartner, label: 'Ansprechpartner' },
+    email:           { value: customer.email,           label: 'E-Mail' },
+    telefon:         { value: customer.telefon,         label: 'Telefon' },
+    adresse:         { value: customer.adresse,         label: 'Adresse' },
+    notizen:         { value: customer.notizen,         label: 'Notizen' },
+    status:          { value: customer.status,          label: 'Status' },
   };
 
   const missing = new Set<string>();
@@ -488,17 +514,17 @@ export async function renderPrompt(
     const key = rawKey.trim();
     if (key.toLowerCase().startsWith('customer.')) {
       const field = key.slice(9).toLowerCase();
-      const value = customerFields[field];
-      if (value == null || value === '') {
+      const entry = customerFields[field];
+      if (!entry || entry.value == null || entry.value === '') {
         missing.add(key);
-        return `<<UNGELÖST: ${key}>>`;
+        return `[${entry?.label ?? field} fehlt]`;
       }
-      return value;
+      return entry.value;
     }
     const value = dkMap.get(key.toUpperCase());
     if (value == null || value === '') {
       missing.add(key);
-      return `<<UNGELÖST: ${key}>>`;
+      return `[${key} fehlt]`;
     }
     return value;
   });

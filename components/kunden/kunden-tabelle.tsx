@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Mail, Phone } from 'lucide-react';
 import {
   Table,
@@ -18,6 +18,8 @@ interface KundenTabelleProps {
 }
 
 export function KundenTabelle({ kunden }: KundenTabelleProps): React.JSX.Element {
+  const router = useRouter();
+
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <Table>
@@ -32,12 +34,12 @@ export function KundenTabelle({ kunden }: KundenTabelleProps): React.JSX.Element
         </TableHeader>
         <TableBody>
           {kunden.map((k) => (
-            <TableRow key={k.id} className="cursor-pointer hover:bg-muted/40">
-              <TableCell className="font-medium">
-                <Link href={`/kunden/${k.id}`} className="hover:underline">
-                  {k.firmenname}
-                </Link>
-              </TableCell>
+            <TableRow
+              key={k.id}
+              className="cursor-pointer hover:bg-muted/40"
+              onClick={() => router.push(`/kunden/${k.id}`)}
+            >
+              <TableCell className="font-medium">{k.firmenname}</TableCell>
               <TableCell>{k.ansprechpartner ?? '—'}</TableCell>
               <TableCell>
                 <div className="flex flex-col gap-0.5 text-xs">

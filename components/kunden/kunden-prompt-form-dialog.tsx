@@ -14,15 +14,25 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   useCreateKundenPrompt,
   useUpdateKundenPrompt,
   useUploadKundenPromptVorlage,
   useRemoveKundenPromptVorlage,
 } from '@/hooks/use-kunden';
+import { useDatenkodierungen } from '@/hooks/use-datenkodierung';
+import { PromptTokenEditor, type TokenDef } from './prompt-token-editor';
 import type { CustomerPrompt } from '@/types';
 import type { StarterPrompt } from '@/lib/kunden/starter-prompts';
+
+const CUSTOMER_FIELDS: TokenDef[] = [
+  { key: 'customer.firmenname', label: 'Firmenname' },
+  { key: 'customer.ansprechpartner', label: 'Ansprechpartner' },
+  { key: 'customer.email', label: 'E-Mail' },
+  { key: 'customer.telefon', label: 'Telefon' },
+  { key: 'customer.adresse', label: 'Adresse' },
+  { key: 'customer.notizen', label: 'Notizen' },
+];
 
 interface KundenPromptFormDialogProps {
   open: boolean;
@@ -61,6 +71,12 @@ export function KundenPromptFormDialog({
   const update = useUpdateKundenPrompt();
   const uploadVorlage = useUploadKundenPromptVorlage();
   const removeVorlage = useRemoveKundenPromptVorlage();
+  const { data: datenkodierungen = [] } = useDatenkodierungen();
+  const datenkodierungTokens: TokenDef[] = datenkodierungen.map((d) => ({
+    key: d.code,
+    label: d.code,
+    hint: d.name,
+  }));
 
   const [form, setForm] = useState<FormState>(empty);
   const [datei, setDatei] = useState<File | null>(null);
@@ -82,6 +98,10 @@ export function KundenPromptFormDialog({
 
   const onChange = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
+  };
+
+  const onTemplateChange = (next: string): void => {
+    setForm((prev) => ({ ...prev, template: next }));
   };
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -126,9 +146,8 @@ export function KundenPromptFormDialog({
           <DialogHeader>
             <DialogTitle>{isEdit ? 'Vorlage bearbeiten' : 'Neue Prompt-Vorlage'}</DialogTitle>
             <DialogDescription>
-              Platzhalter: <code className="rounded bg-muted px-1">{'{{customer.firmenname}}'}</code>,{' '}
-              <code className="rounded bg-muted px-1">{'{{customer.adresse}}'}</code> u.a. für Kundendaten;{' '}
-              <code className="rounded bg-muted px-1">{'{{MWST}}'}</code> u.a. für Datenkodierungen.
+              Schreibe den Anweisungs-Text und füge Felder per Klick als Chips ein —
+              z.B. „Firmenname" für die jeweilige Kunden-Firma.
             </DialogDescription>
           </DialogHeader>
 
@@ -155,20 +174,15 @@ export function KundenPromptFormDialog({
               <Label htmlFor="template">
                 Prompt-Text <span className="text-red-500">*</span>
               </Label>
-              <Textarea
+              <PromptTokenEditor
                 id="template"
                 value={form.template}
-                onChange={onChange('template')}
-                rows={12}
-                maxLength={20000}
-                className="font-mono text-sm"
-                required
-                placeholder="Erstelle eine Rechnung für {{customer.firmenname}}…"
+                onChange={onTemplateChange}
+                customerFields={CUSTOMER_FIELDS}
+                datenkodierungen={datenkodierungTokens}
+                placeholder="Schreibe hier den Anweisungs-Text…"
+                rows={14}
               />
-              <p className="text-xs text-muted-foreground">
-                Dieser Text wird beim Generieren mit den Kundendaten und Datenkodierungen befüllt
-                und kann ins ChatGPT- oder Claude-Eingabefeld kopiert werden.
-              </p>
             </div>
 
             <div className="grid gap-2">
