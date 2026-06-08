@@ -801,6 +801,8 @@ export interface Person {
   name: string;
   email: string | null;
   rolle: string | null;
+  /** Zugeordnete Firma (farbkodiert), z.B. 'seehafer', 'groundpassion'. */
+  firma: string | null;
   created_at: string;
 }
 

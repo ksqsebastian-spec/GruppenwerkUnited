@@ -6,6 +6,7 @@ import { LogOut, PanelLeftClose, PanelLeftOpen, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useAuth } from '@/components/providers/auth-provider';
+import { useHiddenModules } from '@/hooks/use-hidden-modules';
 import { MODULES, MODULE_ICONS } from '@/lib/modules';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +24,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps): React.JSX.
   const router = useRouter();
   const pathname = usePathname();
   const { company, signOut } = useAuth();
+  const [hiddenModules] = useHiddenModules();
 
   const handleSignOut = async (): Promise<void> => {
     try {
@@ -36,6 +38,8 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps): React.JSX.
 
   const allowedModules = company?.allowedModules;
   const visibleModules = MODULES.filter((m) => {
+    // Vom Nutzer ausgeblendete Module (Dashboard „Anpassen") auch hier verbergen
+    if (hiddenModules.has(m.id)) return false;
     if (allowedModules === '*') return true;
     if (Array.isArray(allowedModules)) return allowedModules.includes(m.id);
     return false;

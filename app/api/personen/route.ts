@@ -31,6 +31,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       name: parsed.data.name,
       email,
       rolle: parsed.data.rolle ?? null,
+      firma: parsed.data.firma ? parsed.data.firma : null,
     });
     return NextResponse.json(person, { status: 201 });
   } catch (error) {
