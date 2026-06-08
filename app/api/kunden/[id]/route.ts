@@ -48,7 +48,16 @@ export async function PATCH(
   if (parsed.data.ansprechpartner !== undefined) updates.ansprechpartner = nz(parsed.data.ansprechpartner);
   if (parsed.data.email !== undefined) updates.email = nz(parsed.data.email);
   if (parsed.data.telefon !== undefined) updates.telefon = nz(parsed.data.telefon);
+  if (parsed.data.webseite !== undefined) updates.webseite = nz(parsed.data.webseite);
   if (parsed.data.adresse !== undefined) updates.adresse = nz(parsed.data.adresse);
+  if (parsed.data.strasse !== undefined) updates.strasse = nz(parsed.data.strasse);
+  if (parsed.data.plz !== undefined) updates.plz = nz(parsed.data.plz);
+  if (parsed.data.ort !== undefined) updates.ort = nz(parsed.data.ort);
+  if (parsed.data.land !== undefined) updates.land = nz(parsed.data.land);
+  if (parsed.data.kundennummer !== undefined) updates.kundennummer = nz(parsed.data.kundennummer);
+  if (parsed.data.ust_id !== undefined) updates.ust_id = nz(parsed.data.ust_id);
+  if (parsed.data.steuernummer !== undefined) updates.steuernummer = nz(parsed.data.steuernummer);
+  if (parsed.data.zahlungsziel !== undefined) updates.zahlungsziel = nz(parsed.data.zahlungsziel);
   if (parsed.data.notizen !== undefined) updates.notizen = nz(parsed.data.notizen);
 
   try {

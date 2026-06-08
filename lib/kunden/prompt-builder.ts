@@ -7,6 +7,8 @@
  * im Chip-Editor.
  */
 
+import { CUSTOMER_TOKEN_FIELDS } from '@/lib/kunden/customer-fields';
+
 export type Dokumenttyp =
   | 'rechnung'
   | 'mahnung'
@@ -96,14 +98,7 @@ export const DOKUMENTTYPEN: DokumenttypMeta[] = [
   },
 ];
 
-export const KUNDEN_FELDER: Array<{ key: string; label: string }> = [
-  { key: 'customer.firmenname', label: 'Firmenname' },
-  { key: 'customer.ansprechpartner', label: 'Ansprechpartner' },
-  { key: 'customer.email', label: 'E-Mail' },
-  { key: 'customer.telefon', label: 'Telefon' },
-  { key: 'customer.adresse', label: 'Adresse' },
-  { key: 'customer.notizen', label: 'Notizen' },
-];
+export const KUNDEN_FELDER = CUSTOMER_TOKEN_FIELDS;
 
 const TON_LABELS: Record<Tonalitaet, { kurz: string; satz: string }> = {
   foermlich: {

@@ -8,6 +8,7 @@ import {
   BadgePercent,
   Check,
   CheckCircle2,
+  ClipboardCopy,
   Copy,
   Download,
   File as FileIcon,
@@ -144,18 +145,53 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
     }
   };
 
+  /**
+   * Kopiert die Vorlage-Datei als echtes Bild in die Zwischenablage, sodass sie
+   * direkt im KI-Chat eingefügt werden kann (Strg/Cmd+V). Funktioniert für
+   * Bilder (PNG/JPG); andere Formate (PDF/DOCX) unterstützt die Clipboard-API
+   * nicht — dann automatisch Download.
+   */
+  const handleCopyDatei = async (): Promise<void> => {
+    if (!ergebnis?.prompt.vorlage_dateiname) return;
+    const typ = ergebnis.prompt.vorlage_dateityp ?? '';
+    try {
+      const url = ergebnis.vorlageUrl ?? (await getKundenPromptVorlageDownloadUrl(ergebnis.prompt.id));
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+
+      // Clipboard-API unterstützt zuverlässig nur Bilder (v.a. PNG).
+      const clipboardFaehig =
+        typeof ClipboardItem !== 'undefined' && typ.startsWith('image/');
+      if (clipboardFaehig) {
+        // PNG ist am breitesten unterstützt; andere Bildtypen versuchen wir direkt.
+        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+        toast.success('Datei kopiert — im KI-Chat mit Strg/Cmd+V einfügen');
+        return;
+      }
+      // Nicht-Bild: direkter Download als Fallback
+      triggerDownload(url, ergebnis.prompt.vorlage_dateiname);
+      toast.info('Dieses Format kann nicht kopiert werden — Datei wurde heruntergeladen');
+    } catch {
+      toast.error('Kopieren fehlgeschlagen — bitte herunterladen');
+    }
+  };
+
+  const triggerDownload = (url: string, filename: string): void => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const handleDownload = async (): Promise<void> => {
     if (!ergebnis?.prompt.vorlage_dateiname) return;
     try {
       const url = ergebnis.vorlageUrl ?? (await getKundenPromptVorlageDownloadUrl(ergebnis.prompt.id));
-      const a = document.createElement('a');
-      a.href = url;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      a.download = ergebnis.prompt.vorlage_dateiname;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      triggerDownload(url, ergebnis.prompt.vorlage_dateiname);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Download fehlgeschlagen');
     }
@@ -176,6 +212,7 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
   // ── Ergebnis-Ansicht ────────────────────────────────────────────────────────
   if (ergebnis) {
     const { prompt, text, missing, encoded, mapping, vorlageUrl } = ergebnis;
+    const istBild = (prompt.vorlage_dateityp ?? '').startsWith('image/');
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-2">
@@ -289,12 +326,30 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  <strong>Direkt in den KI-Chat ziehen.</strong> Funktioniert in Chrome/Edge; sonst herunterladen.
-                </p>
-                <Button variant="outline" size="sm" onClick={handleDownload}>
-                  <Download className="mr-2 h-4 w-4" /> Stattdessen herunterladen
-                </Button>
+                {istBild ? (
+                  <>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Datei kopieren</strong> und im KI-Chat mit Strg/Cmd+V einfügen — ohne Download.
+                      Oder die Datei direkt in den Chat ziehen.
+                    </p>
+                    <Button size="sm" onClick={handleCopyDatei}>
+                      <ClipboardCopy className="mr-2 h-4 w-4" /> Datei kopieren (zum Einfügen)
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleDownload}>
+                      <Download className="mr-2 h-4 w-4" /> Herunterladen
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>In den KI-Chat ziehen.</strong> In der Claude-/ChatGPT-Desktop-App funktioniert das
+                      direkt; im Browser-Tab bitte herunterladen und anhängen.
+                    </p>
+                    <Button size="sm" onClick={handleDownload}>
+                      <Download className="mr-2 h-4 w-4" /> Herunterladen
+                    </Button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 text-center text-xs text-muted-foreground">

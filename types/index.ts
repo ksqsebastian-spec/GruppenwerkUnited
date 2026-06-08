@@ -959,7 +959,16 @@ export interface Customer {
   ansprechpartner: string | null;
   email: string | null;
   telefon: string | null;
+  webseite: string | null;
   adresse: string | null;
+  strasse: string | null;
+  plz: string | null;
+  ort: string | null;
+  land: string | null;
+  kundennummer: string | null;
+  ust_id: string | null;
+  steuernummer: string | null;
+  zahlungsziel: string | null;
   status: CustomerStatus;
   notizen: string | null;
   created_at: string;

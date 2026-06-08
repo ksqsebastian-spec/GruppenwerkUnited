@@ -18,6 +18,7 @@ import { KundenKommentarePanel } from '@/components/kunden/kunden-kommentare-pan
 import { KundenMappingsPanel } from '@/components/kunden/kunden-mappings-panel';
 import { KundenPromptRunner } from '@/components/kunden/kunden-prompt-runner';
 import { useKunde, useDeleteKunde } from '@/hooks/use-kunden';
+import type { Customer } from '@/types';
 
 interface KundeDetailPageProps {
   params: Promise<{ id: string }>;
@@ -83,7 +84,12 @@ export default function KundeDetailPage({ params }: KundeDetailPageProps): React
           <Stamm label="Ansprechpartner" value={kunde.ansprechpartner} />
           <Stamm label="E-Mail" value={kunde.email} icon={<Mail className="h-4 w-4 text-muted-foreground" />} />
           <Stamm label="Telefon" value={kunde.telefon} icon={<Phone className="h-4 w-4 text-muted-foreground" />} />
-          <Stamm label="Adresse" value={kunde.adresse} icon={<MapPin className="h-4 w-4 text-muted-foreground" />} />
+          <Stamm label="Webseite" value={kunde.webseite} />
+          <Stamm label="Adresse" value={adresseAnzeige(kunde)} icon={<MapPin className="h-4 w-4 text-muted-foreground" />} />
+          <Stamm label="Kundennummer" value={kunde.kundennummer} />
+          <Stamm label="USt-IdNr." value={kunde.ust_id} />
+          <Stamm label="Steuernummer" value={kunde.steuernummer} />
+          <Stamm label="Zahlungsziel" value={kunde.zahlungsziel} />
           {kunde.notizen && (
             <div className="md:col-span-2">
               <p className="text-xs font-medium text-muted-foreground">Notizen</p>
@@ -135,6 +141,14 @@ export default function KundeDetailPage({ params }: KundeDetailPageProps): React
       />
     </div>
   );
+}
+
+/** Baut die Anzeige-Adresse: bevorzugt strukturierte Felder, sonst Freitext. */
+function adresseAnzeige(k: Customer): string | null {
+  const strukturiert = [k.strasse, [k.plz, k.ort].filter(Boolean).join(' '), k.land]
+    .filter((p) => p && p.trim().length > 0)
+    .join(', ');
+  return strukturiert || k.adresse || null;
 }
 
 function Stamm({

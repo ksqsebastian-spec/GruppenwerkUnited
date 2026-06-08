@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateKundenPrompt, useUploadKundenPromptVorlage } from '@/hooks/use-kunden';
 import { useDatenkodierungen } from '@/hooks/use-datenkodierung';
+import { DatenkodierungMultiSelect } from './datenkodierung-multi-select';
 import {
   DOKUMENTTYPEN,
   KUNDEN_FELDER,
@@ -216,19 +217,12 @@ export function KundenPromptWizardDialog({
                     trotzdem ohne diese Daten anlegen.
                   </p>
                 ) : (
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    {datenkodierungen.map((d) => (
-                      <label key={d.id} className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card p-2 text-sm">
-                        <Checkbox
-                          checked={state.eigeneDaten.includes(d.code)}
-                          onCheckedChange={() => toggleEigeneDaten(d.code)}
-                        />
-                        <span className="flex-1 truncate">
-                          <span className="font-medium">{d.code}</span>
-                          <span className="text-muted-foreground"> · {d.name}</span>
-                        </span>
-                      </label>
-                    ))}
+                  <div className="mt-2">
+                    <DatenkodierungMultiSelect
+                      optionen={datenkodierungen}
+                      ausgewaehlt={state.eigeneDaten}
+                      onToggle={toggleEigeneDaten}
+                    />
                   </div>
                 )}
               </div>

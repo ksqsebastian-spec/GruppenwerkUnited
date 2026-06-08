@@ -22,17 +22,11 @@ import {
 } from '@/hooks/use-kunden';
 import { useDatenkodierungen } from '@/hooks/use-datenkodierung';
 import { PromptTokenEditor, type TokenDef } from './prompt-token-editor';
+import { CUSTOMER_TOKEN_FIELDS } from '@/lib/kunden/customer-fields';
 import type { CustomerPrompt } from '@/types';
 import type { StarterPrompt } from '@/lib/kunden/starter-prompts';
 
-const CUSTOMER_FIELDS: TokenDef[] = [
-  { key: 'customer.firmenname', label: 'Firmenname' },
-  { key: 'customer.ansprechpartner', label: 'Ansprechpartner' },
-  { key: 'customer.email', label: 'E-Mail' },
-  { key: 'customer.telefon', label: 'Telefon' },
-  { key: 'customer.adresse', label: 'Adresse' },
-  { key: 'customer.notizen', label: 'Notizen' },
-];
+const CUSTOMER_FIELDS: TokenDef[] = CUSTOMER_TOKEN_FIELDS;
 
 interface KundenPromptFormDialogProps {
   open: boolean;

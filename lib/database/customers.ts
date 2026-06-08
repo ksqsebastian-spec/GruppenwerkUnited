@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { STARTER_PROMPTS } from '@/lib/kunden/starter-prompts';
+import { CUSTOMER_FIELDS, CUSTOMER_FIELD_LABEL } from '@/lib/kunden/customer-fields';
 import { generateCode } from '@/lib/datenkodierung/code-generator';
 import type {
   Customer,
@@ -493,16 +494,6 @@ export async function getPromptVorlageDownloadUrl(
 
 // ── Prompt-Rendering ─────────────────────────────────────────────────────────
 
-const CUSTOMER_FIELD_LABEL: Record<string, string> = {
-  firmenname: 'Firmenname',
-  ansprechpartner: 'Ansprechpartner',
-  email: 'E-Mail',
-  telefon: 'Telefon',
-  adresse: 'Adresse',
-  notizen: 'Notizen',
-  status: 'Status',
-};
-
 /**
  * Stellt für jedes benötigte Kundenfeld eine eindeutige Datenkodierung sicher
  * (idempotent über Tags `customer:<id>` + `field:<feld>`). Liefert ein
@@ -605,15 +596,14 @@ export async function renderPrompt(
   const dkMap = new Map<string, string>();
   for (const row of datenkodierungen) dkMap.set(row.code.toUpperCase(), row.name);
 
+  // Kundenfelder aus der zentralen Registry aufbauen (+ status)
+  const rec = customer as unknown as Record<string, string | null>;
   const customerFields: Record<string, { value: string | null; label: string }> = {
-    firmenname:      { value: customer.firmenname,      label: 'Firmenname' },
-    ansprechpartner: { value: customer.ansprechpartner, label: 'Ansprechpartner' },
-    email:           { value: customer.email,           label: 'E-Mail' },
-    telefon:         { value: customer.telefon,         label: 'Telefon' },
-    adresse:         { value: customer.adresse,         label: 'Adresse' },
-    notizen:         { value: customer.notizen,         label: 'Notizen' },
-    status:          { value: customer.status,          label: 'Status' },
+    status: { value: customer.status, label: 'Status' },
   };
+  for (const f of CUSTOMER_FIELDS) {
+    customerFields[f.key] = { value: rec[f.key] ?? null, label: f.label };
+  }
 
   // Encoding: für jede im Template verwendete Kundenfeld-Referenz einen Code
   // anlegen / nachschlagen — der Prompt enthält dann nur noch die Codes.
@@ -736,6 +726,8 @@ export async function importLeadsAsCustomers(
       email: lead.email,
       telefon: lead.telefon,
       adresse,
+      ort: lead.stadt,
+      land: lead.land,
       notizen: lead.notizen,
       status: 'prospect',
     });
