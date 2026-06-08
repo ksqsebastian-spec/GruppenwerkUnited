@@ -1030,3 +1030,19 @@ export interface CustomerPromptRendered {
     value: string;
   }>;
 }
+
+export interface CustomerMappingEintrag {
+  code: string;
+  field: string;
+  label: string;
+  value: string;
+}
+
+export interface CustomerMapping {
+  id: string;
+  customer_id: string;
+  company: string;
+  anlass: string;
+  eintraege: CustomerMappingEintrag[];
+  created_at: string;
+}

@@ -2,7 +2,7 @@
 
 import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Edit, Mail, Phone, MapPin, FileText, MessageSquare, Sparkles, Trash2 } from 'lucide-react';
+import { Edit, Mail, Phone, MapPin, FileText, KeyRound, MessageSquare, Sparkles, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import { KundeStatusBadge } from '@/components/kunden/kunde-status-badge';
 import { KundeFormDialog } from '@/components/kunden/kunde-form-dialog';
 import { KundenDateienPanel } from '@/components/kunden/kunden-dateien-panel';
 import { KundenKommentarePanel } from '@/components/kunden/kunden-kommentare-panel';
+import { KundenMappingsPanel } from '@/components/kunden/kunden-mappings-panel';
 import { KundenPromptRunner } from '@/components/kunden/kunden-prompt-runner';
 import { useKunde, useDeleteKunde } from '@/hooks/use-kunden';
 
@@ -103,6 +104,9 @@ export default function KundeDetailPage({ params }: KundeDetailPageProps): React
           <TabsTrigger value="kommentare">
             <MessageSquare className="mr-2 h-4 w-4" /> Kommentare
           </TabsTrigger>
+          <TabsTrigger value="codes">
+            <KeyRound className="mr-2 h-4 w-4" /> Codes
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="prompts" className="pt-4">
           <KundenPromptRunner customerId={id} kundenname={kunde.firmenname} />
@@ -112,6 +116,9 @@ export default function KundeDetailPage({ params }: KundeDetailPageProps): React
         </TabsContent>
         <TabsContent value="kommentare" className="pt-4">
           <KundenKommentarePanel customerId={id} />
+        </TabsContent>
+        <TabsContent value="codes" className="pt-4">
+          <KundenMappingsPanel customerId={id} />
         </TabsContent>
       </Tabs>
 

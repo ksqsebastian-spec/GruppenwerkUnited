@@ -17,6 +17,7 @@ import {
   Lock,
   Mail,
   Receipt,
+  Save,
   Settings2,
   ShieldCheck,
   Sparkles,
@@ -31,6 +32,7 @@ import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import {
   useKundenPrompts,
   useRenderKundenPrompt,
+  useCreateKundenMapping,
   getKundenPromptVorlageDownloadUrl,
 } from '@/hooks/use-kunden';
 import { KATEGORIE_ICON } from '@/lib/kunden/starter-prompts';
@@ -75,6 +77,8 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
 
   const { data: prompts = [], isLoading } = useKundenPrompts();
   const render = useRenderKundenPrompt(customerId);
+  const saveMapping = useCreateKundenMapping(customerId);
+  const [mappingGespeichert, setMappingGespeichert] = useState(false);
 
   const handleCardClick = async (prompt: CustomerPrompt): Promise<void> => {
     try {
@@ -96,6 +100,20 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
         vorlageUrl,
       });
       setCopied(false);
+      setMappingGespeichert(false);
+    } catch {
+      // Toast vom Hook
+    }
+  };
+
+  const handleSaveMapping = async (): Promise<void> => {
+    if (!ergebnis || ergebnis.mapping.length === 0) return;
+    const anlass = ergebnis.prompt.kategorie
+      ? `${ergebnis.prompt.kategorie} — ${ergebnis.prompt.name}`
+      : ergebnis.prompt.name;
+    try {
+      await saveMapping.mutateAsync({ anlass, eintraege: ergebnis.mapping });
+      setMappingGespeichert(true);
     } catch {
       // Toast vom Hook
     }
@@ -208,14 +226,31 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
 
             {encoded && mapping.length > 0 && (
               <div className="mt-3 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-xs text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-100">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="flex items-center gap-1 font-medium">
                     <Lock className="h-3.5 w-3.5" /> Code → Klartext (nur für dich)
                   </p>
-                  <Button size="sm" variant="outline" onClick={handleCopyMapping}>
-                    {copiedMapping ? <Check className="mr-1 h-3 w-3" /> : <Copy className="mr-1 h-3 w-3" />}
-                    Mapping kopieren
-                  </Button>
+                  <div className="flex gap-1.5">
+                    <Button size="sm" variant="outline" onClick={handleCopyMapping}>
+                      {copiedMapping ? <Check className="mr-1 h-3 w-3" /> : <Copy className="mr-1 h-3 w-3" />}
+                      Kopieren
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={mappingGespeichert ? 'outline' : 'default'}
+                      onClick={handleSaveMapping}
+                      disabled={saveMapping.isPending || mappingGespeichert}
+                    >
+                      {saveMapping.isPending ? (
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      ) : mappingGespeichert ? (
+                        <Check className="mr-1 h-3 w-3" />
+                      ) : (
+                        <Save className="mr-1 h-3 w-3" />
+                      )}
+                      {mappingGespeichert ? 'Gespeichert' : 'Beim Kunden speichern'}
+                    </Button>
+                  </div>
                 </div>
                 <p className="mt-1 mb-2">In der KI-Antwort die Codes durch die echten Werte ersetzen.</p>
                 <ul className="space-y-0.5 font-mono">

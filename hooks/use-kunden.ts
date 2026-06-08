@@ -12,6 +12,8 @@ import type {
   CustomerPromptInsert,
   CustomerPromptUpdate,
   CustomerPromptRendered,
+  CustomerMapping,
+  CustomerMappingEintrag,
 } from '@/types';
 
 const QK_CUSTOMERS = 'kunden';
@@ -359,6 +361,57 @@ export function useImportLeadsAlsKunden(): UseMutationResult<LeadImportErgebnis,
       const text = `${r.created} übernommen, ${r.skipped} übersprungen`;
       if (r.errors.length > 0) toast.warning(`${text} · ${r.errors.length} Fehler`);
       else toast.success(text);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+// ── Gespeicherte Code-Mappings ───────────────────────────────────────────────
+
+export function useKundenMappings(customerId: string | null): UseQueryResult<CustomerMapping[], Error> {
+  return useQuery<CustomerMapping[]>({
+    queryKey: ['kunden-mappings', customerId],
+    enabled: !!customerId,
+    queryFn: async () => {
+      const res = await fetch(`/api/kunden/${customerId}/mappings`);
+      if (!res.ok) return jsonOrError(res, 'Mappings konnten nicht geladen werden');
+      return res.json() as Promise<CustomerMapping[]>;
+    },
+  });
+}
+
+export function useCreateKundenMapping(
+  customerId: string,
+): UseMutationResult<CustomerMapping, Error, { anlass: string; eintraege: CustomerMappingEintrag[] }> {
+  const qc = useQueryClient();
+  return useMutation<CustomerMapping, Error, { anlass: string; eintraege: CustomerMappingEintrag[] }>({
+    mutationFn: async ({ anlass, eintraege }) => {
+      const res = await fetch(`/api/kunden/${customerId}/mappings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ anlass, eintraege }),
+      });
+      if (!res.ok) return jsonOrError(res, 'Mapping konnte nicht gespeichert werden');
+      return res.json() as Promise<CustomerMapping>;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['kunden-mappings', customerId] });
+      toast.success('Mapping beim Kunden gespeichert');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export function useDeleteKundenMapping(customerId: string): UseMutationResult<void, Error, string> {
+  const qc = useQueryClient();
+  return useMutation<void, Error, string>({
+    mutationFn: async (mid) => {
+      const res = await fetch(`/api/kunden/${customerId}/mappings/${mid}`, { method: 'DELETE' });
+      if (!res.ok) return jsonOrError(res, 'Mapping konnte nicht gelöscht werden');
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['kunden-mappings', customerId] });
+      toast.success('Mapping gelöscht');
     },
     onError: (e) => toast.error(e.message),
   });
