@@ -16,6 +16,28 @@ import type {
 const STORAGE_BUCKET = 'customer-dateien';
 const PROMPT_VORLAGEN_BUCKET = 'prompt-vorlagen';
 
+/**
+ * Macht aus einem Dateinamen einen storage-tauglichen Pfad-Bestandteil:
+ * Umlaute ersetzt, alle Sonderzeichen auf "_" reduziert, Mehrfach-"_" zusammen­
+ * gefasst. Die Originalbezeichnung wird separat (in der DB als `dateiname`)
+ * gespeichert und beim Download zurückgegeben — der Nutzer bekommt seinen
+ * Namen also zurück.
+ */
+function sanitizeFilenameForPath(name: string): string {
+  return (
+    name
+      .replace(/ä/gi, 'ae')
+      .replace(/ö/gi, 'oe')
+      .replace(/ü/gi, 'ue')
+      .replace(/ß/g, 'ss')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '') // Akzente nach NFD entfernen
+      .replace(/[^a-zA-Z0-9._-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '') || 'datei'
+  );
+}
+
 // ── Kunden ────────────────────────────────────────────────────────────────────
 
 export async function fetchCustomers(companyId: string): Promise<Customer[]> {
@@ -157,13 +179,16 @@ export async function uploadDatei(
   file: File,
 ): Promise<CustomerDatei> {
   const supabase = createAdminClient();
-  const dateipfad = `${companyId}/${customerId}/${Date.now()}-${file.name}`;
+  const dateipfad = `${companyId}/${customerId}/${Date.now()}-${sanitizeFilenameForPath(file.name)}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
   const upload = await supabase.storage
     .from(STORAGE_BUCKET)
     .upload(dateipfad, buffer, { contentType: file.type, upsert: false });
-  if (upload.error) throw new Error('Datei konnte nicht hochgeladen werden');
+  if (upload.error) {
+    console.error('[uploadDatei] storage upload error', upload.error);
+    throw new Error(`Datei konnte nicht hochgeladen werden: ${upload.error.message}`);
+  }
 
   const { data, error } = await supabase
     .from('customer_dateien')
@@ -366,12 +391,15 @@ export async function uploadPromptVorlage(
     .maybeSingle();
   if (readError || !existing) throw new Error('Vorlage nicht gefunden');
 
-  const neuerPfad = `${companyId}/${promptId}/${Date.now()}-${file.name}`;
+  const neuerPfad = `${companyId}/${promptId}/${Date.now()}-${sanitizeFilenameForPath(file.name)}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   const upload = await supabase.storage
     .from(PROMPT_VORLAGEN_BUCKET)
     .upload(neuerPfad, buffer, { contentType: file.type, upsert: false });
-  if (upload.error) throw new Error('Datei konnte nicht hochgeladen werden');
+  if (upload.error) {
+    console.error('[uploadPromptVorlage] storage upload error', upload.error);
+    throw new Error(`Datei konnte nicht hochgeladen werden: ${upload.error.message}`);
+  }
 
   const alt = (existing as { vorlage_dateipfad: string | null }).vorlage_dateipfad;
 
