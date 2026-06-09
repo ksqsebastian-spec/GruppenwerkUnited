@@ -34,10 +34,12 @@ import {
   useKundenPrompts,
   useRenderKundenPrompt,
   useCreateKundenMapping,
-  getKundenPromptVorlageDownloadUrl,
+  useDateiVorlagen,
+  getDateiVorlageDownloadUrl,
 } from '@/hooks/use-kunden';
+import { DateiVorlageSelect } from './datei-vorlage-select';
 import { KATEGORIE_ICON } from '@/lib/kunden/starter-prompts';
-import type { CustomerPrompt, CustomerPromptRendered } from '@/types';
+import type { CustomerPrompt, CustomerPromptRendered, DateiVorlage } from '@/types';
 
 interface KundenPromptRunnerProps {
   customerId: string;
@@ -51,6 +53,8 @@ interface Ergebnis {
   missing: string[];
   encoded: boolean;
   mapping: NonNullable<CustomerPromptRendered['mapping']>;
+  /** Aktuell gewählte Datei (initial: am Prompt verknüpft, durch Nutzer überschreibbar). */
+  datei: DateiVorlage | null;
   vorlageUrl: string | null;
 }
 
@@ -77,27 +81,33 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
   const [copiedMapping, setCopiedMapping] = useState(false);
 
   const { data: prompts = [], isLoading } = useKundenPrompts();
+  const { data: dateiVorlagen = [] } = useDateiVorlagen();
   const render = useRenderKundenPrompt(customerId);
   const saveMapping = useCreateKundenMapping(customerId);
   const [mappingGespeichert, setMappingGespeichert] = useState(false);
 
+  const ladeDateiUrl = async (id: string): Promise<string | null> => {
+    try {
+      return await getDateiVorlageDownloadUrl(id);
+    } catch {
+      return null;
+    }
+  };
+
   const handleCardClick = async (prompt: CustomerPrompt): Promise<void> => {
     try {
       const result = await render.mutateAsync({ promptId: prompt.id, encode });
-      let vorlageUrl: string | null = null;
-      if (prompt.vorlage_dateipfad) {
-        try {
-          vorlageUrl = await getKundenPromptVorlageDownloadUrl(prompt.id);
-        } catch {
-          // URL-Fehler ist nicht-blockierend
-        }
-      }
+      const datei = prompt.datei_vorlage_id
+        ? dateiVorlagen.find((d) => d.id === prompt.datei_vorlage_id) ?? null
+        : null;
+      const vorlageUrl = datei ? await ladeDateiUrl(datei.id) : null;
       setErgebnis({
         prompt,
         text: result.prompt,
         missing: result.missing_placeholders,
         encoded: !!result.encoded,
         mapping: result.mapping ?? [],
+        datei,
         vorlageUrl,
       });
       setCopied(false);
@@ -105,6 +115,14 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
     } catch {
       // Toast vom Hook
     }
+  };
+
+  /** Ersetzt die aktuell ausgewählte Datei-Vorlage am laufenden Ergebnis. */
+  const handleSwapDatei = async (id: string | null): Promise<void> => {
+    if (!ergebnis) return;
+    const datei = id ? dateiVorlagen.find((d) => d.id === id) ?? null : null;
+    const vorlageUrl = datei ? await ladeDateiUrl(datei.id) : null;
+    setErgebnis({ ...ergebnis, datei, vorlageUrl });
   };
 
   const handleSaveMapping = async (): Promise<void> => {
@@ -152,10 +170,10 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
    * nicht — dann automatisch Download.
    */
   const handleCopyDatei = async (): Promise<void> => {
-    if (!ergebnis?.prompt.vorlage_dateiname) return;
-    const typ = ergebnis.prompt.vorlage_dateityp ?? '';
+    if (!ergebnis?.datei) return;
+    const typ = ergebnis.datei.dateityp ?? '';
     try {
-      const url = ergebnis.vorlageUrl ?? (await getKundenPromptVorlageDownloadUrl(ergebnis.prompt.id));
+      const url = ergebnis.vorlageUrl ?? (await getDateiVorlageDownloadUrl(ergebnis.datei.id));
       const resp = await fetch(url);
       const blob = await resp.blob();
 
@@ -169,7 +187,7 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
         return;
       }
       // Nicht-Bild: direkter Download als Fallback
-      triggerDownload(url, ergebnis.prompt.vorlage_dateiname);
+      triggerDownload(url, ergebnis.datei.dateiname);
       toast.info('Dieses Format kann nicht kopiert werden — Datei wurde heruntergeladen');
     } catch {
       toast.error('Kopieren fehlgeschlagen — bitte herunterladen');
@@ -188,21 +206,21 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
   };
 
   const handleDownload = async (): Promise<void> => {
-    if (!ergebnis?.prompt.vorlage_dateiname) return;
+    if (!ergebnis?.datei) return;
     try {
-      const url = ergebnis.vorlageUrl ?? (await getKundenPromptVorlageDownloadUrl(ergebnis.prompt.id));
-      triggerDownload(url, ergebnis.prompt.vorlage_dateiname);
+      const url = ergebnis.vorlageUrl ?? (await getDateiVorlageDownloadUrl(ergebnis.datei.id));
+      triggerDownload(url, ergebnis.datei.dateiname);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Download fehlgeschlagen');
     }
   };
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>): void => {
-    if (!ergebnis?.vorlageUrl || !ergebnis.prompt.vorlage_dateiname) return;
-    const mime = ergebnis.prompt.vorlage_dateityp || 'application/octet-stream';
+    if (!ergebnis?.vorlageUrl || !ergebnis?.datei) return;
+    const mime = ergebnis.datei.dateityp || 'application/octet-stream';
     const url = new URL(ergebnis.vorlageUrl, window.location.href).toString();
     e.dataTransfer.effectAllowed = 'copy';
-    e.dataTransfer.setData('DownloadURL', `${mime}:${ergebnis.prompt.vorlage_dateiname}:${url}`);
+    e.dataTransfer.setData('DownloadURL', `${mime}:${ergebnis.datei.dateiname}:${url}`);
     e.dataTransfer.setData('text/uri-list', url);
     e.dataTransfer.setData('text/plain', url);
   };
@@ -211,8 +229,8 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
 
   // ── Ergebnis-Ansicht ────────────────────────────────────────────────────────
   if (ergebnis) {
-    const { prompt, text, missing, encoded, mapping, vorlageUrl } = ergebnis;
-    const istBild = (prompt.vorlage_dateityp ?? '').startsWith('image/');
+    const { prompt, text, missing, encoded, mapping, datei, vorlageUrl } = ergebnis;
+    const istBild = (datei?.dateityp ?? '').startsWith('image/');
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-2">
@@ -307,7 +325,8 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
           {/* Vorlage-Datei */}
           <div className="space-y-2">
             <span className="text-sm font-medium">Schritt 2 — Vorlage in den Chat ziehen</span>
-            {prompt.vorlage_dateiname ? (
+
+            {datei ? (
               <div
                 draggable={!!vorlageUrl}
                 onDragStart={handleDragStart}
@@ -318,12 +337,8 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
                 <div className="flex items-center gap-2">
                   <FileIcon className="h-8 w-8 text-primary" />
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{prompt.vorlage_dateiname}</p>
-                    {prompt.vorlage_dateigroesse != null && (
-                      <p className="text-xs text-muted-foreground">
-                        {(prompt.vorlage_dateigroesse / 1024).toFixed(1)} KB
-                      </p>
-                    )}
+                    <p className="truncate text-sm font-medium">{datei.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{datei.dateiname}</p>
                   </div>
                 </div>
                 {istBild ? (
@@ -353,13 +368,27 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
               </div>
             ) : (
               <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 text-center text-xs text-muted-foreground">
-                Keine Datei-Vorlage hinterlegt.
+                Keine Datei-Vorlage ausgewählt.
                 <br />
-                <Link href={`/kunden/prompts`} className="underline">
-                  Hier eine Word-/PDF-Vorlage anhängen
-                </Link>
+                Wähle unten eine aus der Bibliothek oder lege eine in{' '}
+                <Link href="/kunden/prompts?tab=dateien" className="underline">
+                  Vorlagen verwalten
+                </Link>{' '}
+                an.
               </div>
             )}
+
+            {/* Datei aus Bibliothek wechseln */}
+            <details className="mt-2 rounded-md border border-border bg-card p-2 text-xs">
+              <summary className="cursor-pointer select-none">Andere Datei wählen</summary>
+              <div className="mt-2">
+                <DateiVorlageSelect
+                  value={datei?.id ?? null}
+                  onChange={(id) => void handleSwapDatei(id)}
+                  label=""
+                />
+              </div>
+            </details>
           </div>
         </div>
       </div>
@@ -413,7 +442,7 @@ export function KundenPromptRunner({ customerId, kundenname }: KundenPromptRunne
                       <Icon className="h-6 w-6" />
                     )}
                   </div>
-                  {p.vorlage_dateiname && (
+                  {p.datei_vorlage_id && (
                     <Badge variant="outline" className="border-emerald-300 text-xs text-emerald-700 dark:border-emerald-700 dark:text-emerald-300">
                       <FileIcon className="mr-1 h-3 w-3" />
                       Datei

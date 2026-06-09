@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { File as FileIcon, Loader2, Upload, Wand2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Loader2, Wand2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,9 +17,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useCreateKundenPrompt, useUploadKundenPromptVorlage } from '@/hooks/use-kunden';
+import { useCreateKundenPrompt } from '@/hooks/use-kunden';
 import { useDatenkodierungen } from '@/hooks/use-datenkodierung';
 import { DatenkodierungMultiSelect } from './datenkodierung-multi-select';
+import { DateiVorlageSelect } from './datei-vorlage-select';
 import {
   DOKUMENTTYPEN,
   KUNDEN_FELDER,
@@ -50,12 +51,10 @@ export function KundenPromptWizardDialog({
   onOpenChange,
 }: KundenPromptWizardDialogProps): React.JSX.Element {
   const create = useCreateKundenPrompt();
-  const upload = useUploadKundenPromptVorlage();
   const { data: datenkodierungen = [] } = useDatenkodierungen();
 
   const [state, setState] = useState<WizardInput>(LEER);
-  const [datei, setDatei] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dateiVorlageId, setDateiVorlageId] = useState<string | null>(null);
 
   // Beim ersten Öffnen Standard-Werte des gewählten Typs übernehmen
   useEffect(() => {
@@ -68,8 +67,7 @@ export function KundenPromptWizardDialog({
         kategorie: typMeta.kategorie,
         kundenfelder: typMeta.defaultKundenfelder,
       });
-      setDatei(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setDateiVorlageId(null);
     }
   }, [open]);
 
@@ -119,19 +117,17 @@ export function KundenPromptWizardDialog({
       beschreibung: state.beschreibung.trim() || null,
       kategorie: state.kategorie.trim() || null,
       template: vorschau,
+      datei_vorlage_id: dateiVorlageId,
     };
     try {
-      const gespeichert = await create.mutateAsync(payload);
-      if (datei) {
-        await upload.mutateAsync({ id: gespeichert.id, file: datei });
-      }
+      await create.mutateAsync(payload);
       onOpenChange(false);
     } catch {
       // Toast vom Hook
     }
   };
 
-  const isPending = create.isPending || upload.isPending;
+  const isPending = create.isPending;
   const valid = state.name.trim().length > 0;
 
   return (
@@ -279,37 +275,18 @@ export function KundenPromptWizardDialog({
                 />
               </div>
 
-              {/* 7. Datei */}
+              {/* 7. Datei-Vorlage aus der Bibliothek */}
               <div>
-                <Label className="text-sm font-medium">
-                  7. Vorlage-Datei (optional)
-                </Label>
+                <Label className="text-sm font-medium">7. Datei-Vorlage (optional)</Label>
                 <p className="text-xs text-muted-foreground">
-                  Eine Word- oder PDF-Datei (z.B. dein Briefkopf), die im KI-Chat per Drag&amp;Drop
-                  hinzugefügt wird.
+                  Wähle eine Datei (Briefpapier etc.) aus deiner Bibliothek — sie wird beim
+                  Generieren standardmäßig vorgeschlagen.
                 </p>
-                <div className="mt-2 flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isPending}
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    {datei ? 'Andere wählen' : 'Datei wählen'}
-                  </Button>
-                  {datei && (
-                    <span className="flex items-center gap-1 truncate text-xs text-muted-foreground">
-                      <FileIcon className="h-3 w-3" /> {datei.name}
-                    </span>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    className="hidden"
-                    onChange={(e) => setDatei(e.target.files?.[0] ?? null)}
-                    accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.txt,.csv,.md"
+                <div className="mt-2">
+                  <DateiVorlageSelect
+                    value={dateiVorlageId}
+                    onChange={setDateiVorlageId}
+                    label=""
                   />
                 </div>
               </div>

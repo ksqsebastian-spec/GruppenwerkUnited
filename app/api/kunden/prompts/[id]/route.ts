@@ -46,6 +46,7 @@ export async function PATCH(
   if (parsed.data.template !== undefined) updates.template = parsed.data.template;
   if (parsed.data.beschreibung !== undefined) updates.beschreibung = nz(parsed.data.beschreibung);
   if (parsed.data.kategorie !== undefined) updates.kategorie = nz(parsed.data.kategorie);
+  if (parsed.data.datei_vorlage_id !== undefined) updates.datei_vorlage_id = parsed.data.datei_vorlage_id ?? null;
 
   try {
     const row = await updatePrompt(id, session.companyId, updates);

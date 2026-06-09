@@ -14,6 +14,7 @@ import type {
   CustomerPromptRendered,
   CustomerMapping,
   CustomerMappingEintrag,
+  DateiVorlage,
 } from '@/types';
 
 const QK_CUSTOMERS = 'kunden';
@@ -419,6 +420,74 @@ export function useDeleteKundenMapping(customerId: string): UseMutationResult<vo
 
 export async function getKundenDateiDownloadUrl(customerId: string, did: string): Promise<string> {
   const res = await fetch(`/api/kunden/${customerId}/dateien/${did}`);
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? 'Download-Link konnte nicht erstellt werden');
+  }
+  const data = (await res.json()) as { url: string };
+  return data.url;
+}
+
+// ── Datei-Vorlagen-Bibliothek ────────────────────────────────────────────────
+
+const QK_DATEI_VORLAGEN = 'datei-vorlagen';
+
+export function useDateiVorlagen(): UseQueryResult<DateiVorlage[], Error> {
+  return useQuery<DateiVorlage[]>({
+    queryKey: [QK_DATEI_VORLAGEN],
+    queryFn: async () => {
+      const res = await fetch('/api/kunden/datei-vorlagen');
+      if (!res.ok) return jsonOrError(res, 'Datei-Vorlagen konnten nicht geladen werden');
+      return res.json() as Promise<DateiVorlage[]>;
+    },
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useUploadDateiVorlage(): UseMutationResult<
+  DateiVorlage,
+  Error,
+  { file: File; name?: string; kategorie?: string | null; beschreibung?: string | null }
+> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ file, name, kategorie, beschreibung }) => {
+      const form = new FormData();
+      form.append('file', file);
+      if (name) form.append('name', name);
+      if (kategorie) form.append('kategorie', kategorie);
+      if (beschreibung) form.append('beschreibung', beschreibung);
+      const res = await fetch('/api/kunden/datei-vorlagen', { method: 'POST', body: form });
+      if (!res.ok) return jsonOrError(res, 'Datei-Vorlage konnte nicht hochgeladen werden');
+      return res.json() as Promise<DateiVorlage>;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QK_DATEI_VORLAGEN] });
+      toast.success('Datei-Vorlage hinzugefügt');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export function useDeleteDateiVorlage(): UseMutationResult<void, Error, string> {
+  const qc = useQueryClient();
+  return useMutation<void, Error, string>({
+    mutationFn: async (id) => {
+      const res = await fetch(`/api/kunden/datei-vorlagen/${id}`, { method: 'DELETE' });
+      if (!res.ok) return jsonOrError(res, 'Datei-Vorlage konnte nicht gelöscht werden');
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QK_DATEI_VORLAGEN] });
+      // Verknüpfte Prompts evtl. neu laden
+      qc.invalidateQueries({ queryKey: [QK_PROMPTS] });
+      toast.success('Datei-Vorlage gelöscht');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export async function getDateiVorlageDownloadUrl(id: string): Promise<string> {
+  const res = await fetch(`/api/kunden/datei-vorlagen/${id}`);
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(body.error ?? 'Download-Link konnte nicht erstellt werden');

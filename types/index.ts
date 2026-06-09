@@ -1011,8 +1011,34 @@ export interface CustomerPrompt {
   vorlage_dateiname: string | null;
   vorlage_dateityp: string | null;
   vorlage_dateigroesse: number | null;
+  /** Verknüpfung zur Bibliothek der Datei-Vorlagen (neuere Quelle der Wahrheit). */
+  datei_vorlage_id: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Wiederverwendbare Datei-Vorlage (Briefpapier-PDF, Word-Layout, Bild …),
+ * unabhängig vom konkreten Prompt. Pro Mandant.
+ */
+export interface DateiVorlage {
+  id: string;
+  company: string;
+  name: string;
+  kategorie: string | null;
+  beschreibung: string | null;
+  dateipfad: string;
+  dateiname: string;
+  dateityp: string | null;
+  dateigroesse: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DateiVorlageMeta {
+  name: string;
+  kategorie?: string | null;
+  beschreibung?: string | null;
 }
 
 export type CustomerPromptInsert = Omit<

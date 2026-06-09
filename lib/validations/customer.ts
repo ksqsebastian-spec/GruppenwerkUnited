@@ -32,6 +32,14 @@ export const customerPromptSchema = z.object({
   beschreibung: z.string().trim().max(500, 'Beschreibung ist zu lang').nullish().or(z.literal('')),
   kategorie: z.string().trim().max(80, 'Kategorie ist zu lang').nullish().or(z.literal('')),
   template: z.string().trim().min(1, 'Vorlage darf nicht leer sein').max(20000, 'Vorlage ist zu lang'),
+  /** UUID einer Datei-Vorlage aus der Bibliothek (null = keine). */
+  datei_vorlage_id: z.string().uuid().nullish(),
+});
+
+export const dateiVorlageMetaSchema = z.object({
+  name: z.string().trim().min(1, 'Name ist erforderlich').max(120, 'Name ist zu lang'),
+  kategorie: z.string().trim().max(80, 'Kategorie ist zu lang').nullish().or(z.literal('')),
+  beschreibung: z.string().trim().max(500, 'Beschreibung ist zu lang').nullish().or(z.literal('')),
 });
 
 export const customerPromptUpdateSchema = customerPromptSchema.partial();

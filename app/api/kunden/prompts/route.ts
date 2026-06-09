@@ -37,6 +37,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     beschreibung: nz(parsed.data.beschreibung),
     kategorie: nz(parsed.data.kategorie),
     template: parsed.data.template,
+    datei_vorlage_id: parsed.data.datei_vorlage_id ?? null,
   };
 
   try {
