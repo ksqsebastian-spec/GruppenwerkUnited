@@ -18,8 +18,8 @@ export interface CompanyConfig {
 
 /**
  * Modul-Liste für reguläre Firmen. Admin behält '*' und sieht weiterhin alles —
- * inklusive Modulen, die hier ausgelassen werden (z.B. 'automationen', das vor
- * dem Go-Live für Endkunden ausgeblendet wurde).
+ * inklusive Modulen, die hier ausgelassen werden (z.B. 'automationen' und
+ * 'kunden', die noch nicht reif für Endkunden sind).
  */
 export const ALL_MODULES: string[] = [
   'roi',
@@ -31,7 +31,6 @@ export const ALL_MODULES: string[] = [
   'fuhrpark',
   'consulting',
   'tickets',
-  'kunden',
 ];
 
 export const COMPANY_CONFIGS: CompanyConfig[] = [
