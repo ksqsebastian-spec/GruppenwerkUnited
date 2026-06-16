@@ -18,19 +18,18 @@ export interface CompanyConfig {
 
 /**
  * Modul-Liste für reguläre Firmen. Admin behält '*' und sieht weiterhin alles —
- * inklusive Modulen, die hier ausgelassen werden (z.B. 'automationen' und
- * 'kunden', die noch nicht reif für Endkunden sind).
+ * inklusive Modulen, die hier ausgelassen werden.
+ *
+ * Aktuell für Endkunden freigegeben: nur Module, die für den produktiven
+ * Einsatz reif sind. 'roi', 'recruiting', 'affiliate', 'consulting', 'tickets',
+ * 'kunden' und 'automationen' werden vorerst zurückgehalten und nur für
+ * Admins angezeigt.
  */
 export const ALL_MODULES: string[] = [
-  'roi',
-  'recruiting',
-  'affiliate',
   'datenkodierung',
   'vob',
   'leads',
   'fuhrpark',
-  'consulting',
-  'tickets',
 ];
 
 export const COMPANY_CONFIGS: CompanyConfig[] = [
