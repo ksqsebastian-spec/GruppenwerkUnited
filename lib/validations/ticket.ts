@@ -14,4 +14,5 @@ export const personSchema = z.object({
   name: z.string().trim().min(1, 'Name ist erforderlich').max(120, 'Name ist zu lang'),
   email: z.string().trim().email('Ungültige E-Mail-Adresse').nullish().or(z.literal('')),
   rolle: z.string().trim().max(120, 'Rolle ist zu lang').nullish(),
+  firma: z.string().trim().max(60, 'Firma ist zu lang').nullish().or(z.literal('')),
 });

@@ -24,6 +24,7 @@ import { useLicenseWarningCount } from '@/hooks/use-license-control';
 import { useUvvWarningCount } from '@/hooks/use-uvv-control';
 import { MODULES, MODULE_ICONS, getModuleByRoute } from '@/lib/modules';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useHiddenModules } from '@/hooks/use-hidden-modules';
 
 const fuhrparkNavigation = [
   { name: 'Dashboard', href: '/fuhrpark', icon: LayoutDashboard, badgeType: null as 'uvv' | 'license' | null },
@@ -46,6 +47,7 @@ interface MobileNavProps {
 export function MobileNav({ open, onOpenChange }: MobileNavProps): React.JSX.Element | null {
   const pathname = usePathname();
   const { company } = useAuth();
+  const [hiddenModules] = useHiddenModules();
   const { data: licenseWarningCount } = useLicenseWarningCount();
   const { data: uvvWarningCount } = useUvvWarningCount();
   const currentModule = getModuleByRoute(pathname);
@@ -62,6 +64,7 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps): React.JSX.Ele
   // Nur erlaubte Module anzeigen
   const allowedModules = company?.allowedModules;
   const visibleModules = MODULES.filter((m) => {
+    if (hiddenModules.has(m.id)) return false;
     if (allowedModules === '*') return true;
     if (Array.isArray(allowedModules)) return allowedModules.includes(m.id);
     return false;

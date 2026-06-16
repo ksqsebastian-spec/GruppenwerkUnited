@@ -126,6 +126,15 @@ export const MODULES: ModuleConfig[] = [
     category: 'tool',
     status: 'active',
   },
+  {
+    id: 'kunden',
+    name: 'Kunden',
+    description: 'Kundenakten mit Dateien, Kommentaren und Prompt-Vorlagen für Rechnung, Mahnung & Co.',
+    route: '/kunden',
+    icon: 'Briefcase',
+    category: 'tool',
+    status: 'active',
+  },
 ];
 
 /**

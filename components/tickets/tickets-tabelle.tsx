@@ -3,6 +3,7 @@
 import { TicketUrgencyBadge } from './ticket-urgency-badge';
 import { TicketStatusBadge } from './ticket-status-badge';
 import { firmaName } from '@/lib/tickets/config';
+import { firmaDot } from '@/lib/tickets/firmen';
 import type { Ticket, Person } from '@/types';
 
 interface TicketsTabelleProps {
@@ -25,7 +26,7 @@ function istUeberfaellig(ticket: Ticket): boolean {
 }
 
 export function TicketsTabelle({ tickets, personen, onTicketClick }: TicketsTabelleProps): React.JSX.Element {
-  const personMap = new Map(personen.map((p) => [p.id, p.name]));
+  const personMap = new Map(personen.map((p) => [p.id, p]));
 
   return (
     <div className="overflow-x-auto rounded-xl border border-[#e5e5e5] bg-white">
@@ -53,7 +54,22 @@ export function TicketsTabelle({ tickets, personen, onTicketClick }: TicketsTabe
                 </div>
               </td>
               <td className="px-4 py-3 text-[#525252]">
-                {t.assignee_person_id ? personMap.get(t.assignee_person_id) ?? '—' : '—'}
+                {(() => {
+                  const person = t.assignee_person_id ? personMap.get(t.assignee_person_id) : null;
+                  if (!person) return '—';
+                  return (
+                    <span className="flex items-center gap-1.5">
+                      {person.firma && (
+                        <span
+                          className="h-2 w-2 shrink-0 rounded-full"
+                          style={{ backgroundColor: firmaDot(person.firma) }}
+                          aria-hidden
+                        />
+                      )}
+                      <span className="truncate">{person.name}</span>
+                    </span>
+                  );
+                })()}
               </td>
               <td className="px-4 py-3 text-[#525252]">{firmaName(t.firma)}</td>
               <td className="px-4 py-3">

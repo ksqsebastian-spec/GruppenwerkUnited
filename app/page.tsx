@@ -9,35 +9,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { DataExportButton } from '@/components/shared/data-export-button';
-
-const HIDDEN_MODULES_KEY = 'werkbank_hidden_modules';
-
-function useHiddenModules(): [Set<string>, (id: string) => void] {
-  const [hidden, setHidden] = useState<Set<string>>(() => {
-    if (typeof window === 'undefined') return new Set();
-    try {
-      const stored = localStorage.getItem(HIDDEN_MODULES_KEY);
-      return stored ? new Set(JSON.parse(stored) as string[]) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
-
-  const toggle = (id: string): void => {
-    setHidden((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      localStorage.setItem(HIDDEN_MODULES_KEY, JSON.stringify([...next]));
-      return next;
-    });
-  };
-
-  return [hidden, toggle];
-}
+import { useHiddenModules } from '@/hooks/use-hidden-modules';
 
 function ModuleCard({ module }: { module: ModuleConfig }): React.JSX.Element {
   const Icon = MODULE_ICONS[module.icon] ?? Wrench;

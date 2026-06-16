@@ -801,6 +801,8 @@ export interface Person {
   name: string;
   email: string | null;
   rolle: string | null;
+  /** Zugeordnete Firma (farbkodiert), z.B. 'seehafer', 'groundpassion'. */
+  firma: string | null;
   created_at: string;
 }
 
@@ -945,3 +947,139 @@ export type ConsultingCompanyUpdate = Partial<ConsultingCompanyInsert>;
 export type ConsultingCheckpointStatusUpdate = Partial<
   Pick<ConsultingCheckpointStatus, 'status' | 'notes' | 'responsible' | 'email' | 'cost_monthly'>
 >;
+
+// ============================================================================
+// Kunden (Customer-Portal)
+// ============================================================================
+
+export type CustomerStatus = 'aktiv' | 'inaktiv' | 'prospect' | 'archiviert';
+
+export interface Customer {
+  id: string;
+  company: string;
+  firmenname: string;
+  ansprechpartner: string | null;
+  email: string | null;
+  telefon: string | null;
+  webseite: string | null;
+  adresse: string | null;
+  strasse: string | null;
+  plz: string | null;
+  ort: string | null;
+  land: string | null;
+  kundennummer: string | null;
+  ust_id: string | null;
+  steuernummer: string | null;
+  zahlungsziel: string | null;
+  status: CustomerStatus;
+  notizen: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CustomerInsert = Omit<Customer, 'id' | 'company' | 'created_at' | 'updated_at'>;
+export type CustomerUpdate = Partial<CustomerInsert>;
+
+export interface CustomerKommentar {
+  id: string;
+  customer_id: string;
+  company: string;
+  text: string;
+  created_at: string;
+}
+
+export interface CustomerDatei {
+  id: string;
+  customer_id: string;
+  company: string;
+  dateiname: string;
+  dateipfad: string;
+  dateityp: string | null;
+  dateigroesse: number | null;
+  created_at: string;
+}
+
+export interface CustomerPrompt {
+  id: string;
+  company: string;
+  name: string;
+  beschreibung: string | null;
+  kategorie: string | null;
+  template: string;
+  /** Optionaler Datei-Anhang (z.B. .docx als Vorlage zum Drag&Drop in Claude) */
+  vorlage_dateipfad: string | null;
+  vorlage_dateiname: string | null;
+  vorlage_dateityp: string | null;
+  vorlage_dateigroesse: number | null;
+  /** Verknüpfung zur Bibliothek der Datei-Vorlagen (neuere Quelle der Wahrheit). */
+  datei_vorlage_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Wiederverwendbare Datei-Vorlage (Briefpapier-PDF, Word-Layout, Bild …),
+ * unabhängig vom konkreten Prompt. Pro Mandant.
+ */
+export interface DateiVorlage {
+  id: string;
+  company: string;
+  name: string;
+  kategorie: string | null;
+  beschreibung: string | null;
+  dateipfad: string;
+  dateiname: string;
+  dateityp: string | null;
+  dateigroesse: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DateiVorlageMeta {
+  name: string;
+  kategorie?: string | null;
+  beschreibung?: string | null;
+}
+
+export type CustomerPromptInsert = Omit<
+  CustomerPrompt,
+  | 'id'
+  | 'company'
+  | 'created_at'
+  | 'updated_at'
+  | 'vorlage_dateipfad'
+  | 'vorlage_dateiname'
+  | 'vorlage_dateityp'
+  | 'vorlage_dateigroesse'
+>;
+export type CustomerPromptUpdate = Partial<CustomerPromptInsert>;
+
+/** Ergebnis des Prompt-Renderings: gefüllter Text + nicht aufgelöste Platzhalter. */
+export interface CustomerPromptRendered {
+  prompt: string;
+  missing_placeholders: string[];
+  /** Wenn der Prompt mit Datenkodierung erzeugt wurde: Code↔Klartext-Mapping. */
+  encoded?: boolean;
+  mapping?: Array<{
+    code: string;
+    field: string;
+    label: string;
+    value: string;
+  }>;
+}
+
+export interface CustomerMappingEintrag {
+  code: string;
+  field: string;
+  label: string;
+  value: string;
+}
+
+export interface CustomerMapping {
+  id: string;
+  customer_id: string;
+  company: string;
+  anlass: string;
+  eintraege: CustomerMappingEintrag[];
+  created_at: string;
+}
