@@ -28,6 +28,7 @@ export interface CompanyConfig {
 export const ALL_MODULES: string[] = [
   'datenkodierung',
   'vob',
+  'immo',
   'leads',
   'fuhrpark',
 ];
@@ -98,6 +99,7 @@ export const ROUTE_TO_MODULE: Record<string, string> = {
   '/affiliate': 'affiliate',
   '/roi': 'roi',
   '/vob': 'vob',
+  '/immo': 'immo',
   '/datenkodierung': 'datenkodierung',
   '/leads': 'leads',
   '/automationen': 'automationen',
