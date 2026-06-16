@@ -28,7 +28,6 @@ export interface CompanyConfig {
 export const ALL_MODULES: string[] = [
   'datenkodierung',
   'vob',
-  'immo',
   'leads',
   'fuhrpark',
 ];
