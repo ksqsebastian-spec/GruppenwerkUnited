@@ -1,36 +1,35 @@
 'use client'
 
-import { formatDate } from '@/lib/utils'
-import type { ImmoScan } from '@/lib/modules/immo/types'
+import { formatFaktor, formatRendite } from '@/lib/modules/immo/utils'
 
 interface StatsOverviewProps {
-  latestScan: ImmoScan | null
-  totalActive: number
-  totalMatched: number
-  totalListings: number
+  dealCount: number
+  avgFaktor: number | null
+  avgRendite: number | null
+  cityCount: number
 }
 
-export function StatsOverview({ latestScan, totalActive, totalMatched, totalListings }: StatsOverviewProps): React.JSX.Element {
+export function StatsOverview({ dealCount, avgFaktor, avgRendite, cityCount }: StatsOverviewProps): React.JSX.Element {
   const items = [
     {
-      label: 'Letzter Scan',
-      value: latestScan ? `KW ${latestScan.calendar_week}` : '—',
-      sub: latestScan ? formatDate(latestScan.scan_date) : 'Kein Scan vorhanden',
+      label: 'Deals (Faktor ≤ 20)',
+      value: String(dealCount),
+      sub: 'Objekte unter Schwelle',
     },
     {
-      label: 'Inserate gesamt',
-      value: String(totalListings),
-      sub: 'Im System erfasst',
+      label: 'Ø Faktor',
+      value: formatFaktor(avgFaktor),
+      sub: 'Kaufpreisfaktor',
     },
     {
-      label: 'Aktive Inserate',
-      value: String(totalActive),
-      sub: 'Aktuell verfügbar',
+      label: 'Ø Rendite',
+      value: formatRendite(avgRendite),
+      sub: 'Bruttorendite',
     },
     {
-      label: 'Treffer',
-      value: String(totalMatched),
-      sub: 'Profil-Zuordnungen',
+      label: 'Städte',
+      value: String(cityCount),
+      sub: 'Beobachtete Regionen',
     },
   ]
 
@@ -39,7 +38,7 @@ export function StatsOverview({ latestScan, totalActive, totalMatched, totalList
       {items.map(item => (
         <div key={item.label} className="bg-card p-5">
           <p className="text-xs text-muted-foreground mb-3">{item.label}</p>
-          <p className="text-[28px] font-semibold text-foreground leading-none tracking-tight">{item.value}</p>
+          <p className="text-[28px] font-semibold text-foreground leading-none tracking-tight tabular-nums">{item.value}</p>
           <p className="text-xs text-muted-foreground mt-2">{item.sub}</p>
         </div>
       ))}

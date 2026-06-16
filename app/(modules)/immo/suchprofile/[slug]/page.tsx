@@ -2,7 +2,7 @@ import { getProfile, getProfileListings } from '@/lib/modules/immo/queries';
 import { Badge } from '@/components/ui/badge';
 import { notFound } from 'next/navigation';
 import { ProfileListingList } from './ProfileListingList';
-import { formatPrice, formatRooms } from '@/lib/modules/immo/utils';
+import { formatFaktor, formatPricePerSqm, countDeals } from '@/lib/modules/immo/utils';
 import type { SearchProfile } from '@/lib/modules/immo/types';
 
 export const dynamic = 'force-dynamic';
@@ -26,12 +26,12 @@ export default async function ProfilePage({ params }: PageProps): Promise<React.
   // Nach notFound()-Aufruf ist profile garantiert nicht null
   const safeProfile = profile as SearchProfile;
   const activeListings = listings.filter((l) => l.status === 'active');
+  const deals = countDeals(activeListings);
 
   const tags: string[] = [];
-  if (safeProfile.city) tags.push(safeProfile.city);
+  if (safeProfile.max_factor) tags.push(`max. Faktor ${formatFaktor(safeProfile.max_factor)}`);
+  if (safeProfile.est_rent_per_sqm) tags.push(`Ø Miete ${formatPricePerSqm(safeProfile.est_rent_per_sqm)}`);
   if (safeProfile.transaction_type) tags.push(safeProfile.transaction_type);
-  if (safeProfile.max_price) tags.push(`bis ${formatPrice(safeProfile.max_price)}`);
-  if (safeProfile.min_rooms) tags.push(`ab ${formatRooms(safeProfile.min_rooms)}`);
 
   return (
     <>
@@ -43,7 +43,7 @@ export default async function ProfilePage({ params }: PageProps): Promise<React.
                 className="w-2.5 h-2.5 rounded-full"
                 style={{ backgroundColor: safeProfile.color }}
               />
-              <h1 className="text-[18px] font-semibold text-neutral-900">{safeProfile.name}</h1>
+              <h1 className="text-[18px] font-semibold text-neutral-900">{safeProfile.city ?? safeProfile.name}</h1>
             </div>
             {(tags.length > 0 || safeProfile.keywords.length > 0) && (
               <div className="flex gap-1.5 flex-wrap ml-5">
@@ -70,9 +70,9 @@ export default async function ProfilePage({ params }: PageProps): Promise<React.
           </div>
           <div className="text-right">
             <p className="text-[28px] font-semibold text-neutral-900 leading-none tabular-nums">
-              {activeListings.length}
+              {deals}
             </p>
-            <p className="text-[11px] text-neutral-400 mt-1">aktiv</p>
+            <p className="text-[11px] text-neutral-400 mt-1">Deals</p>
           </div>
         </div>
         <ProfileListingList listings={listings} />

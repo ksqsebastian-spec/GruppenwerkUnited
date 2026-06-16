@@ -39,24 +39,84 @@ export function formatPricePerSqm(value: number | null): string {
 }
 
 /**
- * Durchschnittlicher Quadratmeterpreis einer Inserat-Liste.
+ * Formatiert den Kaufpreisfaktor, z.B. "17,2".
  */
-export function averagePricePerSqm(listings: DashboardRow[]): number | null {
+export function formatFaktor(value: number | null): string {
+  if (value === null || value === undefined) return '—'
+  return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(value)
+}
+
+/**
+ * Formatiert die Bruttorendite in Prozent, z.B. "5,8 %".
+ */
+export function formatRendite(value: number | null): string {
+  if (value === null || value === undefined) return '—'
+  return `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(value)} %`
+}
+
+/** Schwelle, ab der ein Objekt als "Deal" gilt. */
+export const DEAL_FACTOR_THRESHOLD = 20
+/** Faktor für die stärkste Deal-Stufe. */
+export const STRONG_DEAL_FACTOR_THRESHOLD = 16
+
+export type DealTier = 'strong' | 'deal' | 'neutral'
+
+/**
+ * Durchschnittlicher Kaufpreisfaktor einer Objekt-Liste.
+ */
+export function averageFaktor(listings: DashboardRow[]): number | null {
   const values = listings
-    .map((l) => l.price_per_sqm)
+    .map((l) => l.faktor)
     .filter((v): v is number => v !== null && v !== undefined && v > 0)
   if (values.length === 0) return null
   return values.reduce((sum, v) => sum + v, 0) / values.length
 }
 
 /**
- * Markiert ein Inserat als gutes Angebot, wenn der Quadratmeterpreis
- * spürbar unter dem Vergleichswert (z.B. Durchschnitt) liegt.
+ * Durchschnittliche Bruttorendite einer Objekt-Liste.
  */
-export function isGoodDeal(pricePerSqm: number | null, reference: number | null): boolean {
-  if (pricePerSqm === null || pricePerSqm === undefined || pricePerSqm <= 0) return false
-  if (reference === null || reference === undefined || reference <= 0) return false
-  return pricePerSqm <= reference * 0.9
+export function averageRendite(listings: DashboardRow[]): number | null {
+  const values = listings
+    .map((l) => l.rendite)
+    .filter((v): v is number => v !== null && v !== undefined && v > 0)
+  if (values.length === 0) return null
+  return values.reduce((sum, v) => sum + v, 0) / values.length
+}
+
+/**
+ * Bester (niedrigster) Kaufpreisfaktor einer Objekt-Liste.
+ */
+export function bestFaktor(listings: DashboardRow[]): number | null {
+  const values = listings
+    .map((l) => l.faktor)
+    .filter((v): v is number => v !== null && v !== undefined && v > 0)
+  if (values.length === 0) return null
+  return Math.min(...values)
+}
+
+/**
+ * Markiert ein Objekt als Deal, wenn der Kaufpreisfaktor <= Schwelle liegt.
+ */
+export function isDeal(faktor: number | null): boolean {
+  if (faktor === null || faktor === undefined || faktor <= 0) return false
+  return faktor <= DEAL_FACTOR_THRESHOLD
+}
+
+/**
+ * Stuft ein Objekt anhand des Kaufpreisfaktors ein.
+ */
+export function dealTier(faktor: number | null): DealTier {
+  if (faktor === null || faktor === undefined || faktor <= 0) return 'neutral'
+  if (faktor <= STRONG_DEAL_FACTOR_THRESHOLD) return 'strong'
+  if (faktor <= DEAL_FACTOR_THRESHOLD) return 'deal'
+  return 'neutral'
+}
+
+/**
+ * Zählt die Deals (Faktor <= Schwelle) in einer Objekt-Liste.
+ */
+export function countDeals(listings: DashboardRow[]): number {
+  return listings.filter((l) => isDeal(l.faktor)).length
 }
 
 export function getPortalLabel(portal: string | null): string {
@@ -73,8 +133,10 @@ export function getRelevanceBgClass(relevance: string | null): string {
   }
 }
 
-export function getDealBgClass(good: boolean): string {
-  return good
-    ? 'bg-green-100 text-green-800 border-green-200'
-    : 'bg-slate-100 text-slate-600 border-slate-200'
+export function getDealBgClass(tier: DealTier): string {
+  switch (tier) {
+    case 'strong': return 'bg-green-100 text-green-800 border-green-200'
+    case 'deal': return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    default: return 'bg-slate-100 text-slate-600 border-slate-200'
+  }
 }

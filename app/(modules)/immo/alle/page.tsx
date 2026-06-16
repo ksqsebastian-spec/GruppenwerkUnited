@@ -19,7 +19,7 @@ export default async function AlleListingsPage({ searchParams }: PageProps): Pro
     <>
       <div className="max-w-[1200px]">
         <h1 className="text-[18px] font-semibold text-neutral-900 mb-6">
-          Alle Inserate
+          Alle Objekte
         </h1>
         <AllListingsClient listings={listings} total={total} page={page} />
       </div>

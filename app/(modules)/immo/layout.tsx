@@ -5,11 +5,11 @@ import { ModuleSubnav, type ModuleNavItem } from '@/components/layout/module-sub
 
 /**
  * Immobilien-Modul Navigation
- * Sub-Navigation mit Dashboard, Alle Inserate und Verlauf.
+ * Sub-Navigation mit Dashboard, Alle Objekte und Verlauf.
  */
 const IMMO_NAV_ITEMS: ModuleNavItem[] = [
   { href: '/immo', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { href: '/immo/alle', label: 'Alle Inserate', icon: ListFilter },
+  { href: '/immo/alle', label: 'Alle Objekte', icon: ListFilter },
   { href: '/immo/verlauf', label: 'Verlauf', icon: History },
 ];
 

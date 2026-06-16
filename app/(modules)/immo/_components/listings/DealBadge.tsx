@@ -1,14 +1,20 @@
 import { Badge } from '@/components/ui/badge'
-import { getDealBgClass } from '@/lib/modules/immo/utils'
+import { getDealBgClass, type DealTier } from '@/lib/modules/immo/utils'
 
 interface DealBadgeProps {
-  good: boolean
+  tier: DealTier
 }
 
-export function DealBadge({ good }: DealBadgeProps) {
+const LABELS: Record<DealTier, string> = {
+  strong: 'Top-Deal',
+  deal: 'Deal',
+  neutral: 'Kein Deal',
+}
+
+export function DealBadge({ tier }: DealBadgeProps) {
   return (
-    <Badge variant="outline" className={getDealBgClass(good)}>
-      {good ? 'Günstig' : 'Marktüblich'}
+    <Badge variant="outline" className={getDealBgClass(tier)}>
+      {LABELS[tier]}
     </Badge>
   )
 }

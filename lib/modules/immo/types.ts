@@ -11,6 +11,9 @@ export interface SearchProfile {
   icon: string | null
   active: boolean
   created_at: string
+  // Investment-Felder: Suchprofile repräsentieren jetzt Städte/Regionen
+  max_factor: number | null
+  est_rent_per_sqm: number | null
 }
 
 export interface ImmoScan {
@@ -69,6 +72,12 @@ export interface DashboardRow {
   reason: string | null
   scan_id: string | null
   created_at: string
+  // Investment-Metriken (Kaufpreisfaktor-Scanner)
+  city: string | null
+  jahresnettokaltmiete: number | null
+  faktor: number | null
+  rendite: number | null
+  is_estimated: boolean | null
 }
 
 export interface ProfileWeeklyStat {

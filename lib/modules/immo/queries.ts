@@ -21,8 +21,9 @@ export async function getDashboardData(): Promise<{
   ] = await Promise.all([
     supabase.schema('immo').from('search_profiles').select('*').eq('active', true).order('name'),
     supabase.schema('immo').from('immo_scans').select('*').order('scan_date', { ascending: false }).limit(52),
-    // Alle Treffer aus dem Dashboard-View – nicht limitieren, da sonst Profil-Karten falsche Zahlen zeigen
-    supabase.schema('immo').from('immo_dashboard').select('*').not('profile_slug', 'is', null).order('created_at', { ascending: false }),
+    // Alle Treffer aus dem Dashboard-View – nicht limitieren, da sonst Stadt-Karten falsche Zahlen zeigen
+    // Standardsortierung: bester Deal (niedrigster Faktor) zuerst
+    supabase.schema('immo').from('immo_dashboard').select('*').not('profile_slug', 'is', null).order('faktor', { ascending: true, nullsFirst: false }),
   ])
 
   if (profileError) console.error('Fehler beim Laden der Suchprofile:', profileError)
@@ -52,7 +53,7 @@ export async function getProfileListings(slug: string, status?: string): Promise
     .from('immo_dashboard')
     .select('*')
     .eq('profile_slug', slug)
-    .order('created_at', { ascending: false })
+    .order('faktor', { ascending: true, nullsFirst: false })
 
   if (status === 'active') query = query.eq('status', 'active')
   if (status === 'inactive') query = query.eq('status', 'inactive')
@@ -96,7 +97,7 @@ export async function getAllListings(page = 1, pageSize = 50): Promise<{ listing
     .schema('immo')
     .from('immo_dashboard')
     .select('*', { count: 'exact' })
-    .order('created_at', { ascending: false })
+    .order('faktor', { ascending: true, nullsFirst: false })
     .range(from, to)
 
   if (error) console.error('Fehler beim Laden aller Inserate:', error)

@@ -9,8 +9,10 @@ import {
   formatSize,
   formatRooms,
   formatPricePerSqm,
+  formatFaktor,
+  formatRendite,
   getRelevanceBgClass,
-  isGoodDeal,
+  dealTier,
 } from '@/lib/modules/immo/utils'
 import { ExternalLink } from 'lucide-react'
 import type { DashboardRow } from '@/lib/modules/immo/types'
@@ -18,15 +20,15 @@ import type { DashboardRow } from '@/lib/modules/immo/types'
 interface ListingDrawerProps {
   listing: DashboardRow | null
   allMatches?: DashboardRow[]
-  referencePricePerSqm?: number | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-export function ListingDrawer({ listing, allMatches = [], referencePricePerSqm = null, open, onOpenChange }: ListingDrawerProps): React.JSX.Element | null {
+export function ListingDrawer({ listing, allMatches = [], open, onOpenChange }: ListingDrawerProps): React.JSX.Element | null {
   if (!listing) return null
 
-  const goodDeal = isGoodDeal(listing.price_per_sqm, referencePricePerSqm)
+  const tier = dealTier(listing.faktor)
+  const isDealRow = tier !== 'neutral'
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -38,8 +40,26 @@ export function ListingDrawer({ listing, allMatches = [], referencePricePerSqm =
         </SheetHeader>
 
         <div className="mt-4 space-y-5 px-4">
+          {/* Faktor – prominente Kennzahl */}
+          <div className={`rounded-xl border p-4 ${isDealRow ? 'bg-green-50 border-green-200' : 'bg-muted border-border'}`}>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Kaufpreisfaktor</p>
+              <div className="flex items-center gap-1.5">
+                {listing.is_estimated && (
+                  <Badge variant="outline" className="text-[9px] bg-amber-50 text-amber-700 border-amber-200">geschätzt</Badge>
+                )}
+                <DealBadge tier={tier} />
+              </div>
+            </div>
+            <p className={`text-[34px] font-semibold leading-none tabular-nums ${isDealRow ? 'text-green-700' : 'text-foreground'}`}>
+              {formatFaktor(listing.faktor)}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              Rendite <span className="text-foreground/70 font-medium">{formatRendite(listing.rendite)}</span>
+            </p>
+          </div>
+
           <div className="flex flex-wrap items-center gap-2">
-            {referencePricePerSqm !== null && <DealBadge good={goodDeal} />}
             {listing.property_type && (
               <Badge variant="outline" className="text-[10px] text-muted-foreground border-border">{listing.property_type}</Badge>
             )}
@@ -53,22 +73,28 @@ export function ListingDrawer({ listing, allMatches = [], referencePricePerSqm =
 
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
-              <p className="text-[10px] text-muted-foreground mb-0.5">Preis</p>
+              <p className="text-[10px] text-muted-foreground mb-0.5">Kaufpreis</p>
               <p className="text-foreground font-medium">{formatPrice(listing.price)}</p>
             </div>
             <div>
-              <p className="text-[10px] text-muted-foreground mb-0.5">€/m²</p>
-              <p className={`font-medium ${goodDeal ? 'text-green-600' : 'text-foreground'}`}>
-                {formatPricePerSqm(listing.price_per_sqm)}
-              </p>
+              <p className="text-[10px] text-muted-foreground mb-0.5">Jahresnettokaltmiete</p>
+              <p className="text-foreground font-medium">{formatPrice(listing.jahresnettokaltmiete)}</p>
             </div>
             <div>
-              <p className="text-[10px] text-muted-foreground mb-0.5">Fläche</p>
+              <p className="text-[10px] text-muted-foreground mb-0.5">€/m²</p>
+              <p className="text-foreground">{formatPricePerSqm(listing.price_per_sqm)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-muted-foreground mb-0.5">Größe</p>
               <p className="text-foreground">{formatSize(listing.size_sqm)}</p>
             </div>
             <div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Zimmer</p>
               <p className="text-foreground">{formatRooms(listing.rooms)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-muted-foreground mb-0.5">Stadt</p>
+              <p className="text-foreground">{listing.city ?? '—'}</p>
             </div>
             {listing.location && (
               <div className="col-span-2">
@@ -81,7 +107,7 @@ export function ListingDrawer({ listing, allMatches = [], referencePricePerSqm =
           <a href={listing.url} target="_blank" rel="noopener noreferrer">
             <Button className="w-full bg-foreground hover:bg-foreground/90 text-background text-xs">
               <ExternalLink size={13} className="mr-1.5" />
-              Inserat öffnen
+              Objekt öffnen
             </Button>
           </a>
 
@@ -89,7 +115,7 @@ export function ListingDrawer({ listing, allMatches = [], referencePricePerSqm =
 
           {allMatches.length > 0 && (
             <div>
-              <p className="text-[10px] text-muted-foreground mb-2">Zugeordnete Suchprofile</p>
+              <p className="text-[10px] text-muted-foreground mb-2">Zugeordnete Städte</p>
               <div className="space-y-2">
                 {allMatches.map((match, i) => (
                   match.profile_name && (
