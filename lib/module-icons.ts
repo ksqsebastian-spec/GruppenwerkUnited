@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Wrench,
   Briefcase,
+  Home,
 } from 'lucide-react';
 
 /**
@@ -28,4 +29,5 @@ export const MODULE_ICONS: Record<string, React.ElementType> = {
   ClipboardList,
   Wrench,
   Briefcase,
+  Home,
 };

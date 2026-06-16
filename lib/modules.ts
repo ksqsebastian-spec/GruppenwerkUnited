@@ -52,6 +52,16 @@ export const MODULES: ModuleConfig[] = [
     status: 'active',
   },
   {
+    id: 'immo',
+    name: 'Immobilien',
+    description: 'Immobilien-Inserate überwachen und Suchprofilen zuordnen',
+    route: '/immo',
+    icon: 'Home',
+    category: 'tool',
+    schema: 'immo',
+    status: 'active',
+  },
+  {
     id: 'roi',
     name: 'ROI Rechner',
     description: 'Dienstleistungs-ROI berechnen und auswerten',
