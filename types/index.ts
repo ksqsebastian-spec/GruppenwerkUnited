@@ -1083,3 +1083,29 @@ export interface CustomerMapping {
   eintraege: CustomerMappingEintrag[];
   created_at: string;
 }
+
+// ============================================================================
+// Bilder-Bibliothek (gemeinsam für alle Firmen)
+// ============================================================================
+
+export interface Bild {
+  id: string;
+  titel: string | null;
+  beschreibung: string | null;
+  /** Firmen-Slugs aus lib/tickets/firmen.ts (z.B. 'seehafer','hantke'). */
+  firmen_tags: string[];
+  uploaded_by: string;
+  uploaded_by_company: string;
+  dateipfad: string;
+  dateiname: string;
+  dateityp: string | null;
+  dateigroesse: number | null;
+  created_at: string;
+}
+
+export interface BildMeta {
+  titel?: string | null;
+  beschreibung?: string | null;
+  firmen_tags: string[];
+  uploaded_by: string;
+}
