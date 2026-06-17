@@ -145,6 +145,15 @@ export const MODULES: ModuleConfig[] = [
     category: 'tool',
     status: 'active',
   },
+  {
+    id: 'bilder',
+    name: 'Bilder',
+    description: 'Gemeinsame Bilder-Bibliothek für Webseiten, Social Media & Co. — sichtbar für alle Firmen.',
+    route: '/bilder',
+    icon: 'Image',
+    category: 'tool',
+    status: 'active',
+  },
 ];
 
 /**
