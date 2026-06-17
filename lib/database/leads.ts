@@ -21,7 +21,7 @@ export async function fetchLeads(companyId: string, filter: LeadFilter = {}): Pr
     const clean = filter.search.replace(/[%,()\\]/g, ' ').trim();
     const s = `%${clean}%`;
     query = query.or(
-      `vorname.ilike.${s},nachname.ilike.${s},email.ilike.${s},firma.ilike.${s},position.ilike.${s}`
+      `vorname.ilike.${s},nachname.ilike.${s},email.ilike.${s},telefon.ilike.${s},firma.ilike.${s},position.ilike.${s}`
     );
   }
   if (filter.status) query = query.eq('status', filter.status);
