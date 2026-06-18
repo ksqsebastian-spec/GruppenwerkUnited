@@ -28,11 +28,21 @@ export function getTurndown(): TurndownService {
 
 /**
  * HTML → Markdown via turndown. Sehr robust für DOCX-Output von mammoth und
- * normales Web-HTML.
+ * normales Web-HTML. Bei Parser-Fehler bleibt der Roh-HTML-Inhalt als
+ * Codeblock erhalten.
  */
 export function convertHtml(buffer: Buffer): ConvertResult {
   const html = buffer.toString('utf-8');
-  return { markdown: getTurndown().turndown(html).trim(), warnings: [] };
+  try {
+    return { markdown: getTurndown().turndown(html).trim(), warnings: [] };
+  } catch (err) {
+    return {
+      markdown: '```html\n' + html.trim() + '\n```',
+      warnings: [
+        `HTML konnte nicht in Markdown gewandelt werden: ${err instanceof Error ? err.message : 'unbekannter Fehler'} — Original als Codeblock eingebettet.`,
+      ],
+    };
+  }
 }
 
 function htmlTableToMarkdown(table: HTMLTableElement): string {
