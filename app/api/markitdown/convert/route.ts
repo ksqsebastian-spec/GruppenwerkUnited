@@ -43,8 +43,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       source_dateityp: file.type || null,
     });
   } catch (err) {
+    // In Coolify/Server-Logs landen — sonst sehen wir nie, was wirklich schief läuft
+    console.error('[markitdown/convert] Konvertierung fehlgeschlagen', {
+      filename: file.name,
+      type: file.type,
+      size: file.size,
+      ext,
+      error: err instanceof Error ? `${err.name}: ${err.message}\n${err.stack ?? ''}` : String(err),
+    });
+    const message =
+      err instanceof Error
+        ? `${err.name === 'Error' ? '' : err.name + ': '}${err.message}`
+        : String(err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Konvertierung fehlgeschlagen' },
+      { error: `Konvertierung fehlgeschlagen — ${message || 'unbekannter Fehler'}` },
       { status: 500 },
     );
   }
