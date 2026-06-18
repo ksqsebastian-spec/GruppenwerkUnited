@@ -12,6 +12,7 @@ import {
   Briefcase,
   Home,
   Image,
+  FileCode2,
 } from 'lucide-react';
 
 /**
@@ -32,4 +33,5 @@ export const MODULE_ICONS: Record<string, React.ElementType> = {
   Briefcase,
   Home,
   Image,
+  FileCode2,
 };

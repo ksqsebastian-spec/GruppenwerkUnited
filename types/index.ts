@@ -1109,3 +1109,35 @@ export interface BildMeta {
   firmen_tags: string[];
   uploaded_by: string;
 }
+
+// ============================================================================
+// MarkItDown — Datei → Markdown + Vorlagen-Bibliothek
+// ============================================================================
+
+export interface MarkitdownTemplate {
+  id: string;
+  titel: string;
+  beschreibung: string | null;
+  tags: string[];
+  markdown: string;
+  source_dateiname: string | null;
+  source_dateityp: string | null;
+  saved_by: string;
+  saved_by_company: string;
+  created_at: string;
+}
+
+export interface MarkitdownTemplateInsert {
+  titel: string;
+  beschreibung?: string | null;
+  tags: string[];
+  markdown: string;
+  source_dateiname?: string | null;
+  source_dateityp?: string | null;
+  saved_by: string;
+}
+
+export interface MarkitdownConvertResult {
+  markdown: string;
+  warnings: string[];
+}

@@ -154,6 +154,15 @@ export const MODULES: ModuleConfig[] = [
     category: 'tool',
     status: 'active',
   },
+  {
+    id: 'markitdown',
+    name: 'Markitdown',
+    description: 'Dateien (PDF, DOCX, XLSX, HTML …) in sauberes Markdown wandeln und als Vorlagen speichern.',
+    route: '/markitdown',
+    icon: 'FileCode2',
+    category: 'tool',
+    status: 'active',
+  },
 ];
 
 /**
