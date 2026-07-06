@@ -19,20 +19,31 @@
 
 ---
 
-## Vercel Umgebungsvariablen
+## Cloudflare Workers Umgebungsvariablen
 
-In Vercel → Project → Settings → Environment Variables eintragen:
+Deployment-Details siehe `DEPLOYMENT_CLOUDFLARE.md`.
+
+**Laufzeit-Geheimnisse** per `wrangler secret put <NAME>` oder im Dashboard
+(Workers & Pages → werkbank → Settings → Variables and Secrets) setzen:
 
 ```
 SESSION_SECRET=<64-Zeichen-Zufallsstring — selbst generieren>
+CRON_SECRET=<Zufallsstring — selbst generieren>
+SUPABASE_SERVICE_ROLE_KEY=<Service Role Key aus Supabase Dashboard>
 ADMIN_PASSWORD=Wbk-Admin-2024!
 SEEHAFER_PASSWORD=See-Haf-2024!
 BRINK_PASSWORD=Brk-Tschl-2024!
 HANTKE_PASSWORD=Han-Mal-2024!
 GRUPPENWERK_PASSWORD=GW-Fhrpk-2024!
+```
+
+**Build-Variablen** (öffentlich, `NEXT_PUBLIC_*`) in den Build-Einstellungen bzw.
+lokal beim Deploy bereitstellen:
+
+```
 NEXT_PUBLIC_SUPABASE_URL=https://ldmprzkregyicxgdbfsa.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<Anon Key aus Supabase Dashboard>
-SUPABASE_SERVICE_ROLE_KEY=<Service Role Key aus Supabase Dashboard>
+NEXT_PUBLIC_APP_URL=https://werkbank.gruppenwerk.de
 ```
 
 ### SESSION_SECRET generieren

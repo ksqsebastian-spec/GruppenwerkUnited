@@ -1,0 +1,39 @@
+{
+  // Cloudflare Workers Konfiguration für die Werkbank-App (Next.js via OpenNext).
+  // Deploy-Befehle siehe package.json ("preview" / "deploy") und DEPLOYMENT_CLOUDFLARE.md.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "werkbank",
+
+  // Benutzerdefinierter Einstiegspunkt: bündelt den von OpenNext generierten
+  // Worker und ergänzt den `scheduled`-Handler für den Cron-Job.
+  "main": "custom-worker.ts",
+
+  // nodejs_compat ist Pflicht, damit schwere Server-Bibliotheken (unpdf, mammoth,
+  // xlsx, jspdf) im Workers-Runtime (workerd) laufen.
+  "compatibility_date": "2026-07-06",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Statische Assets werden von OpenNext nach .open-next/assets geschrieben.
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  // Cron Trigger ersetzt den früheren Vercel-Cron (vercel.json).
+  // Läuft täglich um 07:00 UTC -> ruft /api/cron/appointments auf.
+  "triggers": {
+    "crons": ["0 7 * * *"]
+  },
+
+  // Nicht-geheime Laufzeit-Variablen. Geheimnisse (SESSION_SECRET, CRON_SECRET,
+  // SUPABASE_SERVICE_ROLE_KEY, *_PASSWORD) werden per `wrangler secret put`
+  // bzw. im Dashboard gesetzt und NICHT hier eingetragen.
+  "vars": {
+    "NEXT_PUBLIC_APP_URL": "https://werkbank.gruppenwerk.de"
+  },
+
+  // Logs/Traces im Dashboard aktivieren.
+  "observability": {
+    "enabled": true
+  }
+}
