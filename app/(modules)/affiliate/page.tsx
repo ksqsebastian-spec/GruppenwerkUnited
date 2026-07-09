@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { toast } from "sonner";
 import { Search, ChevronDown, ChevronRight, ArrowRight, Check, X, Users } from "lucide-react";
 import type { EmpfehlungWithHandwerker, EmpfehlungStatus, Handwerker } from "@/types/affiliate";
 import { StatCard } from "./_components/ui/StatCard";
@@ -122,7 +123,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.detail || data.error || "Fehler");
+        toast.error(data.detail || data.error || "Fehler");
         return;
       }
 
@@ -134,13 +135,13 @@ export default function AdminDashboardPage(): React.JSX.Element {
           body: JSON.stringify({ id: emp.handwerker.id, active: false }),
         });
         if (!archiveRes.ok) {
-          alert("Auszahlung erfolgreich, aber Kunde konnte nicht archiviert werden.");
+          toast.error("Auszahlung erfolgreich, aber Kunde konnte nicht archiviert werden.");
         }
       }
 
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -155,13 +156,13 @@ export default function AdminDashboardPage(): React.JSX.Element {
         body: JSON.stringify({ id: emp.id, rechnungsbetrag: value }),
       });
       if (!res.ok) {
-        alert("Fehler beim Aktualisieren");
+        toast.error("Fehler beim Aktualisieren");
         return;
       }
       setEditingBetragId(null);
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -176,13 +177,13 @@ export default function AdminDashboardPage(): React.JSX.Element {
         body: JSON.stringify({ id: emp.id, provision_betrag: value }),
       });
       if (!res.ok) {
-        alert("Fehler beim Aktualisieren");
+        toast.error("Fehler beim Aktualisieren");
         return;
       }
       setEditingProvisionId(null);
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Copy, Check, Mail, User, ArrowRight, FileDown } from "lucide-react";
 import type { EmpfehlungWithHandwerker } from "@/types/affiliate";
 import { Card } from "../_components/ui/Card";
@@ -201,7 +202,7 @@ export default function EmailConfiguratorPage(): React.JSX.Element {
                     emailBody: generatedEmail.body,
                   });
                 } catch {
-                  alert("Fehler beim Erstellen des Belegs");
+                  toast.error("Fehler beim Erstellen des Belegs");
                 }
               }}
             >

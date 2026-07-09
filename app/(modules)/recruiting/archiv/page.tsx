@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Search, Archive, ArrowLeft } from "lucide-react";
 import type { EmpfehlungWithStelle } from "@/types/recruiting";
 import { StatCard } from "../_components/ui/StatCard";
@@ -49,12 +50,12 @@ export default function ArchivPage(): React.JSX.Element {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.detail || data.error || "Fehler");
+        toast.error(data.detail || data.error || "Fehler");
         return;
       }
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 

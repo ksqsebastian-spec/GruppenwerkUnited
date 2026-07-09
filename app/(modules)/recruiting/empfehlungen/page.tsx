@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Search, Pencil, ArrowRight } from "lucide-react";
 import type { EmpfehlungWithStelle, Stelle } from "@/types/recruiting";
 import { StatCard } from "../_components/ui/StatCard";
@@ -169,12 +170,12 @@ export default function EmpfehlungenPage(): React.JSX.Element {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.detail || data.error || "Fehler beim Verschieben");
+        toast.error(data.detail || data.error || "Fehler beim Verschieben");
         return;
       }
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -185,12 +186,12 @@ export default function EmpfehlungenPage(): React.JSX.Element {
       const res = await fetch(`/api/recruiting/empfehlungen?id=${emp.id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Fehler beim Löschen");
+        toast.error(data.error || "Fehler beim Löschen");
         return;
       }
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 

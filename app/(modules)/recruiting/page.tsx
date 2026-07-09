@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Search, ChevronDown, ChevronRight, ArrowRight, Check, X, Users } from "lucide-react";
 import type { EmpfehlungWithStelle, EmpfehlungStatus, Stelle } from "@/types/recruiting";
 import { formatDate, formatCurrency } from "@/lib/modules/recruiting/utils";
@@ -120,12 +121,12 @@ export default function AdminDashboardPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.detail || data.error || "Fehler");
+        toast.error(data.detail || data.error || "Fehler");
         return;
       }
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -140,13 +141,13 @@ export default function AdminDashboardPage() {
         body: JSON.stringify({ id: emp.id, praemie_betrag: value }),
       });
       if (!res.ok) {
-        alert("Fehler beim Aktualisieren");
+        toast.error("Fehler beim Aktualisieren");
         return;
       }
       setEditingPraemieId(null);
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import type { Handwerker, EmpfehlungWithHandwerker } from "@/types/affiliate";
 import { Card } from "../_components/ui/Card";
 import { Button } from "../_components/ui/Button";
@@ -151,12 +152,12 @@ export default function KundePage(): React.JSX.Element {
       const res = await fetch(`/api/affiliate/handwerker?id=${hw.id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Fehler beim Löschen");
+        toast.error(data.error || "Fehler beim Löschen");
         return;
       }
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 

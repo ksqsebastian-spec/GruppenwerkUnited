@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Check, X } from "lucide-react";
 import type { Stelle, EmpfehlungWithStelle, EmpfehlungStatus } from "@/types/recruiting";
 import { Card } from "../_components/ui/Card";
@@ -113,13 +114,13 @@ export default function StellenPage(): React.JSX.Element {
         body: JSON.stringify({ id: stelle.id, praemie_betrag: value }),
       });
       if (!res.ok) {
-        alert("Fehler beim Speichern der Prämie");
+        toast.error("Fehler beim Speichern der Prämie");
         return;
       }
       setEditingPraemieId(null);
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -142,12 +143,12 @@ export default function StellenPage(): React.JSX.Element {
       const res = await fetch(`/api/recruiting/stellen?id=${stelle.id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Fehler beim Löschen");
+        toast.error(data.error || "Fehler beim Löschen");
         return;
       }
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 

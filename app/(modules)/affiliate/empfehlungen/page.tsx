@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Search, Check, X, Pencil, ArrowRight } from "lucide-react";
 import type { EmpfehlungWithHandwerker, Handwerker } from "@/types/affiliate";
 import { StatCard } from "../_components/ui/StatCard";
@@ -158,12 +159,12 @@ export default function EmpfehlungenPage(): React.JSX.Element {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.detail || data.error || "Fehler beim Verschieben");
+        toast.error(data.detail || data.error || "Fehler beim Verschieben");
         return;
       }
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -174,12 +175,12 @@ export default function EmpfehlungenPage(): React.JSX.Element {
       const res = await fetch(`/api/affiliate/empfehlungen?id=${emp.id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Fehler beim Löschen");
+        toast.error(data.error || "Fehler beim Löschen");
         return;
       }
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -195,13 +196,13 @@ export default function EmpfehlungenPage(): React.JSX.Element {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Fehler beim Aktualisieren");
+        toast.error(data.error || "Fehler beim Aktualisieren");
         return;
       }
       setEditingBetragId(null);
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
