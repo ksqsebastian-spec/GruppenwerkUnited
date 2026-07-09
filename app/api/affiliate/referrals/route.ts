@@ -2,6 +2,7 @@ import { requireAuth } from '@/lib/modules/affiliate/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { empfehlungCreateSchema, paginationSchema } from "@/lib/modules/affiliate/validators";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { edgeRateLimit } from "@/lib/rate-limit-edge";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // GET /api/affiliate/referrals — Empfehlungen auflisten
@@ -60,13 +61,14 @@ export async function GET(request: NextRequest) {
 
 // POST /api/referrals — create new empfehlung
 export async function POST(request: NextRequest) {
-  // Rate limit by IP
+  // Rate limit by IP — verteiltes Edge-Limit (Workers) + In-Memory (Best-Effort)
   const ip = request.headers.get("x-forwarded-for") || "unknown";
+  const edgeAllowed = await edgeRateLimit("PUBLIC_RATE_LIMITER", `referral-create:${ip}`);
   const rateCheck = checkRateLimit(
     `referral-create:${ip}`,
     RATE_LIMITS.referralCreate
   );
-  if (!rateCheck.allowed) {
+  if (!edgeAllowed || !rateCheck.allowed) {
     return NextResponse.json(
       { error: "Zu viele Anfragen. Bitte warte eine Stunde." },
       {

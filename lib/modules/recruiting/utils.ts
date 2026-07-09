@@ -37,7 +37,13 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function getStatusColor(status: EmpfehlungStatus) {
+interface StatusColor {
+  bg: string;
+  text: string;
+  border: string;
+}
+
+export function getStatusColor(status: EmpfehlungStatus): StatusColor {
   switch (status) {
     case "offen":
       return {
@@ -63,6 +69,10 @@ export function getStatusColor(status: EmpfehlungStatus) {
         text: "#7C3AED",
         border: "#7C3AED",
       };
+    // Fallback für unerwartete Status-Werte aus der DB — verhindert Crash beim
+    // Zugriff auf .bg/.text/.border im Consumer.
+    default:
+      return { bg: "#F3F4F6", text: "#6B7280", border: "#6B7280" };
   }
 }
 
@@ -76,5 +86,7 @@ export function getStatusLabel(status: EmpfehlungStatus): string {
       return "PROBEZEIT BESTANDEN";
     case "ausgezahlt":
       return "AUSGEZAHLT";
+    default:
+      return "UNBEKANNT";
   }
 }

@@ -117,10 +117,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const scanId: string = (scanRow as { id: string }).id
 
-  // 3. Ausschreibungen mit automatischem Matching importieren
+  // 3. Ausschreibungen mit automatischem Matching importieren.
+  //    Tender werden einzeln angelegt (für Fehler-Resilienz pro Zeile + benötigte
+  //    tender_id), die Matches aber gesammelt und am Ende in EINEM Insert
+  //    geschrieben — spart auf Cloudflare Workers viele Subrequests.
   let tendersInserted = 0
   let matchesInserted = 0
   let skipped = 0
+  const allMatchRows: Array<{
+    tender_id: string
+    company_id: string
+    company_slug: string
+    relevance: string
+    reason: string
+  }> = []
 
   for (const t of tenders) {
     if (!t.title || !t.url) {
@@ -156,29 +166,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     tendersInserted++
     const tenderId: string = (tenderRow as { id: string }).id
 
-    // Matching: alle passenden Werkbank-Unternehmen ermitteln
+    // Matching: alle passenden Werkbank-Unternehmen ermitteln und sammeln
     const matches = suggestCompanies(t.category ?? null, t.title, companies as Company[])
+    for (const m of matches) {
+      allMatchRows.push({
+        tender_id: tenderId,
+        company_id: m.company.id,
+        company_slug: m.company.slug,
+        relevance: m.relevance,
+        reason: m.matchedTerms.join(', '),
+      })
+    }
+  }
 
-    if (matches.length === 0) continue
-
-    // Matches in Batch einfügen
-    const matchRows = matches.map((m) => ({
-      tender_id: tenderId,
-      company_id: m.company.id,
-      company_slug: m.company.slug,
-      relevance: m.relevance,
-      reason: m.matchedTerms.join(', '),
-    }))
-
+  // Alle Matches gebündelt einfügen (ein Subrequest statt einer pro Tender)
+  if (allMatchRows.length > 0) {
     const { error: matchError } = await supabase
       .schema('vob')
       .from('vob_matches')
-      .insert(matchRows)
+      .insert(allMatchRows)
 
     if (matchError) {
-      errors.push(`Match-Fehler für "${t.title}": ${matchError.message}`)
+      errors.push(`Matches konnten nicht gespeichert werden: ${matchError.message}`)
     } else {
-      matchesInserted += matchRows.length
+      matchesInserted = allMatchRows.length
     }
   }
 

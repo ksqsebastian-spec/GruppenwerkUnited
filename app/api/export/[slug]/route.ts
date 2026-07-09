@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireSession } from '@/lib/auth/api'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Company, DashboardRow } from '@/lib/modules/vob/types'
 
 /**
  * GET /api/export/[slug]
  * Gibt Unternehmensdaten und zugehörige Ausschreibungen für den PDF-Export zurück.
+ *
+ * Nur für eingeloggte Nutzer — sonst wären Firmen- und Ausschreibungsdaten
+ * über den Slug öffentlich abrufbar (Daten-Leak + Kostenvektor).
  */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<NextResponse> {
+  const session = await requireSession()
+  if (session instanceof NextResponse) return session
+
   const { slug } = await params
 
   if (!slug || slug.trim() === '') {

@@ -26,6 +26,23 @@
     "cpu_ms": 30000
   },
 
+  // Verteiltes Rate-Limiting am Edge (GA `ratelimit`-Binding, kostenlos).
+  // Ersetzt den auf Workers unwirksamen In-Memory-Limiter für Burst-Schutz.
+  // period ist auf 10/60 s begrenzt → schützt vor Bursts; nachhaltige Limits
+  // regelt zusätzlich eine WAF-Rate-Limiting-Regel.
+  "ratelimits": [
+    {
+      "name": "LOGIN_RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 10, "period": 60 }
+    },
+    {
+      "name": "PUBLIC_RATE_LIMITER",
+      "namespace_id": "1002",
+      "simple": { "limit": 15, "period": 60 }
+    }
+  ],
+
   // Cron Trigger ersetzt den früheren Vercel-Cron (vercel.json).
   // Läuft täglich um 07:00 UTC -> ruft /api/cron/appointments auf.
   "triggers": {

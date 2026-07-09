@@ -44,10 +44,18 @@ function b64urlDecode(str: string): Uint8Array<ArrayBuffer> {
 }
 
 async function importKey(): Promise<CryptoKey> {
-  const secret = process.env.SESSION_SECRET ?? 'dev-secret-change-me';
+  const secret = process.env.SESSION_SECRET;
+  // In Produktion MUSS ein echtes Secret gesetzt sein. Fehlt es, würde sonst
+  // still das bekannte Default-Secret genutzt — damit wären Sessions
+  // (companyId/isAdmin) fälschbar (Auth-Bypass). Fail-closed: Ohne Secret wird
+  // geworfen; encode/decode schlagen fehl → Nutzer landen beim Login statt mit
+  // einer gefälschten Admin-Session durchzukommen.
+  if (!secret && process.env.NODE_ENV === 'production') {
+    throw new Error('SESSION_SECRET ist in Produktion nicht gesetzt');
+  }
   return crypto.subtle.importKey(
     'raw',
-    enc.encode(secret),
+    enc.encode(secret ?? 'dev-secret-change-me'),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign', 'verify']
