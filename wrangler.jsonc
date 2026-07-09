@@ -19,6 +19,13 @@
     "binding": "ASSETS"
   },
 
+  // Kosten-/Ausreißer-Schutz: begrenzt die CPU-Zeit pro Request fest auf 30 s
+  // (Standard). Verhindert, dass ein einzelner hängender oder missbräuchlicher
+  // Request unbegrenzt CPU-Budget verbraucht. Reicht für die Datei-Konvertierungen.
+  "limits": {
+    "cpu_ms": 30000
+  },
+
   // Cron Trigger ersetzt den früheren Vercel-Cron (vercel.json).
   // Läuft täglich um 07:00 UTC -> ruft /api/cron/appointments auf.
   "triggers": {
