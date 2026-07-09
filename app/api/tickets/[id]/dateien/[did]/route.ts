@@ -23,7 +23,8 @@ export async function GET(
     const url = await getTicketDateiDownloadUrl(datei.dateipfad);
     return NextResponse.json({ url });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/tickets/[id]/dateien/[did] GET]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }
 
@@ -40,6 +41,7 @@ export async function DELETE(
     if (entfernt) await removeTicketDateiAusStorage(entfernt.dateipfad);
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/tickets/[id]/dateien/[did] DELETE]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

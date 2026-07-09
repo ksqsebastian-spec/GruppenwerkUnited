@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { matchCompanyByPassword } from '@/lib/auth/companies';
 import { SESSION_COOKIE, encodeSession } from '@/lib/auth/session';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { edgeRateLimit } from '@/lib/rate-limit-edge';
 
 // Brute-Force-Schutz: max. 10 Login-Versuche pro 15 Minuten je IP
 const LOGIN_RATE_LIMIT = { windowMs: 15 * 60 * 1000, maxRequests: 10 };
@@ -10,8 +11,11 @@ const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 Tage
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // IP für Rate-Limiting bestimmen (x-forwarded-for kommt von Vercel/Proxy)
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+
+  // Verteiltes Edge-Limit (wirkt auf Workers) + In-Memory-Limit (Dev/Best-Effort).
+  const edgeAllowed = await edgeRateLimit('LOGIN_RATE_LIMITER', `login:${ip}`);
   const rate = checkRateLimit(`login:${ip}`, LOGIN_RATE_LIMIT);
-  if (!rate.allowed) {
+  if (!edgeAllowed || !rate.allowed) {
     return NextResponse.json(
       { error: 'Zu viele Login-Versuche. Bitte später erneut versuchen.' },
       {

@@ -45,6 +45,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const imported = await upsertLeads(session.companyId, leads);
     return NextResponse.json({ imported, total: leads.length });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/leads/import POST]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

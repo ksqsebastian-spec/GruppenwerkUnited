@@ -21,7 +21,8 @@ export async function PATCH(
     if (error) throw new Error(error.message);
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/consulting/field-types/[id] PATCH]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }
 
@@ -35,6 +36,9 @@ export async function DELETE(
   const { id } = await params;
   const supabase = createAdminClient();
   const { error } = await supabase.from('consulting_field_types').delete().eq('id', id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('[/api/consulting/field-types/[id] DELETE]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }

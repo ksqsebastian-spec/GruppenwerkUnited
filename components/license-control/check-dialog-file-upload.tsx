@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import { toast } from 'sonner';
 import { FileText, ImageIcon, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FormLabel } from '@/components/ui/form';
@@ -26,11 +27,11 @@ export function CheckDialogFileUpload({
     const file = event.target.files?.[0];
     if (!file) return;
     if (file.size > MAX_SIZE_BYTES) {
-      alert('Die Datei ist zu groß. Maximal 10 MB erlaubt.');
+      toast.error('Die Datei ist zu groß. Maximal 10 MB erlaubt.');
       return;
     }
     if (!ALLOWED_TYPES.includes(file.type)) {
-      alert('Ungültiges Dateiformat. Erlaubt: PDF, JPG, PNG, WEBP.');
+      toast.error('Ungültiges Dateiformat. Erlaubt: PDF, JPG, PNG, WEBP.');
       return;
     }
     onFileSelected(file);

@@ -15,14 +15,15 @@ async function fetchDashboard(): Promise<DashboardResponse> {
   return res.json() as Promise<DashboardResponse>;
 }
 
+// Gemeinsamer Query-Key + `select`: Alle drei Hooks teilen sich EINEN Request an
+// /api/fuhrpark/dashboard (statt drei identische). React Query dedupliziert über
+// den identischen Key und liefert jedem Hook nur seinen Ausschnitt.
 export function useDashboardStats() {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ['dashboard', 'stats'],
-    queryFn: async () => {
-      const data = await fetchDashboard();
-      return data.stats;
-    },
+    queryKey: ['dashboard'],
+    queryFn: fetchDashboard,
+    select: (data) => data.stats,
     staleTime: QUERY_STALE_TIMES.dashboard,
     enabled: !!user,
   });
@@ -31,12 +32,10 @@ export function useDashboardStats() {
 export function useWarningAppointments() {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ['dashboard', 'warnings'],
-    queryFn: async () => {
-      const data = await fetchDashboard();
-      return data.warningAppointments;
-    },
-    staleTime: QUERY_STALE_TIMES.appointments,
+    queryKey: ['dashboard'],
+    queryFn: fetchDashboard,
+    select: (data) => data.warningAppointments,
+    staleTime: QUERY_STALE_TIMES.dashboard,
     enabled: !!user,
   });
 }
@@ -44,11 +43,9 @@ export function useWarningAppointments() {
 export function useRecentActivities() {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ['dashboard', 'activities'],
-    queryFn: async () => {
-      const data = await fetchDashboard();
-      return data.recentActivities;
-    },
+    queryKey: ['dashboard'],
+    queryFn: fetchDashboard,
+    select: (data) => data.recentActivities,
     staleTime: QUERY_STALE_TIMES.dashboard,
     enabled: !!user,
   });

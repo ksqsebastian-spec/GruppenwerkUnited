@@ -56,9 +56,14 @@ export async function deleteTicket(id: string): Promise<void> {
 
 // ── Personen (je Firma) ────────────────────────────────────────────────────────
 
-export async function fetchPersonen(): Promise<Person[]> {
+// companyId scopet auf die eigene Firma. Wird undefined übergeben (Admin), sind
+// alle Personen sichtbar. Ohne diesen Filter würde jede Firma die PII (Name,
+// E-Mail) aller Mandanten sehen.
+export async function fetchPersonen(companyId?: string): Promise<Person[]> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase.from('personen').select('*').order('name', { ascending: true });
+  let query = supabase.from('personen').select('*').order('name', { ascending: true });
+  if (companyId) query = query.eq('company', companyId);
+  const { data, error } = await query;
   if (error) throw new Error('Personen konnten nicht geladen werden');
   return (data ?? []) as Person[];
 }
@@ -74,16 +79,20 @@ export async function createPerson(companyId: string, input: Omit<PersonInsert, 
   return data as Person;
 }
 
-export async function updatePerson(id: string, update: PersonUpdate): Promise<Person> {
+export async function updatePerson(id: string, update: PersonUpdate, companyId?: string): Promise<Person> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase.from('personen').update(update).eq('id', id).select().single();
+  let query = supabase.from('personen').update(update).eq('id', id);
+  if (companyId) query = query.eq('company', companyId);
+  const { data, error } = await query.select().single();
   if (error) throw new Error('Person konnte nicht aktualisiert werden');
   return data as Person;
 }
 
-export async function deletePerson(id: string): Promise<void> {
+export async function deletePerson(id: string, companyId?: string): Promise<void> {
   const supabase = createAdminClient();
-  const { error } = await supabase.from('personen').delete().eq('id', id);
+  let query = supabase.from('personen').delete().eq('id', id);
+  if (companyId) query = query.eq('company', companyId);
+  const { error } = await query;
   if (error) throw new Error('Person konnte nicht gelöscht werden');
 }
 

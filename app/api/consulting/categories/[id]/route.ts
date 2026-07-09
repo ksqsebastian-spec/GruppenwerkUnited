@@ -21,7 +21,8 @@ export async function PATCH(
     if (error) throw new Error(error.message);
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/consulting/categories/[id] PATCH]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }
 
@@ -37,6 +38,7 @@ export async function DELETE(
     await deleteConsultingCategory(id);
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/consulting/categories/[id] DELETE]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

@@ -29,6 +29,7 @@ export async function PATCH(
     await updateKnotenPosition(session.companyId, id, parsed.data.position_x, parsed.data.position_y);
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/automationen/[id]/position PATCH]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

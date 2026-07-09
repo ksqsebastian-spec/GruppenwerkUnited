@@ -9,18 +9,28 @@ import ExportButton from "../../_components/ExportButton";
 export default function AusgabenPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "recurring" | "onetime">("all");
 
   const fetchPurchases = useCallback(async () => {
-    // Einkäufe über API-Route laden (service role, umgeht PostgREST-Schema-Beschränkungen)
-    const res = await fetch('/api/roi/purchases');
-    if (res.ok) {
-      const data = await res.json();
-      setPurchases((data as Purchase[]) || []);
-    } else {
-      console.error('Fehler beim Laden der Einkäufe:', await res.text());
+    setLoading(true);
+    setError(null);
+    try {
+      // Einkäufe über API-Route laden (service role, umgeht PostgREST-Schema-Beschränkungen)
+      const res = await fetch('/api/roi/purchases');
+      if (res.ok) {
+        const data = await res.json();
+        setPurchases((data as Purchase[]) || []);
+      } else {
+        console.error('Fehler beim Laden der Einkäufe:', await res.text());
+        setError('Die Ausgaben konnten nicht geladen werden. Bitte versuche es erneut.');
+      }
+    } catch (err) {
+      console.error('Fehler beim Laden der Einkäufe:', err);
+      setError('Die Ausgaben konnten nicht geladen werden. Bitte versuche es erneut.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -47,6 +57,21 @@ export default function AusgabenPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-text-dim font-mono text-sm">Laden...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-surface border border-border rounded-xl p-12 text-center">
+        <p className="text-sm font-semibold text-red mb-1">Fehler</p>
+        <p className="text-sm text-text-muted font-mono mb-6">{error}</p>
+        <button
+          onClick={() => fetchPurchases()}
+          className="text-xs font-mono px-4 py-2 rounded-lg border border-border text-text-muted hover:border-accent hover:text-accent transition-colors"
+        >
+          Erneut versuchen
+        </button>
       </div>
     );
   }

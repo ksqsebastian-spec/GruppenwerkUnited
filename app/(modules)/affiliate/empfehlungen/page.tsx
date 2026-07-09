@@ -1,18 +1,21 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Search, Check, X, Pencil, ArrowRight } from "lucide-react";
 import type { EmpfehlungWithHandwerker, Handwerker } from "@/types/affiliate";
 import { StatCard } from "../_components/ui/StatCard";
 import { Card } from "../_components/ui/Card";
 import { Button } from "../_components/ui/Button";
 import { Input } from "../_components/ui/Input";
+import { ErrorState } from "@/components/shared/error-state";
 import { formatDate, formatCurrency } from "@/lib/modules/affiliate/utils";
 
 export default function EmpfehlungenPage(): React.JSX.Element {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithHandwerker[]>([]);
   const [handwerker, setHandwerker] = useState<Handwerker[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -48,6 +51,7 @@ export default function EmpfehlungenPage(): React.JSX.Element {
 
   const fetchData = useCallback(async (): Promise<void> => {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -63,6 +67,7 @@ export default function EmpfehlungenPage(): React.JSX.Element {
       setTotal(data.total || 0);
     } catch {
       setEmpfehlungen([]);
+      setError("Die Kundenempfehlungen konnten nicht geladen werden. Bitte versuche es erneut.");
     } finally {
       setLoading(false);
     }
@@ -158,12 +163,12 @@ export default function EmpfehlungenPage(): React.JSX.Element {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.detail || data.error || "Fehler beim Verschieben");
+        toast.error(data.detail || data.error || "Fehler beim Verschieben");
         return;
       }
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -174,12 +179,12 @@ export default function EmpfehlungenPage(): React.JSX.Element {
       const res = await fetch(`/api/affiliate/empfehlungen?id=${emp.id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Fehler beim Löschen");
+        toast.error(data.error || "Fehler beim Löschen");
         return;
       }
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -195,13 +200,13 @@ export default function EmpfehlungenPage(): React.JSX.Element {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Fehler beim Aktualisieren");
+        toast.error(data.error || "Fehler beim Aktualisieren");
         return;
       }
       setEditingBetragId(null);
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -385,7 +390,13 @@ export default function EmpfehlungenPage(): React.JSX.Element {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
+            {error ? (
+              <tr>
+                <td colSpan={8} className="px-4 py-8">
+                  <ErrorState message={error} onRetry={fetchData} />
+                </td>
+              </tr>
+            ) : loading ? (
               <tr>
                 <td colSpan={8} className="px-4 py-12 text-center text-sm text-muted-foreground">
                   Wird geladen...

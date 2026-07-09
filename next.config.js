@@ -1,10 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Schwere Server-Bibliotheken (Datei→Markdown-Konvertierung) NICHT in den
-  // Route-Bundle ziehen, sondern zur Laufzeit aus node_modules laden. Ohne das
-  // schlägt das Bündeln in manchen Build-Umgebungen (z.B. Nixpacks auf Coolify)
-  // fehl, obwohl `next build` durchläuft — Symptom: „Konvertierung
-  // fehlgeschlagen" erst zur Request-Zeit in Production.
+  // Schwere Server-Bibliotheken (Datei→Markdown-Konvertierung) aus dem
+  // Route-Bundle heraushalten. Verhindert Bündelungsprobleme in verschiedenen
+  // Build-Umgebungen; der Cloudflare-/OpenNext-Build (workerd) bündelt sie
+  // beim Deploy dennoch korrekt in den Worker.
   serverExternalPackages: ['unpdf', 'mammoth', 'xlsx'],
   images: {
     remotePatterns: [

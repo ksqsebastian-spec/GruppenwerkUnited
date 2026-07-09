@@ -1,3 +1,4 @@
+import { addMonths, format } from 'date-fns';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -28,6 +29,42 @@ export function formatCurrency(amount: number): string {
     style: 'currency',
     currency: 'EUR',
   }).format(amount);
+}
+
+/**
+ * Formatiert ein Datum relativ zum heutigen Tag (z.B. "heute", "gestern",
+ * "vor 3 Tagen") und fällt ab 7 Tagen auf das absolute Datum zurück.
+ */
+export function formatRelativeDate(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'heute';
+  if (diffDays === 1) return 'gestern';
+  if (diffDays < 7) return `vor ${diffDays} Tagen`;
+  return formatDate(dateString);
+}
+
+/**
+ * Bildet die Initialen eines Namens (max. 2 Zeichen, Großbuchstaben)
+ */
+export function getInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+/**
+ * Berechnet das nächste Kontrolldatum basierend auf dem Intervall (yyyy-MM-dd)
+ */
+export function calculateNextCheckDue(checkDate: string, intervalMonths: number): string {
+  return format(addMonths(new Date(checkDate), intervalMonths), 'yyyy-MM-dd');
 }
 
 /**

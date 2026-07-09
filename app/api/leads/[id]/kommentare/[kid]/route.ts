@@ -14,6 +14,7 @@ export async function DELETE(
     await deleteKommentar(kid, session.companyId);
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/leads/[id]/kommentare/[kid] DELETE]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

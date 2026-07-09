@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { Damage, DamageInsert, DamageUpdate, DamageFilters, DamageStatus } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
+import { assertVehicleBelongsToTenant } from '@/lib/database/tenant-guards';
 
 // Tenant-Scope: damages haben kein direktes company_id. Filterung läuft über
 // `vehicle:vehicles!inner(company_id)` mit foreignTable-Filter.
@@ -96,22 +97,6 @@ export async function countOpenDamages(tenantCompanyId?: string | null): Promise
   }
 
   return count ?? 0;
-}
-
-/**
- * Verifiziert, dass ein Fahrzeug zur Tenant-Firma gehört, bevor Damage erstellt wird.
- */
-async function assertVehicleBelongsToTenant(vehicleId: string, tenantCompanyId: string): Promise<void> {
-  const supabase = createAdminClient();
-  const { data } = await supabase
-    .from('vehicles')
-    .select('id')
-    .eq('id', vehicleId)
-    .eq('company_id', tenantCompanyId)
-    .maybeSingle();
-  if (!data) {
-    throw new Error('Fahrzeug nicht gefunden');
-  }
 }
 
 export async function createDamage(damage: DamageInsert, tenantCompanyId?: string | null): Promise<Damage> {

@@ -39,7 +39,7 @@ import {
   quickLicenseCheckSchema,
   type QuickLicenseCheckFormData,
 } from '@/lib/validations/license-control';
-import { calculateNextCheckDue } from '@/lib/utils/date-utils';
+import { calculateNextCheckDue } from '@/lib/utils';
 import {
   useLicenseInspectors,
   useLicenseSettings,

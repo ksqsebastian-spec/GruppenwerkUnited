@@ -15,6 +15,7 @@ export async function PATCH(
     const updated = await updateConsultingCheckpointStatus(id, body, session.companyId);
     return NextResponse.json(updated);
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/consulting/checkpoint-status/[id] PATCH]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

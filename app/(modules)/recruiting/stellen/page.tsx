@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Check, X } from "lucide-react";
 import type { Stelle, EmpfehlungWithStelle, EmpfehlungStatus } from "@/types/recruiting";
 import { Card } from "../_components/ui/Card";
 import { Button } from "../_components/ui/Button";
 import { Input } from "../_components/ui/Input";
+import { ErrorState } from "@/components/shared/error-state";
 
 const STATUS_COLORS: Record<EmpfehlungStatus, string> = {
   offen: "#ea580c",
@@ -22,6 +24,7 @@ export default function StellenPage(): React.JSX.Element {
   const [stellen, setStellen] = useState<Stelle[]>([]);
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithStelle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ title: "", description: "", praemie_betrag: "" });
   const [formError, setFormError] = useState("");
@@ -32,6 +35,7 @@ export default function StellenPage(): React.JSX.Element {
   const [praemieInput, setPraemieInput] = useState("");
 
   const fetchData = useCallback(async (): Promise<void> => {
+    setError(null);
     try {
       const [stellenRes, empRes] = await Promise.all([
         fetch("/api/recruiting/stellen"),
@@ -40,6 +44,9 @@ export default function StellenPage(): React.JSX.Element {
       if (stellenRes.ok) {
         const data = await stellenRes.json();
         setStellen(data.data || []);
+      } else {
+        setStellen([]);
+        setError("Die Stellenangebote konnten nicht geladen werden. Bitte versuche es erneut.");
       }
       if (empRes.ok) {
         const data = await empRes.json();
@@ -47,6 +54,7 @@ export default function StellenPage(): React.JSX.Element {
       }
     } catch {
       setStellen([]);
+      setError("Die Stellenangebote konnten nicht geladen werden. Bitte versuche es erneut.");
     } finally {
       setLoading(false);
     }
@@ -113,13 +121,13 @@ export default function StellenPage(): React.JSX.Element {
         body: JSON.stringify({ id: stelle.id, praemie_betrag: value }),
       });
       if (!res.ok) {
-        alert("Fehler beim Speichern der Prämie");
+        toast.error("Fehler beim Speichern der Prämie");
         return;
       }
       setEditingPraemieId(null);
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -142,12 +150,12 @@ export default function StellenPage(): React.JSX.Element {
       const res = await fetch(`/api/recruiting/stellen?id=${stelle.id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Fehler beim Löschen");
+        toast.error(data.error || "Fehler beim Löschen");
         return;
       }
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -223,7 +231,13 @@ export default function StellenPage(): React.JSX.Element {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
+            {error ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-8">
+                  <ErrorState message={error} onRetry={fetchData} />
+                </td>
+              </tr>
+            ) : loading ? (
               <tr>
                 <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">Wird geladen...</td>
               </tr>

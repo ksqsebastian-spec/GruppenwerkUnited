@@ -1,5 +1,9 @@
 import { Job, Config, MonthlyROI, MONATE } from "./types";
 
+// Zentrale Format-Utility wird aus @/lib/utils re-exportiert, damit bestehende
+// Importpfade aus diesem Modul weiterhin funktionieren.
+export { formatCurrency } from "@/lib/utils";
+
 export function groupJobsByMonth(jobs: Job[]): Map<string, Job[]> {
   const grouped = new Map<string, Job[]>();
   for (const job of jobs) {
@@ -103,14 +107,6 @@ export function calculateBreakEven(jobs: Job[], config: Config) {
     monateBreakEven,
     breakEvenDatum: breakEvenDate,
   };
-}
-
-export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-  }).format(value);
 }
 
 export function formatPercent(value: number): string {

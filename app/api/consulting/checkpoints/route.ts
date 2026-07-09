@@ -15,6 +15,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/consulting/checkpoints POST]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

@@ -11,20 +11,30 @@ import ExportButton from "../_components/ExportButton";
 export default function DashboardPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
   const [showImport, setShowImport] = useState(false);
   const [uploads, setUploads] = useState<Upload[]>([]);
 
   const fetchJobs = useCallback(async () => {
-    // Aufträge über API-Route laden (service role, umgeht PostgREST-Schema-Beschränkungen)
-    const res = await fetch('/api/roi/jobs');
-    if (res.ok) {
-      const data = await res.json();
-      setJobs((data as Job[]) || []);
-    } else {
-      console.error('Fehler beim Laden der Aufträge:', await res.text());
+    setLoading(true);
+    setError(null);
+    try {
+      // Aufträge über API-Route laden (service role, umgeht PostgREST-Schema-Beschränkungen)
+      const res = await fetch('/api/roi/jobs');
+      if (res.ok) {
+        const data = await res.json();
+        setJobs((data as Job[]) || []);
+      } else {
+        console.error('Fehler beim Laden der Aufträge:', await res.text());
+        setError('Die Aufträge konnten nicht geladen werden. Bitte versuche es erneut.');
+      }
+    } catch (err) {
+      console.error('Fehler beim Laden der Aufträge:', err);
+      setError('Die Aufträge konnten nicht geladen werden. Bitte versuche es erneut.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const fetchUploads = useCallback(async () => {
@@ -52,6 +62,21 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-text-dim font-mono text-sm">Laden...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-surface border border-border rounded-xl p-12 text-center">
+        <p className="text-sm font-semibold text-red mb-1">Fehler</p>
+        <p className="text-sm text-text-muted font-mono mb-6">{error}</p>
+        <button
+          onClick={() => { fetchJobs(); fetchUploads(); }}
+          className="text-xs font-mono px-4 py-2 rounded-lg border border-border text-text-muted hover:border-accent hover:text-accent transition-colors"
+        >
+          Erneut versuchen
+        </button>
       </div>
     );
   }

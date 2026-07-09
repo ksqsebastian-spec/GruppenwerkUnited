@@ -52,7 +52,8 @@ export async function POST(
 
     if (!error) return NextResponse.json({ code: data.code, id: data.id });
     if (error.code !== '23505') {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('[/api/leads/[id]/export-datenkodierung POST]', error);
+      return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
     }
   }
 

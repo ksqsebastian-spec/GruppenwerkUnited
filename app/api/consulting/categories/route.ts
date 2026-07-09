@@ -13,7 +13,10 @@ export async function GET(): Promise<NextResponse> {
     .select('*, consulting_checkpoints(*)')
     .order('sort_order');
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('[/api/consulting/categories GET]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
+  }
   return NextResponse.json(data ?? []);
 }
 
@@ -26,6 +29,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     await createConsultingCategory(body.name, body.icon ?? null);
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/consulting/categories POST]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

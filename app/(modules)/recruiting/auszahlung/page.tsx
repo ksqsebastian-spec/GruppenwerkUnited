@@ -1,16 +1,19 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Search, Copy, Check, X, CreditCard, ArrowLeft, FileDown } from "lucide-react";
 import { generateQuittung } from "@/lib/utils/generate-quittung";
 import type { EmpfehlungWithStelle } from "@/types/recruiting";
 import { StatCard } from "../_components/ui/StatCard";
 import { Card } from "../_components/ui/Card";
+import { ErrorState } from "@/components/shared/error-state";
 import { formatDate, formatCurrency } from "@/lib/modules/recruiting/utils";
 
 export default function AuszahlungPage(): React.JSX.Element {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithStelle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -23,6 +26,7 @@ export default function AuszahlungPage(): React.JSX.Element {
 
   const fetchData = useCallback(async (): Promise<void> => {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -38,6 +42,7 @@ export default function AuszahlungPage(): React.JSX.Element {
       setTotal(data.total || 0);
     } catch {
       setEmpfehlungen([]);
+      setError("Die Auszahlungen konnten nicht geladen werden. Bitte versuche es erneut.");
     } finally {
       setLoading(false);
     }
@@ -74,13 +79,13 @@ export default function AuszahlungPage(): React.JSX.Element {
         body: JSON.stringify({ id: emp.id, praemie_betrag: value }),
       });
       if (!res.ok) {
-        alert("Fehler beim Aktualisieren");
+        toast.error("Fehler beim Aktualisieren");
         return;
       }
       setEditingPraemieId(null);
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -93,12 +98,12 @@ export default function AuszahlungPage(): React.JSX.Element {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.detail || data.error || "Fehler");
+        toast.error(data.detail || data.error || "Fehler");
         return;
       }
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -113,12 +118,12 @@ export default function AuszahlungPage(): React.JSX.Element {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.detail || data.error || "Fehler");
+        toast.error(data.detail || data.error || "Fehler");
         return;
       }
       fetchData();
     } catch {
-      alert("Netzwerkfehler");
+      toast.error("Netzwerkfehler");
     }
   }
 
@@ -185,7 +190,13 @@ export default function AuszahlungPage(): React.JSX.Element {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
+            {error ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-8">
+                  <ErrorState message={error} onRetry={fetchData} />
+                </td>
+              </tr>
+            ) : loading ? (
               <tr>
                 <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">
                   Wird geladen...

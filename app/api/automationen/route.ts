@@ -14,7 +14,8 @@ export async function GET(): Promise<NextResponse> {
     const knoten = await fetchAutomatisierungsknoten(session.companyId);
     return NextResponse.json(knoten);
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/automationen GET]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }
 
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const knoten = await createAutomatisierungsknoten(session.companyId, input);
     return NextResponse.json(knoten, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/automationen POST]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

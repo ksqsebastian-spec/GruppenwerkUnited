@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { VehicleDriver, VehicleDriverInsert } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
+import { assertVehicleBelongsToTenant } from '@/lib/database/tenant-guards';
 
 const VEHICLE_DRIVER_FROM_VEHICLE = `
   id, vehicle_id, driver_id, is_primary, assigned_at,
@@ -17,17 +18,6 @@ const VEHICLE_DRIVER_BOTH = `
   driver:drivers(id, first_name, last_name, email, phone, company_id),
   vehicle:vehicles(id, license_plate, brand, model, company_id)
 `;
-
-async function assertVehicleBelongsToTenant(vehicleId: string, tenantCompanyId: string): Promise<void> {
-  const supabase = createAdminClient();
-  const { data } = await supabase
-    .from('vehicles')
-    .select('id')
-    .eq('id', vehicleId)
-    .eq('company_id', tenantCompanyId)
-    .maybeSingle();
-  if (!data) throw new Error('Fahrzeug nicht gefunden');
-}
 
 async function assertDriverBelongsToTenant(driverId: string, tenantCompanyId: string): Promise<void> {
   const supabase = createAdminClient();

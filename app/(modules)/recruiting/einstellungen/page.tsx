@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Check, Loader2 } from "lucide-react";
 import { Card } from "../_components/ui/Card";
 import { StatCard } from "../_components/ui/StatCard";
@@ -34,7 +35,7 @@ export default function EinstellungenPage(): React.JSX.Element {
   async function handleSave(): Promise<void> {
     const value = parseFloat(inputValue);
     if (isNaN(value) || value < 0 || value > 99999) {
-      alert("Ungültiger Betrag. Bitte gib einen Wert zwischen 0 und 99.999 ein.");
+      toast.error("Ungültiger Betrag. Bitte gib einen Wert zwischen 0 und 99.999 ein.");
       return;
     }
 
@@ -47,14 +48,14 @@ export default function EinstellungenPage(): React.JSX.Element {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Fehler beim Speichern");
+        toast.error(data.error || "Fehler beim Speichern");
         return;
       }
       setPraemieDefault(value);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch {
-      alert("Netzwerkfehler beim Speichern");
+      toast.error("Netzwerkfehler beim Speichern");
     } finally {
       setSaving(false);
     }

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireSession } from '@/lib/auth/api';
+import { requireAdminSession } from '@/lib/auth/api';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    await requireSession();
+    await requireAdminSession();
     const supabase = createAdminClient();
 
     const formData = await req.formData();
@@ -47,9 +47,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ logo_url: publicUrl });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Upload fehlgeschlagen' },
-      { status: 500 }
-    );
+    console.error('[/api/consulting/credentials/logo POST]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

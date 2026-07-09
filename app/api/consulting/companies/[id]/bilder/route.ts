@@ -23,10 +23,8 @@ export async function GET(_req: NextRequest, { params }: Params): Promise<NextRe
     if (error) throw new Error(error.message);
     return NextResponse.json(data ?? []);
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Fehler' },
-      { status: 500 }
-    );
+    console.error('[/api/consulting/companies/[id]/bilder GET]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }
 
@@ -79,10 +77,8 @@ export async function POST(req: NextRequest, { params }: Params): Promise<NextRe
 
     return NextResponse.json(record, { status: 201 });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Upload fehlgeschlagen' },
-      { status: 500 }
-    );
+    console.error('[/api/consulting/companies/[id]/bilder POST]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }
 
@@ -118,10 +114,8 @@ export async function PATCH(req: NextRequest, { params }: Params): Promise<NextR
 
     return NextResponse.json({ error: 'Ungültige Anfrage' }, { status: 400 });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Fehler' },
-      { status: 500 }
-    );
+    console.error('[/api/consulting/companies/[id]/bilder PATCH]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }
 
@@ -166,9 +160,7 @@ export async function DELETE(req: NextRequest, { params }: Params): Promise<Next
 
     return NextResponse.json({ error: 'Ungültige Anfrage' }, { status: 400 });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Fehler' },
-      { status: 500 }
-    );
+    console.error('[/api/consulting/companies/[id]/bilder DELETE]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

@@ -15,7 +15,8 @@ export async function PATCH(
     const lead = await updateLead(id, session.companyId, body);
     return NextResponse.json(lead);
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/leads/[id] PATCH]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }
 
@@ -31,6 +32,7 @@ export async function DELETE(
     await deleteLead(id, session.companyId);
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/leads/[id] DELETE]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

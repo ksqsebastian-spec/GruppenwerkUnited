@@ -76,6 +76,14 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
   }
 
+  // Mass-Assignment verhindern: unveränderliche Spalten dürfen nicht per
+  // beliebigem key überschrieben werden. Insbesondere company_id/id — sonst
+  // könnte ein Auftrag einer fremden Firma zugeschrieben werden.
+  const IMMUTABLE_KEYS = new Set(['id', 'company_id', 'created_at', 'updated_at']);
+  if (typeof body.key !== 'string' || IMMUTABLE_KEYS.has(body.key)) {
+    return NextResponse.json({ error: 'Ungültiges Feld' }, { status: 400 });
+  }
+
   const { data, error } = await supabase
     .schema('roi')
     .from('jobs')

@@ -25,7 +25,8 @@ export async function GET(
     const data = await fetchDateien(id, session.companyId);
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/leads/[id]/dateien GET]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }
 
@@ -67,6 +68,7 @@ export async function POST(
 
     return NextResponse.json(eintrag, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/leads/[id]/dateien POST]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

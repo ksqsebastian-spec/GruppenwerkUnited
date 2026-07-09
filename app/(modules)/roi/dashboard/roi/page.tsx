@@ -48,29 +48,39 @@ export default function ROIPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [config, setConfig] = useState<Config | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    // Daten über API-Routen laden (service role, umgeht PostgREST-Schema-Beschränkungen)
-    const [jobsRes, configRes] = await Promise.all([
-      fetch('/api/roi/jobs'),
-      fetch('/api/roi/config'),
-    ]);
+    setLoading(true);
+    setError(null);
+    try {
+      // Daten über API-Routen laden (service role, umgeht PostgREST-Schema-Beschränkungen)
+      const [jobsRes, configRes] = await Promise.all([
+        fetch('/api/roi/jobs'),
+        fetch('/api/roi/config'),
+      ]);
 
-    if (jobsRes.ok) {
-      const jobsData = await jobsRes.json();
-      setJobs((jobsData as Job[]) || []);
-    } else {
-      console.error('Fehler beim Laden der Aufträge:', await jobsRes.text());
+      if (jobsRes.ok) {
+        const jobsData = await jobsRes.json();
+        setJobs((jobsData as Job[]) || []);
+      } else {
+        console.error('Fehler beim Laden der Aufträge:', await jobsRes.text());
+        setError('Die ROI-Daten konnten nicht geladen werden. Bitte versuche es erneut.');
+      }
+
+      if (configRes.ok) {
+        const configData = await configRes.json();
+        setConfig((configData as Config) ?? null);
+      } else {
+        console.error('Fehler beim Laden der Konfiguration:', await configRes.text());
+        setError('Die ROI-Daten konnten nicht geladen werden. Bitte versuche es erneut.');
+      }
+    } catch (err) {
+      console.error('Fehler beim Laden der ROI-Daten:', err);
+      setError('Die ROI-Daten konnten nicht geladen werden. Bitte versuche es erneut.');
+    } finally {
+      setLoading(false);
     }
-
-    if (configRes.ok) {
-      const configData = await configRes.json();
-      setConfig((configData as Config) ?? null);
-    } else {
-      console.error('Fehler beim Laden der Konfiguration:', await configRes.text());
-    }
-
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -97,6 +107,22 @@ export default function ROIPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-text-dim font-mono text-sm">Laden...</div>
+      </div>
+    );
+  }
+
+  // Fehler beim Laden der Daten
+  if (error) {
+    return (
+      <div className="bg-surface border border-border rounded-xl p-12 text-center">
+        <p className="text-sm font-semibold text-red mb-1">Fehler</p>
+        <p className="text-sm text-text-muted font-mono mb-6">{error}</p>
+        <button
+          onClick={() => fetchData()}
+          className="text-xs font-mono px-4 py-2 rounded-lg border border-border text-text-muted hover:border-accent hover:text-accent transition-colors"
+        >
+          Erneut versuchen
+        </button>
       </div>
     );
   }
