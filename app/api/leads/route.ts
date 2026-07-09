@@ -19,7 +19,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const data = await fetchLeads(session.companyId, filter);
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/leads GET]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }
 
@@ -32,6 +33,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const lead = await createLead(session.companyId, body);
     return NextResponse.json(lead, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/leads POST]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

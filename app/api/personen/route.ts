@@ -8,10 +8,12 @@ export async function GET(): Promise<NextResponse> {
   if (session instanceof NextResponse) return session;
 
   try {
-    const data = await fetchPersonen();
+    // Admins sehen alle Personen, Firmen nur ihre eigenen.
+    const data = await fetchPersonen(session.isAdmin ? undefined : session.companyId);
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/personen GET]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }
 
@@ -35,6 +37,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
     return NextResponse.json(person, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/personen POST]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

@@ -12,10 +12,11 @@ export async function PATCH(
   const { id } = await params;
   try {
     const body = await req.json();
-    const person = await updatePerson(id, body);
+    const person = await updatePerson(id, body, session.isAdmin ? undefined : session.companyId);
     return NextResponse.json(person);
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/personen/[id] PATCH]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }
 
@@ -28,9 +29,10 @@ export async function DELETE(
 
   const { id } = await params;
   try {
-    await deletePerson(id);
+    await deletePerson(id, session.isAdmin ? undefined : session.companyId);
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/personen/[id] DELETE]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

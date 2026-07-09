@@ -32,7 +32,8 @@ export async function PATCH(
     const knoten = await updateAutomatisierungsknoten(session.companyId, id, parsed.data);
     return NextResponse.json(knoten);
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/automationen/[id] PATCH]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }
 
@@ -48,6 +49,7 @@ export async function DELETE(
     await deleteAutomatisierungsknoten(session.companyId, id);
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('[/api/automationen/[id] DELETE]', error);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

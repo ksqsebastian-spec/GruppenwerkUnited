@@ -64,8 +64,10 @@ export async function POST(
     provisionProzent
   );
 
-  // Update status
-  const { data: updated, error: updateError } = await adminClient
+  // Update status — erneut auf status='offen' scopen (+ Firma bei Nicht-Admins).
+  // Verhindert TOCTOU: zwei parallele Complete-Requests würden sonst beide den
+  // Fetch bestehen und doppelt Provision auszahlen/auditieren.
+  let updateQuery = adminClient
     .from("empfehlungen")
     .update({
       status: "erledigt",
@@ -73,13 +75,26 @@ export async function POST(
       provision_betrag: provisionBetrag,
     })
     .eq("id", id)
-    .select()
-    .single();
+    .eq("status", "offen");
+
+  if (!authResult.isAdmin) {
+    updateQuery = updateQuery.eq("company", authResult.companyId);
+  }
+
+  const { data: updated, error: updateError } = await updateQuery.select().maybeSingle();
 
   if (updateError) {
     return NextResponse.json(
       { error: "Status konnte nicht aktualisiert werden" },
       { status: 500 }
+    );
+  }
+
+  // Kein Row getroffen → wurde parallel bereits erledigt.
+  if (!updated) {
+    return NextResponse.json(
+      { error: "Empfehlung wurde bereits erledigt" },
+      { status: 409 }
     );
   }
 
