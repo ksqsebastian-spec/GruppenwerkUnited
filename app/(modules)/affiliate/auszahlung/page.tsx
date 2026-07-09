@@ -8,11 +8,13 @@ import type { EmpfehlungWithHandwerker } from "@/types/affiliate";
 import { StatCard } from "../_components/ui/StatCard";
 import { Card } from "../_components/ui/Card";
 import { Button } from "../_components/ui/Button";
+import { ErrorState } from "@/components/shared/error-state";
 import { formatDate, formatCurrency } from "@/lib/modules/affiliate/utils";
 
 export default function AuszahlungPage(): React.JSX.Element {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithHandwerker[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -27,6 +29,7 @@ export default function AuszahlungPage(): React.JSX.Element {
 
   const fetchData = useCallback(async (): Promise<void> => {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -42,6 +45,7 @@ export default function AuszahlungPage(): React.JSX.Element {
       setTotal(data.total || 0);
     } catch {
       setEmpfehlungen([]);
+      setError("Die Auszahlungen konnten nicht geladen werden. Bitte versuche es erneut.");
     } finally {
       setLoading(false);
     }
@@ -227,7 +231,13 @@ export default function AuszahlungPage(): React.JSX.Element {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
+            {error ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-8">
+                  <ErrorState message={error} onRetry={fetchData} />
+                </td>
+              </tr>
+            ) : loading ? (
               <tr>
                 <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted-foreground">
                   Wird geladen...

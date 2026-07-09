@@ -6,6 +6,7 @@ import type { Handwerker, EmpfehlungWithHandwerker } from "@/types/affiliate";
 import { Card } from "../_components/ui/Card";
 import { Button } from "../_components/ui/Button";
 import { Input } from "../_components/ui/Input";
+import { ErrorState } from "@/components/shared/error-state";
 import { Check, X } from "lucide-react";
 
 // Statusanzeige je nach Aktivität und Archivstatus
@@ -36,6 +37,7 @@ export default function KundePage(): React.JSX.Element {
   const [handwerker, setHandwerker] = useState<Handwerker[]>([]);
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithHandwerker[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editProvision, setEditProvision] = useState("");
@@ -44,6 +46,7 @@ export default function KundePage(): React.JSX.Element {
   const [formLoading, setFormLoading] = useState(false);
 
   const fetchData = useCallback(async (): Promise<void> => {
+    setError(null);
     try {
       const [hwRes, empRes] = await Promise.all([
         fetch("/api/affiliate/handwerker"),
@@ -52,6 +55,9 @@ export default function KundePage(): React.JSX.Element {
       if (hwRes.ok) {
         const data = await hwRes.json();
         setHandwerker(data.data || []);
+      } else {
+        setHandwerker([]);
+        setError("Die Affiliate-Partner konnten nicht geladen werden. Bitte versuche es erneut.");
       }
       if (empRes.ok) {
         const data = await empRes.json();
@@ -59,6 +65,7 @@ export default function KundePage(): React.JSX.Element {
       }
     } catch {
       setHandwerker([]);
+      setError("Die Affiliate-Partner konnten nicht geladen werden. Bitte versuche es erneut.");
     } finally {
       setLoading(false);
     }
@@ -208,7 +215,13 @@ export default function KundePage(): React.JSX.Element {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
+            {error ? (
+              <tr>
+                <td colSpan={8} className="px-4 py-8">
+                  <ErrorState message={error} onRetry={fetchData} />
+                </td>
+              </tr>
+            ) : loading ? (
               <tr>
                 <td colSpan={8} className="px-4 py-12 text-center text-sm text-muted-foreground">
                   Wird geladen...

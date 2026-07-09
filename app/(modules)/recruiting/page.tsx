@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { Search, ChevronDown, ChevronRight, ArrowRight, Check, X, Users } from "lucide-react";
 import type { EmpfehlungWithStelle, EmpfehlungStatus, Stelle } from "@/types/recruiting";
+import { ErrorState } from "@/components/shared/error-state";
 import { formatDate, formatCurrency } from "@/lib/modules/recruiting/utils";
 
 const STATUS_DOT_COLORS: Record<EmpfehlungStatus, string> = {
@@ -35,6 +36,7 @@ interface StelleGroup {
 export default function AdminDashboardPage() {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithStelle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [expandedKunden, setExpandedKunden] = useState<Set<string>>(new Set());
 
@@ -44,6 +46,7 @@ export default function AdminDashboardPage() {
 
   const fetchData = useCallback(async (): Promise<void> => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/recruiting/stellen?view=empfehlungen&pageSize=200");
       if (!res.ok) throw new Error();
@@ -51,6 +54,7 @@ export default function AdminDashboardPage() {
       setEmpfehlungen(data.data || []);
     } catch {
       setEmpfehlungen([]);
+      setError("Die Empfehlungen konnten nicht geladen werden. Bitte versuche es erneut.");
     } finally {
       setLoading(false);
     }
@@ -218,7 +222,11 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Stellen-Gruppen */}
-      {loading ? (
+      {error ? (
+        <div className="bg-card rounded-xl border border-border">
+          <ErrorState message={error} onRetry={fetchData} />
+        </div>
+      ) : loading ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center text-sm text-muted-foreground">
           Wird geladen...
         </div>

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { Search, ChevronDown, ChevronRight, ArrowRight, Check, X, Users } from "lucide-react";
 import type { EmpfehlungWithHandwerker, EmpfehlungStatus, Handwerker } from "@/types/affiliate";
+import { ErrorState } from "@/components/shared/error-state";
 import { StatCard } from "./_components/ui/StatCard";
 import { formatDate, formatCurrency } from "@/lib/modules/affiliate/utils";
 
@@ -33,6 +34,7 @@ interface KundeGroup {
 export default function AdminDashboardPage(): React.JSX.Element {
   const [empfehlungen, setEmpfehlungen] = useState<EmpfehlungWithHandwerker[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [expandedKunden, setExpandedKunden] = useState<Set<string>>(new Set());
 
@@ -44,6 +46,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
 
   const fetchData = useCallback(async (): Promise<void> => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/affiliate/handwerker?view=empfehlungen&pageSize=200");
       if (!res.ok) throw new Error();
@@ -51,6 +54,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
       setEmpfehlungen(data.data || []);
     } catch {
       setEmpfehlungen([]);
+      setError("Die Empfehlungen konnten nicht geladen werden. Bitte versuche es erneut.");
     } finally {
       setLoading(false);
     }
@@ -238,7 +242,11 @@ export default function AdminDashboardPage(): React.JSX.Element {
       </div>
 
       {/* Gruppen-Karten */}
-      {loading ? (
+      {error ? (
+        <div className="bg-card rounded-xl border border-border">
+          <ErrorState message={error} onRetry={fetchData} />
+        </div>
+      ) : loading ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center text-sm text-muted-foreground">
           Wird geladen...
         </div>
