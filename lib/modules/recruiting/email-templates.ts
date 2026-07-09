@@ -1,6 +1,8 @@
 // Email template generator — produces copy-pasteable text for Outlook/mail clients.
 // No automated sending; admin copies the output manually.
 
+import { formatCurrency } from "@/lib/utils";
+
 export type EmailType = "ausgezahlt";
 
 interface AusgezahltParams {
@@ -8,13 +10,6 @@ interface AusgezahltParams {
   empfehlerEmail: string;
   refCode: string;
   praemieBetrag: number;
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(amount);
 }
 
 export function generateAusgezahltEmail(params: AusgezahltParams) {

@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { Appointment, AppointmentInsert, AppointmentUpdate, AppointmentFilters, UpcomingAppointments } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
+import { assertVehicleBelongsToTenant } from '@/lib/database/tenant-guards';
 
 // appointments hat kein direktes company_id → Tenant-Scope läuft über vehicle.company_id.
 const APPOINTMENT_COLUMNS = `
@@ -118,17 +119,6 @@ export async function fetchUpcomingAppointments(tenantCompanyId?: string | null)
       return dueDate > in14Days && dueDate <= in30Days;
     }),
   };
-}
-
-async function assertVehicleBelongsToTenant(vehicleId: string, tenantCompanyId: string): Promise<void> {
-  const supabase = createAdminClient();
-  const { data } = await supabase
-    .from('vehicles')
-    .select('id')
-    .eq('id', vehicleId)
-    .eq('company_id', tenantCompanyId)
-    .maybeSingle();
-  if (!data) throw new Error('Fahrzeug nicht gefunden');
 }
 
 export async function createAppointment(appointment: AppointmentInsert, tenantCompanyId?: string | null): Promise<Appointment> {

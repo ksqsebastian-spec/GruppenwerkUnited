@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { Cost, CostInsert, CostUpdate, CostFilters, CostType } from '@/types';
 import { ERROR_MESSAGES } from '@/lib/errors/messages';
+import { assertVehicleBelongsToTenant } from '@/lib/database/tenant-guards';
 
 // costs hat kein direktes company_id → Tenant-Scope läuft über vehicle.company_id.
 const COST_COLUMNS = `
@@ -111,17 +112,6 @@ export async function fetchCostsThisMonth(tenantCompanyId?: string | null): Prom
   }
 
   return (data ?? []).reduce((sum, cost: { amount: number | null }) => sum + (cost.amount || 0), 0);
-}
-
-async function assertVehicleBelongsToTenant(vehicleId: string, tenantCompanyId: string): Promise<void> {
-  const supabase = createAdminClient();
-  const { data } = await supabase
-    .from('vehicles')
-    .select('id')
-    .eq('id', vehicleId)
-    .eq('company_id', tenantCompanyId)
-    .maybeSingle();
-  if (!data) throw new Error('Fahrzeug nicht gefunden');
 }
 
 export async function createCost(cost: CostInsert, tenantCompanyId?: string | null): Promise<Cost> {
